@@ -19,31 +19,44 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import HeaderWhite from '../components/HeaderWhite';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, login, logout } = useAuthStore();
 
+  const handleLogin = (role: string) => {
+    login(role);
+    if (role === 'taker') {
+      navigate('/taker')
+    } else if (role === 'host') {
+      navigate('/host')
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  }
+
   return (
     <>
-      <div>Welcome to Proctormatic</div>
+      <HeaderWhite />
+      {/* <div>Welcome to Proctormatic</div>
       <div>
-        {user ? (
+        {/* {user ? (
           <>
             <p>현재 로그인된 역할: {user.role}</p>
-            <button onClick={logout}>로그아웃</button>
+            <button onClick={handleLogout}>로그아웃</button>
           </>
         ) : (
           <>
-            <button onClick={() => login('taker')}>응시자 로그인</button>
-            <button onClick={() => login('host')}>주최자 로그인</button>
+            <button onClick={() => handleLogin('taker')}>응시자 로그인</button>
+            <button onClick={() => handleLogin('host')}>주최자 로그인</button>
           </>
         )}
-      </div>
-      <div>
-        <button onClick={() => navigate('/taker')}>응시자 페이지로 이동</button>
-        <button onClick={() => navigate('/host')}>주최자 페이지로 이동</button>
-      </div>
+      </div> 
+      */}
     </>
   );
 };
