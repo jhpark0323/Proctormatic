@@ -153,4 +153,23 @@ const fonts = {
   },
 };
 
+// Function to inject font styles as CSS variables
+export const injectFonts = () => {
+  const root = document.documentElement;
+
+  // Set default font (MD_MEDIUM)
+  root.style.setProperty('--font-weight', fonts.MD_MEDIUM.fontWeight);
+  root.style.setProperty('--font-size', '16px');
+  root.style.setProperty('--line-height', fonts.MD_MEDIUM.lineHeight);
+  root.style.setProperty('--font-family', fonts.MD_MEDIUM.fontFamily);
+
+  // Set other font styles as CSS variables
+  Object.entries(fonts).forEach(([key, value]) => {
+    Object.entries(value).forEach(([property, cssValue]) => {
+      const cssVarName = `--${key.toLowerCase().replace(/_/g, '-')}-${property}`;
+      root.style.setProperty(cssVarName, cssValue as string);
+    });
+  });
+};
+
 export { fonts };

@@ -1,53 +1,28 @@
-import {create} from 'zustand';
-import axiosInstance from '../utils/axios';
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-// interface AuthState {
-//   user: { role: string } | null;
-//   token: string | null;
-//   setUser: ( user: { role: string } | null ) => void;
-//   fetchUser: () => void;
-//   logout: () => void;
-// }
-
-// 테스트용 코드 추후 삭제 요망 //////////////////////////////
+interface User {
+  role: string;
+}
 
 interface AuthState {
-  user: { role: string } | null;
+  user: User | null;
   login: (role: string) => void;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  login: (role) => set({ user: { role } }),
-  logout: () => set({ user: null }),
-}));
-
-
-
-///////////////////////////////////////////////////////////
-
-
-
-// export const useAuthStore = create<AuthState>((set) => ({
-//   user: null,
-//   token: localStorage.getItem('token'),
-//   setUser: (user) => set({ user }),
-//   fetchUser: async () => {
-//     const token = localStorage.getItem('token');
-//     if (token) {
-//       try {
-//         const response = await axiosInstance.get('/auth/me');
-//         set({ user: response.data });
-//       } catch (error) {
-//         console.error('Failed to fetch user:', error);
-//         localStorage.removeItem('token');
-//         set({ user: null });
-//       }
-//     }
-//   },
-//   logout: () => {
-//     localStorage.removeItem('token');
-//     set({ user: null, token: null });
-//   },
-// }));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      login: (role: string) => set({ user: { role } }),
+      logout: () => set({ user: null }),
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      // 선택적으로 특정 상태만 저장하고 싶다면:
+      partialize: (state) => ({ user: state.user }),
+    }
+  )
+);
