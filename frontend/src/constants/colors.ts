@@ -31,4 +31,13 @@ const colors = {
   DELETE_ACTIVED: "#860B07",
 };
 
+// 함수를 활용해서 색상을 css 변수로 적용
+export const injectColors = () => {
+  const root = document.documentElement;
+
+  Object.entries(colors).forEach(([key, value]) => {
+    root.style.setProperty(`--${key}`, value);
+  });
+};
+
 export { colors };

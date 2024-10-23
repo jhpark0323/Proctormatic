@@ -8,7 +8,7 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({ onClose }) => {
   return (
-    <div className={styles.Modal}>
+    <div className={styles.Modal} role='dialog'>
       <div className={styles.wrapper}>
         <div className={styles.headerBox}>
           <img

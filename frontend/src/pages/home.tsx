@@ -32,7 +32,7 @@ const Home = () => {
       <HeaderWhite onLoginClick={openModal} />
       {isModalOpen && <Modal onClose={closeModal} />}
       {isModalOpen && (
-        <div className={styles.backdrop} onClick={closeModal}></div>
+        <div className={styles.backdrop} data-testid="backdrop" onClick={closeModal}></div>
       )}
     </>
   );
