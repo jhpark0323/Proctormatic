@@ -56,3 +56,27 @@
   line-height: 24px;
   color: rgb(110, 110, 110);
 }
+
+.downLine > p {
+  margin: 0;
+}
+
+.userSelectBox {
+  width: 360px;
+  height: 140px;
+}
+
+.userSelectBox {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-around;
+}
+
+.selectButton {
+  width: 30%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
