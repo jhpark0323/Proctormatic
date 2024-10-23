@@ -29,8 +29,22 @@ const Home = () => {
 
   return (
     <>
-      <HeaderWhite onLoginClick={openModal} />
-      {isModalOpen && <Modal onClose={closeModal} />}
+      <HeaderWhite 
+        onLoginClick={openModal} 
+        userRole={user?.role} 
+        onLogoutClick={handleLogout} 
+      />
+      {isModalOpen && (
+        <Modal 
+          onClose={closeModal} 
+          title="AI 온라인 시험 자동 관리감독 서비스" 
+          subtitle={[
+            "어렵고 피곤한 시험 감시와 검증은 그만!",
+            "이젠 프록토매틱에게 맡기세요."
+          ]}
+          onLogin={handleLogin}
+        />
+      )}
       {isModalOpen && (
         <div className={styles.backdrop} data-testid="backdrop" onClick={closeModal}></div>
       )}

@@ -28,17 +28,17 @@ function App() {
         <Route
           path="/taker"
           element={
-            // <PrivateRoute allowedRoles={["taker"]}>
+            <PrivateRoute allowedRoles={["taker"]}>
               <TakerHome />
-            // </PrivateRoute>
+            </PrivateRoute>
           }
         />
         <Route
           path="/host"
           element={
-            // <PrivateRoute allowedRoles={["host"]}>
+            <PrivateRoute allowedRoles={["host"]}>
               <HostHome />
-            // </PrivateRoute>
+            </PrivateRoute>
           }
         />
       </Routes>
