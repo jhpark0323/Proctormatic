@@ -44,6 +44,10 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # APP
     'accounts',
+    'coins',
+    'exams',
+    'helpdesks',
+    'takers',
 
     # DRF
     'rest_framework',
