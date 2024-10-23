@@ -21,5 +21,8 @@
 
 .LoginButton {
   color: #2276DC;
+  display: flex;
+  align-items: center;
+  line-height: 22px;
   cursor: pointer;
 }
