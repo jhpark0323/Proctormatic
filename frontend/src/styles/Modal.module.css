@@ -1,0 +1,58 @@
+.Modal {
+  top: 50%;
+  left: 50%;
+  padding: 60px;
+  box-sizing: border-box;
+  width: 580px;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+.headerBox {
+  display: flex;
+  width: 100%;
+  padding: 8.5px 0px;
+}
+
+.cancelButton {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+}
+
+.titleInfoBox {
+  display: grid;
+  flex-direction: column;
+  gap: 16px;
+  margin: 48px 0px 67px;
+  width: 100%;
+  text-align: center;
+}
+
+.upLine {
+  font-size: 26px;
+  font-family: bold;
+  line-height: 38px;
+}
+
+.downLine {
+  font-size: 16px;
+  font-family: regular;
+  line-height: 24px;
+  color: rgb(110, 110, 110);
+}

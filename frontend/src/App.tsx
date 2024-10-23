@@ -5,8 +5,6 @@ import TakerHome from "./pages/taker/TakerHome";
 import HostHome from "./pages/host/HostHome";
 import { useAuthStore } from "./store/useAuthStore";
 import PrivateRoute from "./components/PrivateRoute";
-import { fonts } from "./constants";
-import "./App.css";
 
 function App() {
   // const fetchUser = useAuthStore((state) => state.fetchUser);
