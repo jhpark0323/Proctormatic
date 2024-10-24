@@ -27,16 +27,16 @@ def is_valid_email(email):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'isAlreadyExists': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
+                    'isAlreadyExists': openapi.Schema(type=openapi.TYPE_BOOLEAN)
                 }
             )
         ),
         400: openapi.Response(
-            description="잘못된 요청",
+            description="잘못된 요청(이메일과 시험 ID를 모두 입력해야 합니다.)",
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="이메일과 시험 ID를 모두 입력해야 합니다.")
+                    'message': openapi.Schema(type=openapi.TYPE_STRING)
                 }
             )
         ),
@@ -45,7 +45,7 @@ def is_valid_email(email):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="유효하지 않은 이메일 형식입니다.")
+                    'message': openapi.Schema(type=openapi.TYPE_STRING)
                 }
             )
         ),
@@ -54,7 +54,7 @@ def is_valid_email(email):
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="유효하지 않은 시험 ID입니다.")
+                    'message': openapi.Schema(type=openapi.TYPE_STRING)
                 }
             )
         ),
