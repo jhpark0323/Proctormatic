@@ -26,7 +26,7 @@ from django.core.paginator import Paginator
                     items=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                         'id': openapi.Schema(type=openapi.TYPE_INTEGER),
                         'title': openapi.Schema(type=openapi.TYPE_STRING),
-                        'created_at': openapi.Schema(type=openapi.TYPE_STRING, format='date-time'),
+                        'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
                     })
                 ),
                 'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN),
