@@ -37,34 +37,19 @@ from django.core.paginator import Paginator
         400: openapi.Response('잘못된 요청', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
-            },
-            example={
-                "status": 400,
-                "message": "잘못된 요청입니다."
             }
         )),
         403: openapi.Response('권한 없음', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
-            },
-            example={
-                "status": 403,
-                "message": "권한이 없습니다."
             }
         )),
         404: openapi.Response('잘못된 페이지 요청', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
-            },
-            example={
-                "status": 404,
-                "message": "잘못된 페이지 요청입니다."
             }
         )),
     }
@@ -78,23 +63,13 @@ from django.core.paginator import Paginator
         201: openapi.Response('성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER),
                 'message': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-            example={
-                "status": 201,
-                "message": "공지사항이 등록되었습니다."
             }
         )),
         400: openapi.Response('잘못된 요청', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
-            },
-            example={
-                "status": 400,
-                "message": "잘못된 요청입니다."
             }
         )),
     }
