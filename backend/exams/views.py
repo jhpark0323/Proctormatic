@@ -11,16 +11,6 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-# JWT에서 user ID와 role 추출 함수
-def get_user_info_from_token(request):
-    jwt_authenticator = JWTAuthentication()
-    user, token = jwt_authenticator.authenticate(request)
-    if token:
-        user_id = token.get('id')
-        user_role = token.get('role')
-        return user_id, user_role
-    return None, None
-
 User = get_user_model()  # User 모델 가져오기
 
 # Swagger 설정 추가 - 시험 생성 엔드포인트
@@ -89,10 +79,7 @@ def create_exam(request):
     exam_cost = serializer.validated_data.get('cost', 0)
 
     # user의 현재 코인을 가져옴 (데이터베이스에서 user_id로 사용자 조회)
-    user = User.objects.filter(id=user_id).first()
-    if not user:
-        return Response({"message": "사용자 정보를 찾을 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
-
+    user = User.objects.get(id=user_id)
     user_coin = user.coin
 
     # user의 코인이 exam 비용보다 작은지 확인
@@ -101,7 +88,7 @@ def create_exam(request):
             "message": "적립금이 부족합니다. 충전해주세요."
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # 시험 시작 시간 검증
+    # 시험 시작 시간 검증 및 entry_time 계산
     start_time = serializer.validated_data.get('start_time')
     current_time = datetime.datetime.now().time()
 
@@ -115,12 +102,14 @@ def create_exam(request):
             "message": "응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요. 응시 시작 시간을 변경해주세요."
         }, status=status.HTTP_409_CONFLICT)
 
-    # 비용 검증을 통과한 경우, 시험을 생성
-    serializer.save(user=user)
+    # entry_time 계산 (시험 시작 시간 30분 전)
+    entry_time = (datetime.datetime.combine(datetime.date.today(), start_time) - datetime.timedelta(minutes=30)).time()
+
+    # 시리얼라이저에 entry_time 추가
+    serializer.save(user=user, entry_time=entry_time)
     return Response({
         "message": "시험이 성공적으로 예약되었습니다."
     }, status=status.HTTP_201_CREATED)
-
 
 # Swagger 설정 추가 - 예약된 시험 조회 엔드포인트
 @swagger_auto_schema(
@@ -214,3 +203,13 @@ def scheduled_exam_list(request):
             "totalPage": paginator.num_pages
         }
     }, status=status.HTTP_200_OK)
+
+# JWT에서 user ID와 role 추출 함수
+def get_user_info_from_token(request):
+    jwt_authenticator = JWTAuthentication()
+    user, token = jwt_authenticator.authenticate(request)
+    if token:
+        user_id = token.get('id')
+        user_role = token.get('role')
+        return user_id, user_role
+    return None, None
