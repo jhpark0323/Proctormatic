@@ -29,7 +29,11 @@ const Checkbox: React.FC<CheckboxProps> = ({
   };
 
   return (
-    <div className={`checkbox ${disabled ? "disabled" : "enabled"}`}>
+    <div
+      className={`checkbox ${disabled ? "disabled" : "enabled"} ${
+        styles.checkbox
+      }`}
+    >
       <label>
         <input
           type="checkbox"
