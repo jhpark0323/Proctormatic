@@ -74,7 +74,7 @@ from django.core.paginator import Paginator
         )),
     }
 )
-@api_view(['GET','POST'])
+@api_view(['POST', 'GET'])
 def notification(request):
     if request.method == 'POST':
         serializer = NotificationCreateSerializer(data=request.data)
@@ -82,7 +82,7 @@ def notification(request):
             serializer.save()
             return Response({'message': '공지사항이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
         return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-    else:
+    elif request.method == 'GET':
         notifications = Notification.objects.all()
         page = request.GET.get('page', 1)
         size = request.GET.get('size', 10)
