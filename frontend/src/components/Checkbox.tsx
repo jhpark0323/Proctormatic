@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from "react";
-import styles from "../styles/Buttons.module.css";
+import styles from "@/styles/Buttons.module.css";
 
 // checked 에 들어갈 boolean 값은  const [service, setService] = React.useState(false); 와 같이 불러올 수 있음
 // children: 태그로 감싼 내용이 라벨로 들어감
