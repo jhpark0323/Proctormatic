@@ -11,11 +11,15 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-# JWT에서 user ID 추출 함수
-def get_user_id_from_token(request):
+# JWT에서 user ID와 role 추출 함수
+def get_user_info_from_token(request):
     jwt_authenticator = JWTAuthentication()
     user, token = jwt_authenticator.authenticate(request)
-    return token.get('id') if token else None
+    if token:
+        user_id = token.get('id')
+        user_role = token.get('role')
+        return user_id, user_role
+    return None, None
 
 User = get_user_model()  # User 모델 가져오기
 
@@ -33,6 +37,12 @@ User = get_user_model()  # User 모델 가져오기
             }
         )),
         400: openapi.Response('요청 데이터가 유효하지 않거나 서비스 요금이 부족한 경우', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
                 'message': openapi.Schema(type=openapi.TYPE_STRING)
@@ -59,10 +69,14 @@ def create_exam(request):
     새로운 시험을 생성하는 API입니다.
     요청 데이터에는 시험의 제목, 날짜, 시작 시간, 종료 시간, 예상 참가자 수 등이 포함되어야 합니다.
     """
-    # JWT에서 user ID를 추출
-    user_id = get_user_id_from_token(request)
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
     if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     # 요청된 데이터를 시리얼라이저로 검증
     serializer = ExamSerializer(data=request.data)
@@ -75,7 +89,10 @@ def create_exam(request):
     exam_cost = serializer.validated_data.get('cost', 0)
 
     # user의 현재 코인을 가져옴 (데이터베이스에서 user_id로 사용자 조회)
-    user = User.objects.get(id=user_id)
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return Response({"message": "사용자 정보를 찾을 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
     user_coin = user.coin
 
     # user의 코인이 exam 비용보다 작은지 확인
@@ -130,10 +147,10 @@ def create_exam(request):
                 })
             }
         )),
-        400: openapi.Response('페이지 및 크기 값이 잘못되었습니다.', openapi.Schema(
+        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
             }
         )),
         403: openapi.Response('권한이 없습니다.', openapi.Schema(
@@ -151,20 +168,14 @@ def scheduled_exam_list(request):
     예약된 시험 목록을 조회하는 API입니다.
     현재 시간 기준으로 아직 시작되지 않은 시험만 반환하며, 페이지네이션 기능을 제공합니다.
     """
-    # JWT에서 user ID를 추출
-    user_id = get_user_id_from_token(request)
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
     if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # 페이지네이션을 위한 요청 파라미터 처리
-    page = request.query_params.get('page', 1)
-    size = request.query_params.get('size', 10)
-
-    # 페이지와 크기 값이 정수형인지 검증
-    if not str(page).isdigit() or not str(size).isdigit():
-        return Response({
-            "message": "페이지 및 크기 값이 잘못되었습니다."
-        }, status=status.HTTP_400_BAD_REQUEST)
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     # 현재 시간 가져오기
     current_datetime = datetime.datetime.now()
@@ -188,8 +199,8 @@ def scheduled_exam_list(request):
     exams = (future_exams | today_future_exams).order_by('date', 'start_time')
 
     # 페이지네이션 처리
-    paginator = Paginator(exams, int(size))
-    paginated_exams = paginator.get_page(int(page))
+    paginator = Paginator(exams, int(request.query_params.get('size', 10)))
+    paginated_exams = paginator.get_page(int(request.query_params.get('page', 1)))
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = ScheduledExamListSerializer(paginated_exams, many=True)
