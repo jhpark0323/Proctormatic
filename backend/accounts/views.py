@@ -91,10 +91,7 @@ def handle_email_verification(request):
 
         if email:
             email_exists = User.objects.filter(email=email).exists()
-            if email_exists:
-                return Response({'isAlreadyExists': email_exists}, status=status.HTTP_200_OK)
-            else:
-                return Response({'isAlreadyExists': email_exists}, status=status.HTTP_200_OK)
+            return Response({'isAlreadyExists': email_exists}, status=status.HTTP_200_OK)
         else:
             return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
