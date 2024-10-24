@@ -8,12 +8,6 @@ from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-def is_valid_email(email):
-    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    if re.match(email_regex, email):
-        return True
-    return False
-
 @swagger_auto_schema(
     method='get',
     operation_description="이메일 중복 체크",
@@ -75,6 +69,12 @@ def check_duplicate_taker(request):
     if not Exam.objects.filter(id=exam_id).exists():
         return Response({'message': '유효하지 않은 시험 ID입니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-    is_duplicate = Taker.objects.filter(email=email, exam_id=exam_id).exists()
+    is_duplicate = Taker.objects.filter(email=email, exam__id=exam_id).exists()
 
     return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
+
+def is_valid_email(email):
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if re.match(email_regex, email):
+        return True
+    return False
