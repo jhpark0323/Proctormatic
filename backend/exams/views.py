@@ -17,28 +17,24 @@ from drf_yasg import openapi
         201: openapi.Response('시험이 성공적으로 예약되었습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=201),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='시험이 성공적으로 예약되었습니다.')
             }
         )),
         400: openapi.Response('요청 데이터가 유효하지 않거나 서비스 요금이 부족한 경우', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=400),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='적립금이 부족합니다. 충전해주세요.')
             }
         )),
         403: openapi.Response('권한이 없습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=403),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='권한이 없습니다.')
             }
         )),
         409: openapi.Response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=409),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
             }
         )),
@@ -47,55 +43,51 @@ from drf_yasg import openapi
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])  # 인증된 사용자만 접근 가능
 def create_exam(request):
-    # 권한이 없는 경우 403 Forbidden 응답 처리 (예시: 관리자 권한만 접근 가능)
-    if not request.user.is_authenticated or not request.user.is_staff:
+    # 권한이 없는 경우 403 Forbidden 응답 처리
+    if not request.user.is_authenticated:
         return Response({
-            "status": 403,
             "message": "권한이 없습니다."
         }, status=status.HTTP_403_FORBIDDEN)
 
-    # 서비스 요금 (coin)이 충분하지 않은 경우 처리
-    coin = request.data.get('coin', 0)
-    if int(coin) < 100:
+    # 요청된 데이터를 시리얼라이저로 검증
+    serializer = ExamSerializer(data=request.data)
+    if not serializer.is_valid():
         return Response({
-            "status": 400,
+            "message": "요청 데이터가 유효하지 않습니다. 확인해주세요.",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # 시리얼라이저에서 cost를 가져옴
+    exam_cost = serializer.validated_data.get('cost', 0)
+
+    # user의 현재 코인을 가져옴
+    user_coin = request.user.coin
+
+    # user의 코인이 exam 비용보다 작은지 확인
+    if int(user_coin) < int(exam_cost):
+        return Response({
             "message": "적립금이 부족합니다. 충전해주세요."
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # 시험 시작 시간이 현재 시간으로부터 30분 이상 남아 있지 않은 경우 처리
-    start_time = request.data.get('start_time')
+    # 시험 시작 시간 검증
+    start_time = serializer.validated_data.get('start_time')
     current_time = datetime.datetime.now().time()
-    try:
-        start_time_obj = datetime.datetime.strptime(start_time, "%H:%M:%S").time()
-    except ValueError:
-        return Response({
-            "status": 400,
-            "message": "유효한 시간 형식이 아닙니다. (예: HH:MM:SS)"
-        }, status=status.HTTP_400_BAD_REQUEST)
 
-    if (datetime.datetime.combine(datetime.date.today(), start_time_obj) - datetime.datetime.combine(
-            datetime.date.today(), current_time)).total_seconds() < 1800:
+    # 현재 시간과 시험 시작 시간을 비교
+    start_seconds = datetime.datetime.combine(datetime.date.today(), start_time).timestamp()
+    current_seconds = datetime.datetime.combine(datetime.date.today(), current_time).timestamp()
+
+    # 시험 시작 시간이 현재 시간으로부터 30분 이상 남아 있지 않은 경우 처리
+    if (start_seconds - current_seconds) < 1800:
         return Response({
-            "status": 409,
             "message": "응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요. 응시 시작 시간을 변경해주세요."
         }, status=status.HTTP_409_CONFLICT)
 
-    # 시리얼라이저 유효성 검사
-    serializer = ExamSerializer(data=request.data)
-    if serializer.is_valid():
-        # user 필드는 뷰에서 직접 설정
-        serializer.save(user=request.user)
-        return Response({
-            "status": 201,
-            "message": "시험이 성공적으로 예약되었습니다."
-        }, status=status.HTTP_201_CREATED)
-
-    # 기본적인 유효성 실패 응답
+    # 비용 검증을 통과한 경우, 시험을 생성
+    serializer.save(user=request.user)
     return Response({
-        "status": 400,
-        "message": "요청 데이터가 유효하지 않습니다. 확인해주세요.",
-        "errors": serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+        "message": "시험이 성공적으로 예약되었습니다."
+    }, status=status.HTTP_201_CREATED)
 
 
 # Swagger 설정 추가 - 예약된 시험 조회 엔드포인트
@@ -109,7 +101,6 @@ def create_exam(request):
         200: openapi.Response('예약된 시험 목록 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=200),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='예약된 시험 목록 조회 성공.'),
                 'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                     'scheduledExamList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_OBJECT)),
@@ -122,14 +113,12 @@ def create_exam(request):
         400: openapi.Response('페이지 및 크기 값이 잘못되었습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=400),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='페이지 및 크기 값이 잘못되었습니다.')
             }
         )),
         403: openapi.Response('권한이 없습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, example=403),
                 'message': openapi.Schema(type=openapi.TYPE_STRING, example='권한이 없습니다.')
             }
         )),
@@ -141,7 +130,6 @@ def scheduled_exam_list(request):
     # 권한이 없는 경우 403 Forbidden 처리
     if not request.user.is_authenticated:
         return Response({
-            "status": 403,
             "message": "권한이 없습니다."
         }, status=status.HTTP_403_FORBIDDEN)
 
@@ -149,29 +137,42 @@ def scheduled_exam_list(request):
     page = request.query_params.get('page', 1)
     size = request.query_params.get('size', 10)
 
-    try:
-        page = int(page)
-        size = int(size)
-    except ValueError:
+    # 페이지와 크기 값이 정수형인지 검증
+    if not str(page).isdigit() or not str(size).isdigit():
         return Response({
-            "status": 400,
             "message": "페이지 및 크기 값이 잘못되었습니다."
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # 현재 사용자의 예약된 시험 목록을 필터링
-    exams = Exam.objects.filter(user=request.user).order_by('date')
+    # 현재 시간 가져오기
+    current_datetime = datetime.datetime.now()
+    current_date = current_datetime.date()
+    current_time = current_datetime.time()
+
+    # 오늘 이후의 시험들
+    future_exams = Exam.objects.filter(
+        user=request.user,
+        date__gt=current_date
+    )
+
+    # 오늘 중에서 시작 시간이 현재 시간 이후인 시험들
+    today_future_exams = Exam.objects.filter(
+        user=request.user,
+        date=current_date,
+        start_time__gt=current_time
+    )
+
+    # 두 쿼리셋을 결합하고 정렬
+    exams = (future_exams | today_future_exams).order_by('date', 'start_time')
 
     # 페이지네이션 처리
-    paginator = Paginator(exams, size)
-    paginated_exams = paginator.get_page(page)
+    paginator = Paginator(exams, int(size))
+    paginated_exams = paginator.get_page(int(page))
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = ScheduledExamSerializer(paginated_exams, many=True)
 
     # 응답 데이터 구성
     return Response({
-        "status": 200,
-        "message": "예약된 시험 목록 조회 성공.",
         "result": {
             "scheduledExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
