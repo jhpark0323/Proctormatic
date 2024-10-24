@@ -22,6 +22,8 @@ User = get_user_model()  # User 모델 가져오기
 # Swagger 설정 추가 - 시험 생성 엔드포인트
 @swagger_auto_schema(
     method='post',
+    operation_summary="시험 생성",
+    operation_description="새로운 시험을 생성합니다. 요청 데이터에는 시험 제목, 날짜, 시작 시간, 종료 시간, 예상 참가자 수 등이 포함되어야 합니다.",
     request_body=ExamSerializer,
     responses={
         201: openapi.Response('시험이 성공적으로 예약되었습니다.', openapi.Schema(
@@ -53,6 +55,10 @@ User = get_user_model()  # User 모델 가져오기
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])  # 인증된 사용자만 접근 가능
 def create_exam(request):
+    """
+    새로운 시험을 생성하는 API입니다.
+    요청 데이터에는 시험의 제목, 날짜, 시작 시간, 종료 시간, 예상 참가자 수 등이 포함되어야 합니다.
+    """
     # JWT에서 user ID를 추출
     user_id = get_user_id_from_token(request)
     if not user_id:
@@ -102,6 +108,8 @@ def create_exam(request):
 # Swagger 설정 추가 - 예약된 시험 조회 엔드포인트
 @swagger_auto_schema(
     method='get',
+    operation_summary="예약된 시험 목록 조회",
+    operation_description="사용자가 예약한 미래의 시험 목록을 조회합니다. 현재 시간 기준으로 아직 시작되지 않은 시험만 반환됩니다.",
     manual_parameters=[
         openapi.Parameter('page', openapi.IN_QUERY, description="페이지 번호 (기본값 1)", type=openapi.TYPE_INTEGER),
         openapi.Parameter('size', openapi.IN_QUERY, description="페이지 당 항목 수 (기본값 10)", type=openapi.TYPE_INTEGER)
@@ -111,23 +119,27 @@ def create_exam(request):
             type=openapi.TYPE_OBJECT,
             properties={
                 'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
-                    'scheduledExamList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_OBJECT)),
-                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER)
+                    'scheduledExamList': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Items(type=openapi.TYPE_OBJECT),
+                        description="예약된 시험 목록"
+                    ),
+                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
+                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
+                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
                 })
             }
         )),
         400: openapi.Response('페이지 및 크기 값이 잘못되었습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
             }
         )),
         403: openapi.Response('권한이 없습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
     }
@@ -135,6 +147,10 @@ def create_exam(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])  # 인증된 사용자만 접근 가능
 def scheduled_exam_list(request):
+    """
+    예약된 시험 목록을 조회하는 API입니다.
+    현재 시간 기준으로 아직 시작되지 않은 시험만 반환하며, 페이지네이션 기능을 제공합니다.
+    """
     # JWT에서 user ID를 추출
     user_id = get_user_id_from_token(request)
     if not user_id:
