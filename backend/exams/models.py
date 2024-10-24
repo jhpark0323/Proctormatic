@@ -1,3 +1,20 @@
 from django.db import models
+from django.conf import settings
 
-# Create your models here.
+class Exam(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # 시험 생성자
+    title = models.CharField(max_length=255)  # 시험 제목
+    date = models.DateField()  # 시험 날짜
+    entry_time = models.TimeField()  # 입장 시간
+    start_time = models.TimeField()  # 시험 시작 시간
+    exit_time = models.TimeField(null=True, blank=True)  # 퇴장 시간 (nullable)
+    end_time = models.TimeField()  # 시험 종료 시간
+    url = models.CharField(max_length=255)  # 시험 URL
+    expected_taker = models.IntegerField()  # 예상 참가자 수
+    total_taker = models.IntegerField(default=0)  # 총 참가자 수
+    cheer_msg = models.CharField(max_length=255, null=True, blank=True)  # 응원 메시지 (nullable)
+    coin = models.IntegerField()  # 서비스 요금
+    created_at = models.DateTimeField(auto_now_add=True)  # 생성일
+
+    def __str__(self):
+        return self.title
