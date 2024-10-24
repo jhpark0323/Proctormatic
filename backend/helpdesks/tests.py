@@ -10,7 +10,7 @@ User = get_user_model()
 class NotificationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse('create_notification')
+        self.url = reverse('notification')
 
     def test_create_notification(self):
         data = {

@@ -27,11 +27,10 @@ from drf_yasg import openapi
     }
 )
 @api_view(['POST'])
-def create_notification(request):
+def notification(request):
     serializer = NotificationCreateSerializer(data=request.data)
     print(serializer.errors)
     if serializer.is_valid():
         serializer.save()
         return Response({'message': '공지사항이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
     return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
