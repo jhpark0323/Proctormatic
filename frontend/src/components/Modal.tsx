@@ -10,6 +10,11 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ onClose, title, subtitle, onLogin }) => {
+  const handleLogin = (role: string) => {
+    localStorage.setItem('userRole', role);
+    onLogin(role);
+  };
+
   return (
     <div className={styles.Modal} role='dialog'>
       <div className={styles.wrapper}>
@@ -34,13 +39,13 @@ const Modal: React.FC<ModalProps> = ({ onClose, title, subtitle, onLogin }) => {
         <div className={styles.userSelectBox}>
           <div 
             className={styles.selectButton} 
-            onClick={() => onLogin('host')}
+            onClick={() => handleLogin('host')}
           >
             주최자
           </div>
           <div 
             className={styles.selectButton} 
-            onClick={() => onLogin('taker')}
+            onClick={() => handleLogin('taker')}
           >
             응시자
           </div>
@@ -49,5 +54,6 @@ const Modal: React.FC<ModalProps> = ({ onClose, title, subtitle, onLogin }) => {
     </div>
   );
 };
+
 
 export default Modal;

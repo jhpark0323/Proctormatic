@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Home from '../../pages/Home';
+import Home from '../../pages/home';
 
 describe('Home 페이지 테스트', () => {
 

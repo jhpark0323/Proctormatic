@@ -26,7 +26,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick, userRole, onLog
             로그인 / 가입
           </div>
         )}
-        <button className={styles.ReservationButton}>시험 예약하기</button>
+        {/* <button className={styles.ReservationButton}>시험 예약하기</button> */}
       </div>
     </div>
   );

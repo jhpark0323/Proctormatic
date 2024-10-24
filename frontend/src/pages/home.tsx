@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import HeaderWhite from '../components/HeaderWhite';
 import Modal from '../components/Modal';
 import styles from '../styles/Home.module.css';
+import SwiperComponent from '../components/Swiper';
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,6 +35,11 @@ const Home = () => {
         userRole={user?.role} 
         onLogoutClick={handleLogout} 
       />
+      <div className={styles.Content}>
+        <SwiperComponent />
+      </div>
+
+
       {isModalOpen && (
         <Modal 
           onClose={closeModal} 
