@@ -1,14 +1,18 @@
-from django.core.validators import validate_email
-from django.shortcuts import render
+import re
 
-# Create your views here.
+from exams.models import Exam
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
 from .models import Taker
-from .utils import create_response
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+def is_valid_email(email):
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if re.match(email_regex, email):
+        return True
+    return False
 
 @swagger_auto_schema(
     method='get',
@@ -23,13 +27,7 @@ from drf_yasg import openapi
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="이메일 중복체크 결과입니다."),
-                    'result': openapi.Schema(
-                        type=openapi.TYPE_OBJECT,
-                        properties={
-                            'isAlreadyExists': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
-                        }
-                    )
+                    'isAlreadyExists': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
                 }
             )
         ),
@@ -51,6 +49,15 @@ from drf_yasg import openapi
                 }
             )
         ),
+        404: openapi.Response(
+            description="시험 ID가 존재하지 않음",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="유효하지 않은 시험 ID입니다.")
+                }
+            )
+        ),
     }
 )
 
@@ -60,17 +67,14 @@ def check_duplicate_taker(request):
     exam_id = request.query_params.get("id")
 
     if not email or not exam_id:
-        return create_response('이메일과 시험 ID를 모두 입력해야 합니다.', status_code=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': '이메일과 시험 ID를 모두 입력해야 합니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    from django.core.exceptions import ValidationError
-    try:
-        validate_email(email)
-    except ValidationError:
-        return create_response('유효하지 않은 이메일 형식입니다.', status_code=status.HTTP_400_BAD_REQUEST)
+    if not is_valid_email(email):
+        return Response({'message': '유효하지 않은 이메일 형식입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not Exam.objects.filter(id=exam_id).exists():
+        return Response({'message': '유효하지 않은 시험 ID입니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     is_duplicate = Taker.objects.filter(email=email, exam_id=exam_id).exists()
 
-    if is_duplicate:
-        return create_response('이메일 중복체크 결과입니다.', {'isAlreadyExists': True})
-    else:
-        return create_response('이메일 중복체크 결과입니다.', {'isAlreadyExists': False})
+    return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
