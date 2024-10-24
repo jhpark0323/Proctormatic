@@ -10,7 +10,7 @@ from drf_yasg import openapi
 
 @swagger_auto_schema(
     method='get',
-    operation_description="이메일 중복 체크",
+    operation_summary="이메일 중복 체크",
     manual_parameters=[
         openapi.Parameter('email', openapi.IN_QUERY, description="응시자 이메일", type=openapi.TYPE_STRING, required=True),
         openapi.Parameter('id', openapi.IN_QUERY, description="시험 ID", type=openapi.TYPE_INTEGER, required=True),
