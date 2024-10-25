@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import get_user_model, authenticate
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -191,35 +193,76 @@ def handle_user(request):
         400: openapi.Response('잘못된 요청입니다.', schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'error': openapi.Schema(type=openapi.TYPE_STRING),
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
             }
         )),
     },
 )
-@api_view(['POST'])
+@swagger_auto_schema(
+    method='patch',
+    operation_summary="accessToken 재발급",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    ),
+    responses={
+        200: openapi.Response('토큰이 재발급되었습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'access': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+    },
+)
+@api_view(['POST', 'PATCH'])
 @permission_classes([AllowAny])
-def login(request):
-    email = request.data.get('email')
-    password = request.data.get('password')
+def handle_token(request):
+    if request.method == 'POST':
+        email = request.data.get('email')
+        password = request.data.get('password')
 
-    if not email:
-        return Response({'error': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not password:
-        return Response({'error': '비밀번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not password:
+            return Response({'message': '비밀번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.filter(email=email).first()
-    if user is None:
-        return Response({'error': '입력한 이메일은 등록되어 있지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.filter(email=email).first()
+        if user is None:
+            return Response({'message': '입력한 이메일은 등록되어 있지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = authenticate(email=email, password=password)
-    if user is None:
-        return Response({'error': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        user = authenticate(email=email, password=password)
+        if user is None:
+            return Response({'message': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = CustomTokenObtainPairSerializer()
-    serializer.user = user
-    token_data = serializer.validate({})
-    return Response(token_data, status=status.HTTP_200_OK)
+        serializer = CustomTokenObtainPairSerializer()
+        serializer.user = user
+        token_data = serializer.validate({})
+        return Response(token_data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PATCH':
+        refresh_token = request.data.get('refresh')
+
+        if not refresh_token:
+            return Response({'message' : 'refresh token이 입력되지 않았습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            new_access_token = str(refresh.access_token)
+            return Response({'access': new_access_token}, status=status.HTTP_200_OK)
+
+        except TokenError as e:
+            if isinstance(e, InvalidToken):
+                return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 def is_valid_email(email):
