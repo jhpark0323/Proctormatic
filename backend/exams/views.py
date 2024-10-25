@@ -91,6 +91,9 @@ def create_exam(request):
         return Response({
             "message": "적립금이 부족합니다. 충전해주세요."
         }, status=status.HTTP_400_BAD_REQUEST)
+    
+    user.coin = user_coin - exam_cost
+    user.save()  # 변경사항 저장
 
     # 시험 시작 시간 검증 및 entry_time 계산
     start_time = serializer.validated_data.get('start_time')
