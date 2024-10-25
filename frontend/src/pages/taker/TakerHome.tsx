@@ -56,7 +56,7 @@ const TakerHome = () => {
         </div>
         <div className={styles.ContentInner}>
           {/* 사이드바 부분 */}
-          <div className={styles.InnerSide}>
+          <div className={styles.InnerSide} role="complementary">
             <div className={styles.SideStep} style={getStepStyle(1)}>
               <MdOutlineEmail size={22} />URL 입력하기
             </div>
@@ -75,7 +75,7 @@ const TakerHome = () => {
           </div>
 
           {/* 메인 부분 */}
-          <div className={styles.InnerMain}>
+          <div className={styles.InnerMain} role="main">
             {renderStepContent()}
           </div>
         </div>
