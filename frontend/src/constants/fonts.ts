@@ -158,18 +158,41 @@ export const injectFonts = () => {
   const root = document.documentElement;
 
   // Set default font (MD_MEDIUM)
-  root.style.setProperty('--font-weight', fonts.MD_MEDIUM.fontWeight);
-  root.style.setProperty('--font-size', '16px');
-  root.style.setProperty('--line-height', fonts.MD_MEDIUM.lineHeight);
-  root.style.setProperty('--font-family', fonts.MD_MEDIUM.fontFamily);
+  root.style.setProperty('--font-weight', fonts.LG_MEDIUM.fontWeight);
+  root.style.setProperty('--font-size', fonts.LG_MEDIUM.fontSize);
+  root.style.setProperty('--line-height', fonts.LG_MEDIUM.lineHeight);
+  root.style.setProperty('--font-family', fonts.LG_MEDIUM.fontFamily);
 
-  // Set other font styles as CSS variables
+  // CSS 변수 이름 형식 수정
   Object.entries(fonts).forEach(([key, value]) => {
     Object.entries(value).forEach(([property, cssValue]) => {
-      const cssVarName = `--${key.toLowerCase().replace(/_/g, '-')}-${property}`;
+      const cssVarName = `--font-${key.toLowerCase()}-${property.toLowerCase()}`;
       root.style.setProperty(cssVarName, cssValue as string);
     });
   });
+};
+
+// 사용하기 쉽게 CSS 클래스로 변환하는 유틸리티 함수 추가
+export const createFontStyles = () => {
+  let styles = '';
+  Object.entries(fonts).forEach(([key, value]) => {
+    styles += `
+      .font-${key.toLowerCase()} {
+        font-weight: var(--font-${key.toLowerCase()}-fontweight);
+        font-size: var(--font-${key.toLowerCase()}-fontsize);
+        line-height: var(--font-${key.toLowerCase()}-lineheight);
+        font-family: var(--font-${key.toLowerCase()}-fontfamily);
+      }
+    `;
+  });
+  return styles;
+};
+
+// styles.css에서 사용할 CSS
+export const generateGlobalStyles = () => {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = createFontStyles();
+  document.head.appendChild(styleSheet);
 };
 
 export { fonts };
