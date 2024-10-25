@@ -18,7 +18,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick, userRole, onLog
         {userRole ? (
           <div className={styles.UserInfo}>
             <span className={styles.UserRole}>
-              {userRole === 'host' ? '주최자' : '응시자'}로 로그인됨
+              {userRole}로 로그인됨
             </span>
             <button className={styles.ActionButton} onClick={onLogoutClick}>
               로그아웃

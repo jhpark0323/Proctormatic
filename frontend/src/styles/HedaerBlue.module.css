@@ -9,14 +9,16 @@
   height: 75px;
   padding: 18px 30px;
   box-sizing: border-box;
-  background-color: white;
+  background-color: var(--NAVY);
   z-index: 40;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: white;
 }
 
 .Logo {
   margin: 0px;
   width: 220px;
+  height: 35px;
   cursor: pointer;
 }
 
@@ -26,15 +28,10 @@
   align-items: center;
   gap: 20px;
 }
-
-.LoginButton {
-  color: #2276DC;
-  display: flex;
-  align-items: center;
-  line-height: 22px;
-  cursor: pointer;
+.userName {
+  color: var(--PRIMARY);
 }
 
-.UserInfo > span {
+.UserInfo {
   margin-right: 10px;
 }

@@ -1,0 +1,65 @@
+.Content {
+  margin-top: 75px;
+  height: calc(100vh - 75px);
+  min-height: 675px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  overflow-y: auto;
+  background-color: var(--BACKGROUND);
+}
+
+.ContentHeader {
+  height: 75px;
+  display: flex;
+  width: 100%;
+  font-size: 23px;
+  align-items: center;
+  padding-left: 50px;
+  gap: 10px;
+  font-weight: bold;
+}
+
+.ContentFooter {
+  height: 75px;
+}
+
+.ContentInner {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  box-sizing: border-box; /* 추가: padding 포함하여 width 계산 */
+}
+
+.InnerSide {
+  flex: 0 0 20%; /* 사이드바 너비를 15%로 고정 */
+  max-width: 250px; /* 최대 너비를 지정하여 큰 화면에서도 균형 유지 */
+  padding: 50px 0px;
+  padding-left: 30px;
+  box-sizing: border-box; /* padding 포함하여 width 계산 */
+}
+
+.InnerMain {
+  flex: 0 0 80%; /* 남은 공간을 채우도록 설정 */
+  background-color: white;
+  margin-right: 30px;
+  padding: 50px 75px;
+  border-radius: 20px;
+  box-sizing: border-box; /* padding 포함하여 width 계산 */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.SideStep {
+  margin-bottom: 35px;
+  font-size: 18px;
+  font-weight: bold;
+  
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
