@@ -18,4 +18,13 @@ const shadows = {
     "0px 1px 16px 0px rgba(0, 0, 0, 0.28), 0px 8px 20px 0px rgba(0, 0, 0, 0.32)",
 };
 
+// 함수를 활용해서 shadow를 css 변수로 적용
+export const injectShadows = () => {
+  const root = document.documentElement;
+
+  Object.entries(shadows).forEach(([key, value]) => {
+    root.style.setProperty(`--shadow-${key}`, value);
+  });
+};
+
 export { shadows };

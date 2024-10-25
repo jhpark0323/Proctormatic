@@ -4,7 +4,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import HeaderWhite from "../components/HeaderWhite";
 import Modal from "../components/Modal";
 import styles from "../styles/Home.module.css";
-import Checkbox from "../components/Checkbox";
+import SwiperComponent from "../components/Swiper";
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,11 +13,8 @@ const Home = () => {
 
   const handleLogin = (role: string) => {
     login(role);
-    if (role === "taker") {
-      navigate("/taker");
-    } else if (role === "host") {
-      navigate("/host");
-    }
+    navigate("/");
+    setIsModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -27,17 +24,17 @@ const Home = () => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  const [service, setService] = React.useState(true);
   return (
     <>
-      <Checkbox checked={service} onChange={setService} disabled={true}>
-        (필수) 서비스 이용약관
-      </Checkbox>
       <HeaderWhite
         onLoginClick={openModal}
         userRole={user?.role}
         onLogoutClick={handleLogout}
       />
+      <div className={styles.Content}>
+        <SwiperComponent />
+      </div>
+
       {isModalOpen && (
         <Modal
           onClose={closeModal}
