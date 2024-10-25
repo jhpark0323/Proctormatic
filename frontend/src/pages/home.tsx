@@ -13,11 +13,8 @@ const Home = () => {
 
   const handleLogin = (role: string) => {
     login(role);
-    if (role === 'taker') {
-      navigate('/taker');
-    } else if (role === 'host') {
-      navigate('/host');
-    }
+    navigate('/');
+    setIsModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -38,7 +35,6 @@ const Home = () => {
       <div className={styles.Content}>
         <SwiperComponent />
       </div>
-
 
       {isModalOpen && (
         <Modal 
