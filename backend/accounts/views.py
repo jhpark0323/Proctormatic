@@ -10,7 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
-from .serializers import CustomTokenObtainPairSerializer, UserSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer
 
 User = get_user_model()
 
@@ -134,6 +134,28 @@ def handle_email_verification(request):
             return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
+    method='get',
+    operation_summary="회원정보 조회",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    responses={
+        200: openapi.Response('회원정보 조회 결과입니다.', schema=UserSerializer()),
+        401: openapi.Response('인증 실패', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+    },
+)
+@swagger_auto_schema(
     method='post',
     operation_summary="회원가입",
     request_body=openapi.Schema(
@@ -162,7 +184,7 @@ def handle_email_verification(request):
         )),
     }
 )
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
@@ -171,6 +193,18 @@ def handle_user(request):
             serializer.save()
             return Response({"message": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
         return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        if not request.user.is_authenticated:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if request.method == 'GET':
+            user = request.user
+
+            if not user.is_active:
+                return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+            serializer = UserInfoSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='post',
