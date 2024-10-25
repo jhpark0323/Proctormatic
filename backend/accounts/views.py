@@ -1,13 +1,14 @@
 import re
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
-from .serializers import UserSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -82,6 +83,7 @@ User = get_user_model()
     }
 )
 @api_view(['GET', 'POST', 'PUT'])
+@permission_classes([AllowAny])
 def handle_email_verification(request):
     if request.method == 'GET':
         email = request.query_params.get('email')
@@ -159,6 +161,7 @@ def handle_email_verification(request):
     }
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
         serializer = UserSerializer(data=request.data)
@@ -166,6 +169,57 @@ def handle_user(request):
             serializer.save()
             return Response({"message": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
         return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="로그인",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'email': openapi.Schema(type=openapi.TYPE_STRING),
+            'password': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    ),
+    responses={
+        200: openapi.Response('로그인이 완료되었습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'access': openapi.Schema(type=openapi.TYPE_STRING),
+                'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'error': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+    },
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    if not email:
+        return Response({'error': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not password:
+        return Response({'error': '비밀번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.filter(email=email).first()
+    if user is None:
+        return Response({'error': '입력한 이메일은 등록되어 있지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(email=email, password=password)
+    if user is None:
+        return Response({'error': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = CustomTokenObtainPairSerializer()
+    serializer.user = user
+    token_data = serializer.validate({})
+    return Response(token_data, status=status.HTTP_200_OK)
 
 
 def is_valid_email(email):
