@@ -1,5 +1,4 @@
-import React from "react";
-import { fonts } from "../../constants";
+
 
 const TakerHome = () => {
   return (
