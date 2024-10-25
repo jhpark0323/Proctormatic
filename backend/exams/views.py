@@ -124,37 +124,6 @@ def create_exam(request):
         "message": "시험이 성공적으로 예약되었습니다."
     }, status=status.HTTP_201_CREATED)
 
-
-def send_exam_email(email, exam):
-    subject = f"[시험 예약 완료] {exam.title}"
-    message = f"""
-    안녕하세요,
-
-    {exam.title} 시험이 성공적으로 예약되었습니다! 아래의 시험 정보를 확인해 주세요.
-
-    시험 정보:
-    - 제목: {exam.title}
-    - 날짜: {exam.date}
-    - 입장 가능 시간: {exam.entry_time}
-    - 시작 시간: {exam.start_time}
-    - 종료 시간: {exam.end_time}
-    - 시험 URL: {exam.url}
-
-    응시를 준비하는 데 필요한 자세한 사항은 아래를 참고하세요.
-
-    [시험 응시 방법]
-    1. 위의 '시험 URL'을 클릭하여 입장하세요.
-    2. 시험 시작 시간에 맞추어 로그인하고, 필요한 절차를 진행해 주세요.
-
-    응시와 관련하여 추가로 궁금한 사항이 있다면 언제든지 문의해 주세요.
-
-    감사합니다.
-
-    ---
-    ※ 이 메일은 발신 전용입니다. 회신을 할 수 없습니다.
-    """
-    send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
-
 # Swagger 설정 추가 - 예약된 시험 조회 엔드포인트
 @swagger_auto_schema(
     method='get',
@@ -257,13 +226,41 @@ def scheduled_exam_list(request):
 User = get_user_model()  # User 모델 가져오기
 
 def get_user_info_from_token(request):
-    print("get_user_info_from_token 함수 호출됨")  # 이 줄이 출력되는지 확인하세요
-    jwt_authenticator = JWTAuthentication()
-    user, token = jwt_authenticator.authenticate(request)
-    if token:
-        user_id = token.payload.get('id')
-        user_role = token.payload.get('role')
-        print(f"Extracted user_id: {user_id}, user_role: {user_role}")  # 디버깅을 위한 출력
+    user = request.user
+    if user.is_authenticated:  # 사용자가 인증되었는지 확인
+        user_id = user.id  # 기본적으로 User 모델의 PK는 'id'
+        user_role = request.auth['role'] # 커스텀 필드 'role'을 가져옴
         return user_id, user_role
-    print("Token not found or invalid.")  # 디버깅을 위한 출력
     return None, None
+
+
+
+def send_exam_email(email, exam):
+    subject = f"[시험 예약 완료] {exam.title}"
+    message = f"""
+    안녕하세요,
+
+    {exam.title} 시험이 성공적으로 예약되었습니다! 아래의 시험 정보를 확인해 주세요.
+
+    시험 정보:
+    - 제목: {exam.title}
+    - 날짜: {exam.date}
+    - 입장 가능 시간: {exam.entry_time}
+    - 시작 시간: {exam.start_time}
+    - 종료 시간: {exam.end_time}
+    - 시험 URL: {exam.url}
+
+    응시를 준비하는 데 필요한 자세한 사항은 아래를 참고하세요.
+
+    [시험 응시 방법]
+    1. 위의 '시험 URL'을 클릭하여 입장하세요.
+    2. 시험 시작 시간에 맞추어 로그인하고, 필요한 절차를 진행해 주세요.
+
+    응시와 관련하여 추가로 궁금한 사항이 있다면 언제든지 문의해 주세요.
+
+    감사합니다.
+
+    ---
+    ※ 이 메일은 발신 전용입니다. 회신을 할 수 없습니다.
+    """
+    send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
