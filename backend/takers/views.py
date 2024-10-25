@@ -1,8 +1,9 @@
 import re
 
 from exams.models import Exam
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
@@ -75,6 +76,7 @@ from .serializers import TakerSerializer
 )
 
 @api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
 def add_taker(request):
     if request.method == 'GET':
         email = request.query_params.get('email')
