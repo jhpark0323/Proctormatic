@@ -1,12 +1,15 @@
 import re
 
 from exams.models import Exam
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .serializers import TakerSerializer
+
 
 @swagger_auto_schema(
     method='get',
@@ -54,24 +57,50 @@ from drf_yasg import openapi
         ),
     }
 )
+@swagger_auto_schema(
+    method='post',
+    operation_summary="응시자 등록",
+    request_body=TakerSerializer,
+    responses={
+        201: openapi.Response(description="응시자 등록 성공"),
+        400: openapi.Response(
+            description="잘못된 요청",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        ),
+    }
+)
 
-@api_view(['GET'])
-def check_duplicate_taker(request):
-    email = request.query_params.get('email')
-    exam_id = request.query_params.get("id")
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def add_taker(request):
+    if request.method == 'GET':
+        email = request.query_params.get('email')
+        exam_id = request.query_params.get("id")
 
-    if not email or not exam_id:
-        return Response({'message': '이메일과 시험 ID를 모두 입력해야 합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not exam_id:
+            return Response({'message': '이메일과 시험 ID를 모두 입력해야 합니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not is_valid_email(email):
-        return Response({'message': '유효하지 않은 이메일 형식입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_valid_email(email):
+            return Response({'message': '유효하지 않은 이메일 형식입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not Exam.objects.filter(id=exam_id).exists():
-        return Response({'message': '유효하지 않은 시험 ID입니다.'}, status=status.HTTP_404_NOT_FOUND)
+        if not Exam.objects.filter(id=exam_id).exists():
+            return Response({'message': '유효하지 않은 시험 ID입니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-    is_duplicate = Taker.objects.filter(email=email, exam__id=exam_id).exists()
+        is_duplicate = Taker.objects.filter(email=email, exam__id=exam_id).exists()
 
-    return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
+        return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        serializer = TakerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response("잘못된 요청입니다.", status=status.HTTP_400_BAD_REQUEST)
 
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
