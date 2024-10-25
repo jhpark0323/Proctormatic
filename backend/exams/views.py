@@ -84,15 +84,15 @@ def create_exam(request):
 
     # user의 현재 코인을 가져옴 (데이터베이스에서 user_id로 사용자 조회)
     user = User.objects.get(id=user_id)
-    user_coin = user.coin
+    user_coin_amount = user.coin_amount
 
     # user의 코인이 exam 비용보다 작은지 확인
-    if int(user_coin) < int(exam_cost):
+    if int(user_coin_amount) < int(exam_cost):
         return Response({
             "message": "적립금이 부족합니다. 충전해주세요."
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    user.coin = user_coin - exam_cost
+    user.coin_amount = user_coin_amount - exam_cost
     user.save()  # 변경사항 저장
 
     # 시험 시작 시간 검증 및 entry_time 계산
@@ -319,12 +319,6 @@ def ongoing_exam_list(request):
         }
     }, status=status.HTTP_200_OK)
 
-
-
-
-
-
-
 User = get_user_model()  # User 모델 가져오기
 
 def get_user_info_from_token(request):
@@ -334,8 +328,6 @@ def get_user_info_from_token(request):
         user_role = request.auth['role'] # 커스텀 필드 'role'을 가져옴
         return user_id, user_role
     return None, None
-
-
 
 def send_exam_email(email, exam):
     subject = f"[시험 예약 완료] {exam.title}"
