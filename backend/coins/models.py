@@ -18,5 +18,5 @@ class Coin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class CoinCode(models.Model):
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=100)
     amount = models.IntegerField()
