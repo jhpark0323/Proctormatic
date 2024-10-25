@@ -1,3 +1,30 @@
+/* Checkbox */
 .checkbox {
-  cursor: disabled ? "not-allowed" : "pointer";
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox input[type="checkbox"] {
+  appearance: none; /* 기본 체크박스 스타일 제거 */
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--GRAY_400);
+  border-radius: 2px;
+  background-color: var(--GRAY_100);
+  margin-right: 0.3rem;
+  position: relative;
+  top: 0.1rem;
+}
+
+.checkbox input[type="checkbox"]:checked {
+  appearance: auto;
+}
+
+.checkbox label {
+  /* 라벨 드래그 막기 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
