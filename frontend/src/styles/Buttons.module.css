@@ -65,31 +65,37 @@
   left: 22px;
 }
 
-/* Buttons.module.css */
-
+/* 텍스트 필드 */
 .textfield-container {
   display: flex;
   width: 240px;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-2, 2px);
+  gap: 2px;
 }
 
 .textfield-label {
   font-size: 14px;
-  color: #333; /* 라벨 텍스트 색상 */
 }
 
 .textfield-input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
   border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+
+/* underline 타입일 때 적용될 스타일 */
+.textfield-input.underline {
+  border-radius: 0px;
+  border: none;
+  border-bottom: 1px solid var(--GRAY_400);
 }
 
 .textfield-help {
   font-size: 12px;
-  color: #888; /* 도움말 텍스트 색상 */
+  color: var(--DELETE);
 }
 
 .trailing-icon {
@@ -97,4 +103,6 @@
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
 }
