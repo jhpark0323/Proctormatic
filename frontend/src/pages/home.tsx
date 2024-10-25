@@ -27,10 +27,10 @@ const Home = () => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  const [service, setService] = React.useState(false);
+  const [service, setService] = React.useState(true);
   return (
     <>
-      <Checkbox checked={service} onChange={setService}>
+      <Checkbox checked={service} onChange={setService} disabled={true}>
         (필수) 서비스 이용약관
       </Checkbox>
       <HeaderWhite
