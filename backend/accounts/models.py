@@ -27,7 +27,7 @@ class User(AbstractBaseUser):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     birth = models.DateField()
-    coin = models.IntegerField(default=0)
+    coin_amount = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     policy = models.BooleanField()
     marketing = models.BooleanField()
