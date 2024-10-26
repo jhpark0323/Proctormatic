@@ -1,12 +1,13 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator
 from rest_framework import status
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from coins.models import CoinCode
-from coins.serializers import CoinCodeSerializer, CoinCodeCreateSerializer, CoinSerializer
+from coins.models import Coin, CoinCode
+from coins.serializers import CoinCodeSerializer, CoinCodeCreateSerializer, CoinSerializer, CoinHistorySerializer
 
 User = get_user_model()
 
@@ -104,3 +105,78 @@ def create_coin_code(request):
     if serializer.is_valid():
         serializer.save()
         return Response({'message': '코드 생성 완료'}, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary='적립금 사용내역 조회',
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING),
+        openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING),
+        openapi.Parameter('page', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, default=1),
+        openapi.Parameter('size', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, default=10),
+    ],
+    responses={
+        200: openapi.Response('적립금 조회 성공', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'coinList': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'type': openapi.Schema(type=openapi.TYPE_STRING),
+                                'amount': openapi.Schema(type=openapi.TYPE_STRING),
+                                'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+                            },
+                        )
+                    ),
+                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER),
+                },
+            ),
+        ),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        404: openapi.Response('잘못된 페이지 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def coin_history(request):
+    user_id = request.auth['id']
+    user = User.objects.get(pk=user_id)
+
+    if not user.is_active:
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+    coin_type = request.query_params.get('type')
+    history = Coin.objects.filter(user=user_id).order_by('-created_at')
+    if coin_type in ['charge', 'use', 'refund']:
+        history = history.filter(type=coin_type)
+
+    page = request.GET.get('page', 1)
+    size = request.GET.get('size', 10)
+
+    paginator = Paginator(history, size)
+    paginated_history = paginator.get_page(page)
+
+    if int(page) > paginator.num_pages:
+        return Response({'message': '요청한 페이지가 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CoinHistorySerializer(paginated_history, many=True)
+    return Response({
+        'coinList': serializer.data,
+        "prev": paginated_history.has_previous(),
+        "next": paginated_history.has_next(),
+        "totalPage": paginator.num_pages,
+    }, status=status.HTTP_200_OK)
