@@ -10,7 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
-from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer, EditMarketingSerializer
 
 User = get_user_model()
 
@@ -184,7 +184,34 @@ def handle_email_verification(request):
         )),
     }
 )
-@api_view(['GET', 'POST'])
+@swagger_auto_schema(
+    method='put',
+    operation_summary="마케팅 활용 및 광고 수신 여부 수정",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'marketing': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+        }
+    ),
+    responses={
+        200: openapi.Response('마케팅 활용 및 광고 수신 여부가 수정되었습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        400: openapi.Response('잘못된 인증번호 또는 만료된 인증번호', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+    }
+)
+@api_view(['GET', 'POST', 'PUT'])
 @permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
@@ -197,14 +224,24 @@ def handle_user(request):
         if not request.user.is_authenticated:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-        if request.method == 'GET':
-            user = request.user
+        user_id = request.auth['id']
+        user = User.objects.get(pk=user_id)
 
+        if request.method == 'GET':
             if not user.is_active:
                 return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
             serializer = UserInfoSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+        elif request.method == 'PUT':
+
+            serializer = EditMarketingSerializer(data=request.data)
+            if serializer.is_valid():
+                user.marketing = serializer.data.get('marketing')
+                user.save()
+                return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
+
 
 @swagger_auto_schema(
     method='post',
