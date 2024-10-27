@@ -34,3 +34,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['id', 'password', 'policy', 'is_active', 'last_login']
+
+class EditMarketingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('marketing',)
