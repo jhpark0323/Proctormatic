@@ -1,9 +1,7 @@
 import { useState } from "react";
 import styles from "@/styles/Buttons.module.css";
 
-interface ToggleSwitchProps {}
-
-const ToggleSwitch = ({}: ToggleSwitchProps) => {
+const ToggleSwitch = () => {
   const [isOn, setIsOn] = useState(false);
 
   const toggleHandler = () => {

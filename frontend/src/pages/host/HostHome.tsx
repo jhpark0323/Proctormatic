@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import Checkbox from "@/components/Checkbox";
 import Textfield from "@/components/Textfield";
+import CustomButton from "@/components/CustomButton";
 
 const HostHome = () => {
   const [checkbox, toggleSwitch] = React.useState(false);
@@ -13,7 +14,7 @@ const HostHome = () => {
       <Checkbox checked={checkbox} onChange={toggleSwitch}>
         하이
       </Checkbox> */}
-      <Textfield
+      {/* <Textfield
         label="이름"
         helpMessage="이름을 입력하세요"
         placeholder="홍길동"
@@ -21,7 +22,11 @@ const HostHome = () => {
         onChange={(value) => setName(value)}
       >
         {name}
-      </Textfield>
+      </Textfield> */}
+      <CustomButton
+        label="ggg"
+        onClick={() => alert("Button clicked!")} // 클릭 시 실행할 함수
+      />
       <div>
         <h2>주최자 페이지</h2>
         <p>여기는 주최자를 위한 페이지입니다.</p>

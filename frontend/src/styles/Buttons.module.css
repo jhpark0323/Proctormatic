@@ -106,3 +106,74 @@
   width: 16px;
   height: 16px;
 }
+
+/* Buttons.module.css */
+
+.button {
+  display: inline-flex;
+  height: 30px;
+  padding: 5px 30px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* 기본 rectangular 스타일 */
+.button.rectangular {
+  border-radius: 0.3rem;
+}
+
+/* oval 스타일 */
+.button.oval {
+  border-radius: 40px;
+}
+
+.button.primary_fill {
+  background-color: var(--PRIMARY);
+  color: var(--WHITE);
+}
+
+.button.primary_outline {
+  background-color: transparent;
+  border: 2px solid var(--PRIMARY);
+  color: var(--PRIMARY);
+}
+
+/* primary_clear 스타일 */
+.button.primary_clear {
+  background-color: transparent;
+  color: var(--PRIMARY);
+  border: none;
+}
+
+/* secondary 스타일 */
+.button.secondary {
+  background-color: var(--SECONDARY);
+  color: var(--WHITE);
+}
+
+/* danger 스타일 */
+.button.danger {
+  background-color: var(--DELETE);
+  color: var(--WHITE);
+}
+
+/* danger_outline 스타일 */
+.button.danger_outline {
+  background-color: transparent;
+  border: 2px solid var(--DELETE);
+  color: var(--DELETE);
+}
+
+/* whitefill 스타일 */
+.button.whitefill {
+  background-color: var(--WHITE);
+  color: var(--BLACK);
+}
+
+.button.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background-color: var(--GRAY_300);
+  color: var(--GRAY_500);
+}
