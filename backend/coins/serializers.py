@@ -15,3 +15,8 @@ class CoinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coin
         fields = '__all__'
+
+class CoinHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coin
+        fields = ('type', 'amount', 'created_at',)
