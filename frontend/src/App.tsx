@@ -7,6 +7,10 @@ import HostHome from "./pages/host/HostHome";
 import PrivateRoute from "./components/PrivateRoute";
 import { injectColors, injectFonts, injectShadows } from "./constants";
 import "./App.css";
+// Toast
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import styles from "@/styles/Buttons.module.css";
 
 function App() {
   useEffect(() => {
@@ -14,7 +18,6 @@ function App() {
     injectFonts(); // 폰트 변수를 설정
     injectShadows(); // 그림자 변수를 설정
   }, []);
-
 
   // const fetchUser = useAuthStore((state) => state.fetchUser);
 
@@ -43,6 +46,7 @@ function App() {
           }
         />
       </Routes>
+      <ToastContainer />
     </Router>
   );
 }

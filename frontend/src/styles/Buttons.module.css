@@ -172,7 +172,6 @@
 }
 
 /* tooltip */
-
 .tooltip-default {
   background-color: var(--GRAY_800) !important;
   color: var(--WHITE) !important;
