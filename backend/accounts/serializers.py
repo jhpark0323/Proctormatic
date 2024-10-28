@@ -1,4 +1,3 @@
-from django.core.validators import EmailValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from datetime import datetime
@@ -79,4 +78,12 @@ class ResetPasswordRequestSerializer(serializers.Serializer):
         'required': '이메일을 입력해주세요.',
         'blank': '이메일을 입력해주세요.',
         'invalid': '잘못된 이메일 형식입니다.',
+    })
+
+class ResetPasswordEmailCheckSerializer(serializers.Serializer):
+    password1 = serializers.CharField(required=True, error_messages={
+        'required': '비밀번호가 입력되지 않았습니다.'
+    })
+    password2 = serializers.CharField(required=True, error_messages={
+        'required': '비밀번호 확인이 입력되지 않았습니다.'
     })
