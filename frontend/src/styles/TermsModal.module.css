@@ -30,12 +30,15 @@
 }
 
 .closeButton {
-  color: var(--GRAY_400);
+  color: var(--BLACK);
   cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 20px;
 }
 
 .closeButton:hover {
-  color: var(--GRAY_600);
+  color: var(--BLACK);
 }
 
 .modalDescription {
@@ -51,6 +54,7 @@
 
 .checkAll {
   display: flex;
+  gap: 10px;
   align-items: center;
   padding: 0.5rem 0;
   border-top: 1px solid var(--GRAY_200);

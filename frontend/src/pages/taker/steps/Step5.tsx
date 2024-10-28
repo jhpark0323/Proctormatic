@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from '@/styles/Step.module.css';
 import CustomButton from '@/components/CustomButton';
-import TermsModal from '@/components/TremsModal';
+import TermsModal from '@/components/TermsModal';
 import { useNavigate } from 'react-router-dom';
 
 const Step5: React.FC = () => {

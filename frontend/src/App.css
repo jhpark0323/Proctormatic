@@ -8,3 +8,8 @@ body {
   font-family: var(--font-family);
   color: var(--gray-900); /* 기본 텍스트 색상 */
 }
+
+* {
+  user-select: none; /*모든 요소에 선택 방지 설정 */
+  -webkit-user-drag: none; /* 이미지 등 드래그 방지 */
+}
