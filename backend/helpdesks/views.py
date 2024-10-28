@@ -1,11 +1,11 @@
 from .models import Notification, Question
-from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer
+from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
+    FaqCreateSerializer
 from .serializers import QuestionCreateSerializer, QuestionListSerializer
-from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.paginator import Paginator
@@ -255,4 +255,25 @@ def question(request):
             "totalPage": paginator.num_pages,
         }
         return Response(data, status=status.HTTP_200_OK)
-        
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="자주 묻는 질문 등록",
+    request_body=FaqCreateSerializer,
+    responses={
+        201: openapi.Response('자주 묻는 질문 등록 성공', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ))
+    }
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def faq(request):
+    if request.method == 'POST':
+        serializer = FaqCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '자주 묻는 질문이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
