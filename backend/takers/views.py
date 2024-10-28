@@ -72,6 +72,15 @@ from .serializers import TakerSerializer, TakerTokenSerializer
                 }
             )
         ),
+        403: openapi.Response(  # Adding the new response for the token issuance failure
+            description="시험이 종료되었습니다.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="시험이 종료되었습니다. 토큰을 발급할 수 없습니다.")
+                }
+            )
+        ),
     }
 )
 
