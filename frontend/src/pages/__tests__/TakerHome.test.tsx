@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import TakerHome from '../taker/TakerHome';
 import { useAuthStore } from '../../store/useAuthStore';
+import Step5 from '@/pages/taker/steps/Step5';
 
 describe('TakerHome 페이지 테스트', () => {
   beforeEach(() => {
