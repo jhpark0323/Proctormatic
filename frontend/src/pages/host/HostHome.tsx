@@ -1,12 +1,14 @@
 import HostHeader from "@/components/HostHeader";
 import Helpdesk from "./Helpdesk";
+import Mypage from "./mypages/Mypage";
 
 const HostHome = () => {
   return (
     <>
       <div style={{ overflowX: "hidden" }}>
         <HostHeader />
-        <Helpdesk />
+        {/* <Helpdesk /> */}
+        <Mypage />
       </div>
       {/* <div>
         <h2>주최자 페이지</h2>
