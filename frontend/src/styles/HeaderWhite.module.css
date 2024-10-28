@@ -27,7 +27,7 @@
 }
 
 .LoginButton {
-  color: #2276DC;
+  color: #2276dc;
   display: flex;
   align-items: center;
   line-height: 22px;
@@ -50,7 +50,7 @@
 }
 
 .UserRole > span {
-  color: #2276DC;
+  color: #2276dc;
 }
 
 .Modal {
@@ -80,4 +80,16 @@
 
 .LogoutButton:hover {
   background-color: #f5f5f5;
+}
+
+/* HostHeader */
+.menu {
+  display: flex;
+  gap: 10vh;
+  align-items: center;
+}
+
+.menuIcon {
+  text-decoration: none;
+  color: var(--BLACK);
 }
