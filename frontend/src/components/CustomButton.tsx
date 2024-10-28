@@ -10,12 +10,14 @@ onClick={() => alert("Button clicked!")}
 interface CustomButtonProps {
   state?: "default" | "disabled";
   style?:
+    | "default"
     | "primary_fill"
     | "primary_outline"
     | "primary_clear"
     | "secondary"
     | "danger"
     | "danger_outline"
+    | "blackfill"
     | "whitefill";
   type?: "rectangular" | "oval";
   children: React.ReactNode;
@@ -24,7 +26,7 @@ interface CustomButtonProps {
 
 const CustomButton = ({
   state = "default",
-  style = "primary_fill",
+  style = "default",
   type = "oval",
   children,
   onClick,

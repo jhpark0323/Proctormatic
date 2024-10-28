@@ -116,6 +116,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  font-size: small;
 }
 
 .button.rectangular {
@@ -124,6 +125,11 @@
 
 .button.oval {
   border-radius: 40px;
+}
+
+.button.default {
+  background-color: var(--NAVY);
+  color: var(--WHITE);
 }
 
 .button.primary_fill {
@@ -162,6 +168,11 @@
 .button.whitefill {
   background-color: var(--WHITE);
   color: var(--BLACK);
+}
+
+.button.blackfill {
+  background-color: var(--BLACK);
+  color: var(--WHITE);
 }
 
 .button.disabled {
