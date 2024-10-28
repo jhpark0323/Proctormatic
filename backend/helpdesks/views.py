@@ -1,10 +1,11 @@
 from .models import Notification
-from .serializers import NotificationCreateSerializer, NotificationListSerializer
+from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer
+from .serializers import QuestionCreateSerializer
 from django.contrib.auth import get_user_model
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.paginator import Paginator
@@ -59,6 +60,15 @@ from django.core.paginator import Paginator
     operation_summary="공지사항 등록",
     operation_description="새로운 공지사항을 등록합니다.",
     request_body=NotificationCreateSerializer,
+        manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer 액세스 토큰",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ],
     responses={
         201: openapi.Response('성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -75,8 +85,11 @@ from django.core.paginator import Paginator
     }
 )
 @api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
 def notification(request):
     if request.method == 'POST':
+        if request.auth['role'] != 'host':
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = NotificationCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -96,3 +109,82 @@ def notification(request):
             "totalPage": paginator.num_pages,
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    method='GET',
+    operation_summary="공지사항 조회",
+    operation_description="공지사항 조회페이지",
+    responses={
+        200: openapi.Response('성공', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING),
+                'content': openapi.Schema(type=openapi.TYPE_STRING),
+                'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+            }
+        )),
+        404: openapi.Response('존재하지 않는 공지사항입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def check_notification(request, notification_id):
+    try:
+        notification = Notification.objects.get(pk=notification_id)
+    except:
+        return Response({'message': '공지 사항이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = NotificationObjectSerializer(notification)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="질문 등록",
+    operation_description="새로운 질문을 등록합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer 액세스 토큰",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'category': openapi.Schema(type=openapi.TYPE_STRING, description='카테고리'),
+            'title': openapi.Schema(type=openapi.TYPE_STRING, description='제목 (최대 100자까지 입력 가능)'),
+            'content': openapi.Schema(type=openapi.TYPE_STRING, description='내용'),
+        },
+        required=['category', 'title', 'content']
+    ),
+    responses={
+        201: openapi.Response('등록 성공', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='성공 메시지'),
+            }
+        )),
+        400: openapi.Response('잘못된 요청', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지: 제목은 100자를 넘을 수 없습니다.'),
+            }
+        ))
+    }
+)
+@api_view(['POST'])
+def question(request):
+    if request.method == 'POST':
+        serializer = QuestionCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response({'message': '등록이 완료되었습니다.'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message' : '제목은 100자를 넘길 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
