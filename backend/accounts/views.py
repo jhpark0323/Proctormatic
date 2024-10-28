@@ -216,7 +216,28 @@ def handle_email_verification(request):
         )),
     }
 )
-@api_view(['GET', 'POST', 'PUT'])
+@swagger_auto_schema(
+    method='patch',
+    operation_summary="회원 탈퇴",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    responses={
+        204: openapi.Response('회원 탈퇴를 완료했습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ))
+    }
+)
+@api_view(['GET', 'POST', 'PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
@@ -232,10 +253,10 @@ def handle_user(request):
         user_id = request.auth['id']
         user = User.objects.get(pk=user_id)
 
-        if request.method == 'GET':
-            if not user.is_active:
-                return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
+        if request.method == 'GET':
             serializer = UserInfoSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -247,6 +268,10 @@ def handle_user(request):
                 user.save()
                 return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
 
+        elif request.method == 'PATCH':
+            user.is_active = False
+            user.save()
+            return Response({'message': '회원 탈퇴를 완료했습니다.'}, status=status.HTTP_204_NO_CONTENT)
 
 @swagger_auto_schema(
     method='post',
@@ -318,6 +343,9 @@ def handle_token(request):
         user = authenticate(email=email, password=password)
         if user is None:
             return Response({'message': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = CustomTokenObtainPairSerializer()
         serializer.user = user
@@ -402,7 +430,7 @@ def reset_password(request):
             name = serializer.validated_data.get('name')
             email = serializer.validated_data.get('email')
 
-            if not User.objects.filter(name=name, email=email).exists():
+            if not User.objects.filter(name=name, email=email, is_active=0).exists():
                 return Response({'message': '가입된 회원이 아닙니다. 성명과 이메일을 확인해주세요.'}, status=status.HTTP_404_NOT_FOUND)
 
             code = generate_verification_code()
@@ -420,6 +448,9 @@ def reset_password(request):
 
         user_id = request.auth['id']
         user = User.objects.get(pk=user_id)
+
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
         if serializer.is_valid():

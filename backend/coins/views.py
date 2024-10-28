@@ -59,6 +59,9 @@ def handle_coin(request):
     user_id = request.auth['id']
     user = User.objects.get(pk=user_id)
 
+    if not user.is_active:
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
     if request.method == 'GET':
         return Response({'coin': user.coin_amount}, status=status.HTTP_200_OK)
     elif request.method == 'POST':
