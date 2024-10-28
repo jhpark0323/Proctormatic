@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Exam
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer
 from django.core.paginator import Paginator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -318,6 +318,109 @@ def ongoing_exam_list(request):
             "totalPage": paginator.num_pages
         }
     }, status=status.HTTP_200_OK)
+
+# Swagger 설정 추가 - 완료된 시험 조회 엔드포인트
+@swagger_auto_schema(
+    method='get',
+    operation_summary="완료된 시험 목록 조회",
+    operation_description="현재 시간을 기준으로 종료된 시험 목록을 조회합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        ),
+        openapi.Parameter('page', openapi.IN_QUERY, description="페이지 번호 (기본값 1)", type=openapi.TYPE_INTEGER),
+        openapi.Parameter('size', openapi.IN_QUERY, description="페이지 당 항목 수 (기본값 10)", type=openapi.TYPE_INTEGER)
+    ],
+    responses={
+        200: openapi.Response('완료된 시험 목록 조회 성공', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description="상태 코드"),
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지"),
+                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+                    'completedExamList': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Items(type=openapi.TYPE_OBJECT),
+                        description="완료된 시험 목록"
+                    ),
+                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
+                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
+                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
+                })
+            }
+        )),
+        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def completed_exam_list(request):
+    """
+    완료된 시험 목록을 조회하는 API입니다.
+    현재 시간을 기준으로 종료된 시험만 반환하며, 페이지네이션 기능을 제공합니다.
+    """
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
+    if not user_id:
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 현재 시간 가져오기
+    current_datetime = datetime.datetime.now()
+    current_date = current_datetime.date()
+    current_time = current_datetime.time()
+
+    # 종료된 시험들 필터링
+    completed_exams = Exam.objects.filter(
+        user_id=user_id,
+        date__lt=current_date
+    )
+
+    # 오늘 날짜의 시험 중에서 종료 시간이 지난 시험들 추가
+    today_completed_exams = Exam.objects.filter(
+        user_id=user_id,
+        date=current_date,
+        end_time__lt=current_time
+    )
+
+    # 두 쿼리셋을 결합하고 정렬
+    exams = (completed_exams | today_completed_exams).order_by('-date', '-end_time')
+
+    # 페이지네이션 처리
+    paginator = Paginator(exams, int(request.query_params.get('size', 10)))
+    paginated_exams = paginator.get_page(int(request.query_params.get('page', 1)))
+
+    # 새로운 시리얼라이저 사용
+    serializer = CompletedExamListSerializer(paginated_exams, many=True)
+
+    # 응답 데이터 구성
+    return Response({
+        "status": 200,
+        "message": "완료된 시험 목록 조회 성공",
+        "result": {
+            "completedExamList": serializer.data,
+            "prev": paginated_exams.has_previous(),
+            "next": paginated_exams.has_next(),
+            "totalPage": paginator.num_pages
+        }
+    }, status=status.HTTP_200_OK)
+
 
 User = get_user_model()  # User 모델 가져오기
 

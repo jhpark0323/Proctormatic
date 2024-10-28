@@ -23,3 +23,14 @@ class OngoingExamListSerializer(serializers.ModelSerializer):
     def get_total_taker(self, obj):
         # Taker 모델에서 특정 시험에 응시한 사람들의 수를 카운트
         return Taker.objects.filter(exam_id=obj.id).count()
+
+class CompletedExamListSerializer(serializers.ModelSerializer):
+    total_taker = serializers.SerializerMethodField()  # 동적으로 계산할 필드
+
+    class Meta:
+        model = Exam
+        fields = ['id', 'title', 'date', 'start_time', 'end_time', 'url', 'expected_taker', 'total_taker']
+
+    def get_total_taker(self, obj):
+        # Exam 모델에서 'total_taker' 필드를 반환
+        return obj.total_taker
