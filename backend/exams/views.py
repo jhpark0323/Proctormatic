@@ -68,6 +68,11 @@ def create_exam(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -83,8 +88,6 @@ def create_exam(request):
     # 시리얼라이저에서 cost를 가져옴
     exam_cost = serializer.validated_data.get('cost', 0)
 
-    # user의 현재 코인을 가져옴 (데이터베이스에서 user_id로 사용자 조회)
-    user = User.objects.get(id=user_id)
     user_coin_amount = user.coin_amount
 
     # user의 코인이 exam 비용보다 작은지 확인
@@ -182,6 +185,11 @@ def scheduled_exam_list(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -285,6 +293,11 @@ def ongoing_exam_list(request):
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
@@ -378,6 +391,11 @@ def completed_exam_list(request):
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
@@ -424,7 +442,7 @@ def completed_exam_list(request):
     }, status=status.HTTP_200_OK)
 
 
-# Swagger 설정 추가 - 시험 세부 정보 조회 엔드포인트
+# Swagger 설정 추가 - 시험 세부 정보 조회 및 수정 엔드포인트
 @swagger_auto_schema(
     method='get',
     operation_summary="시험 세부 정보 조회",
@@ -441,19 +459,19 @@ def completed_exam_list(request):
         200: openapi.Response('시험 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
-                    'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
-                    'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
-                    'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
-                    'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
-                    'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
-                    'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
-                    'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
-                    'taker_list': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Items(type=openapi.TYPE_OBJECT),
-                        description="응시자 리스트"
-                    )
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
+                'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
+                'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
+                'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
+                'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
+                'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
+                'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
+                'taker_list': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT),
+                    description="응시자 리스트"
+                )
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
@@ -476,12 +494,57 @@ def completed_exam_list(request):
         )),
     }
 )
-@api_view(['GET'])
+@swagger_auto_schema(
+    method='put',
+    operation_summary="시험 정보 수정",
+    operation_description="특정 시험의 정보를 수정합니다.",
+    request_body=ExamSerializer,
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        200: openapi.Response('수정이 완료되었습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지")
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+        409: openapi.Response('시간 또는 비용 관련 오류입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="시간 또는 비용 오류 메시지")
+            }
+        )),
+    }
+)
+@api_view(['GET', 'PUT'])
 def exam_detail(request, pk):
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -495,11 +558,41 @@ def exam_detail(request, pk):
     # 객체가 존재할 경우 가져오기
     exam = Exam.objects.get(pk=pk, user_id=user_id)
 
-    # 시리얼라이저로 직렬화
-    serializer = ExamDetailSerializer(exam)
-    
-    # 응답 데이터 구성
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    if request.method == 'GET':
+        # GET 요청 처리: 시험 세부 정보 조회
+        serializer = ExamDetailSerializer(exam)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PUT':
+        # PUT 요청 처리: 특정 시험 수정
+        serializer = ExamSerializer(exam, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response({"message": "요청 데이터가 유효하지 않습니다. 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 기존 비용과 수정된 비용의 차이 계산
+        original_cost = exam.cost
+        new_cost = serializer.validated_data['cost']
+        cost_difference = new_cost - original_cost
+
+        # 시험 생성자의 현재 코인을 가져옴
+        exam_creator = exam.user
+        creator_coin_amount = exam_creator.coin_amount
+
+        # 시험 생성자의 코인이 비용 차액을 충당할 수 있는지 확인
+        if int(creator_coin_amount) < int(cost_difference):
+            return Response({"message": "적립금이 부족합니다. 충전해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 차액만큼 코인 차감 후 저장
+        exam_creator.coin_amount = creator_coin_amount - cost_difference
+        exam_creator.save()
+
+        # 데이터 수정 및 저장
+        serializer.save()
+
+        return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
+
+    # 추가로 명확히 응답을 설정
+    return Response({"message": "올바르지 않은 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 User = get_user_model()  # User 모델 가져오기
