@@ -6,12 +6,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.hashers import check_password
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer, EditMarketingSerializer, \
-    FindEmailRequestSerializer, FindEmailResponseSerializer
+    FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordRequestSerializer, \
+    ResetPasswordEmailCheckSerializer
 
 User = get_user_model()
 
@@ -338,6 +340,7 @@ def handle_token(request):
                 return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 @swagger_auto_schema(
     method='post',
     operation_summary="이메일 찾기",
@@ -363,6 +366,76 @@ def find_email(request):
         }, status=status.HTTP_200_OK)
     else:
         return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="비밀번호 재설정 이메일 인증번호 발송",
+    request_body=ResetPasswordRequestSerializer,
+    responses={
+        200: openapi.Response('인증번호를 발송했습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        400: openapi.Response('잘못된 이메일 형식 또는 이름 및 이메일 미제공', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        404: openapi.Response('가입된 회원이 아닙니다. 성명과 이메일을 확인해주세요.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+    }
+)
+@swagger_auto_schema(
+    method='put',
+    operation_summary="비밀번호 재설정",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    request_body=ResetPasswordEmailCheckSerializer,
+    responses={
+        200: openapi.Response('비밀번호가 성공적으로 변경되었습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        400: openapi.Response('비밀번호 미입력 또는 불일치', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        409: openapi.Response('기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.', schema=openapi.Schema(type=openapi.TYPE_STRING))
+    }
+)
+@api_view(['POST', 'PUT'])
+@permission_classes([AllowAny])
+def reset_password(request):
+    if request.method == 'POST':
+        serializer = ResetPasswordRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            name = serializer.validated_data.get('name')
+            email = serializer.validated_data.get('email')
+
+            if not User.objects.filter(name=name, email=email).exists():
+                return Response({'message': '가입된 회원이 아닙니다. 성명과 이메일을 확인해주세요.'}, status=status.HTTP_404_NOT_FOUND)
+
+            code = generate_verification_code()
+            send_verification_email(email, code)
+            save_verification_code_to_redis(email, code)
+
+            return Response({'message': '인증번호를 발송했습니다.'}, status=status.HTTP_200_OK)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+        if not request.user.is_authenticated:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        user_id = request.auth['id']
+        user = User.objects.get(pk=user_id)
+
+        serializer = ResetPasswordEmailCheckSerializer(data=request.data)
+        if serializer.is_valid():
+            password1 = serializer.validated_data.get('password1')
+            password2 = serializer.validated_data.get('password2')
+
+            if password1 != password2:
+                return Response({'message': '비밀번호가 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if len(password1) < 8:
+                return Response({'message': '비밀번호는 최소 8자리입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if check_password(password1, user.password):
+                return Response({'message': '기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
+
+            user.set_password(password1)
+            user.save()
+            return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
 
 
 def is_valid_email(email):
