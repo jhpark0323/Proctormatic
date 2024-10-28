@@ -159,7 +159,7 @@ swagger_jwt_auth = openapi.Parameter(
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'access': openapi.Schema(type=openapi.TYPE_STRING, description='Access Token'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='성공 메시지'),
                 }
             )
         ),
@@ -182,7 +182,7 @@ swagger_jwt_auth = openapi.Parameter(
             }
         ),
         401: openapi.Response(
-            description="권한이 없음",
+            description="인증 실패 또는 권한 없음",
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
@@ -193,12 +193,45 @@ swagger_jwt_auth = openapi.Parameter(
             examples={
                 'unauthorized': {
                     'status': 401,
+                    'message': "해당하는 유저를 찾을 수 없습니다."
+                }
+            }
+        ),
+        403: openapi.Response(
+            description="해당하는 role 사용자가 아님",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='오류 메시지'),
+                }
+            ),
+            examples={
+                'forbidden': {
+                    'status': 403,
                     'message': "권한이 없습니다."
+                }
+            }
+        ),
+        404: openapi.Response(
+            description="응시자 찾을 수 없음",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='오류 메시지'),
+                }
+            ),
+            examples={
+                'not_found': {
+                    'status': 404,
+                    'message': "응시자를 찾을 수 없습니다."
                 }
             }
         ),
     }
 )
+
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
 @permission_classes([AllowAny])
