@@ -1,0 +1,19 @@
+.StepTitleBox {
+  height: 50px;
+  display: flex;
+  gap: 30px;
+}
+
+.StepTitle {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.StepInner {
+  flex: 1;
+}
+
+.StepFooter {
+  display: flex;
+  justify-content: flex-end;
+}

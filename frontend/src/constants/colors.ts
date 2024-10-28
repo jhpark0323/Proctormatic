@@ -2,6 +2,7 @@ const colors = {
   WHITE: "#FFF",
   BLACK: "#000",
   BACKGROUND: "#F0F1F2",
+  NAVY: '#20315B',
 
   // Grayscale
   GRAY_50: "#FAFAFA",

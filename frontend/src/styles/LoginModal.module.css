@@ -71,6 +71,7 @@
   flex-direction: row;
   width: 100%;
   justify-content: space-around;
+  padding-bottom: 10px;
 }
 
 .selectButton {
@@ -79,4 +80,6 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  border-radius: 20px;
+  box-shadow: var(--shadow-LIGHT_3);
 }
