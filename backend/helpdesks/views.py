@@ -1,5 +1,5 @@
 from .models import Notification
-from .serializers import NotificationCreateSerializer, NotificationListSerializer
+from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -96,3 +96,34 @@ def notification(request):
             "totalPage": paginator.num_pages,
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    method='GET',
+    operation_summary="공지사항 조회",
+    operation_description="공지사항 조회페이지",
+    responses={
+        200: openapi.Response('성공', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING),
+                'content': openapi.Schema(type=openapi.TYPE_STRING),
+                'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+            }
+        ))
+        404: openapi.Response('존재하지 않는 공지사항입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='에러 메시지'),
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def check_notification(request, notification_id):
+    try:
+        notification = Notification.objects.get(pk=notification_id)
+    except:
+        return Response({'message': '공지 사항이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = NotificationObjectSerializer(notification)
+    return Response(serializer.data, status=status.HTTP_200_OK)

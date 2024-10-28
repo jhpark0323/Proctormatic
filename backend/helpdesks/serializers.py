@@ -12,3 +12,8 @@ class NotificationListSerializer(serializers.ModelSerializer):
         model = Notification
         exclude = ['content']
 
+class NotificationObjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        exclude = ['id']
+
