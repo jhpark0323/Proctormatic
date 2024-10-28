@@ -142,8 +142,6 @@ def check_notification(request, notification_id):
     serializer = NotificationObjectSerializer(notification)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-from drf_yasg import openapi
-
 @swagger_auto_schema(
     method='post',
     operation_summary="질문 등록",
