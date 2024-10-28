@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '../styles/HeaderWhite.module.css';
 import CustomButton from './CustomButton';
@@ -11,6 +11,16 @@ interface HeaderWhiteProps {
 
 const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick, userRole, onLogoutClick }) => {
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const toggleModal = () => {
+    setIsModalOpen((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    onLogoutClick();
+    setIsModalOpen(false);
+  };
 
   return (
     <div className={styles.Header}>
@@ -18,15 +28,18 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick, userRole, onLog
       <div className={styles.LoginBox}>
         {userRole ? (
           <div className={styles.UserInfo}>
-            <span className={styles.UserRole}>
-              <span>{userRole}</span> 님
-            </span>
-            <div>
-              gd
+            <div className={styles.UserRoleContainer}>
+              <span className={styles.UserRole} onClick={toggleModal}>
+                <span>{userRole}</span> 님
+              </span>
+              {isModalOpen && (
+                <div className={styles.Modal}>
+                  <button className={styles.LogoutButton} onClick={handleLogout}>
+                    로그아웃
+                  </button>
+                </div>
+              )}
             </div>
-            {/* <button className={styles.ActionButton} onClick={onLogoutClick}>
-              로그아웃
-            </button> */}
             {userRole === 'taker' ? (
               <CustomButton onClick={() => navigate('/taker')}>
                 시험 입실하기

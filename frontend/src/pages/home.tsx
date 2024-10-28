@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import HeaderWhite from '../components/HeaderWhite';
-import Modal from '../components/Modal';
+import Modal from '../components/LoginModal';
 import styles from '../styles/Home.module.css';
 import SwiperComponent from '../components/Swiper';
 

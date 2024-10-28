@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Modal from '../Modal';
+import Modal from '../LoginModal';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
