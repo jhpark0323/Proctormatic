@@ -433,8 +433,6 @@ def completed_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-        "status": 200,
-        "message": "완료된 시험 목록 조회 성공",
         "result": {
             "completedExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
@@ -519,8 +517,6 @@ def exam_detail(request, pk):
     
     # 응답 데이터 구성
     return Response({
-        "status": 200,
-        "message": "시험 조회 성공",
         "result": serializer.data
     }, status=status.HTTP_200_OK)
 
