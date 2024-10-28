@@ -1,0 +1,47 @@
+/* My Coin */
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1rem 0;
+}
+
+.coinText {
+  margin-left: 0.5rem;
+  color: var(--PRIMARY);
+}
+
+.coinWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+/* Account Info */
+.infoItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 10vh;
+}
+.infoTitle {
+  width: 20%;
+}
+.infoContent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 80%;
+}
+
+.infoButton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  width: 80%;
+}

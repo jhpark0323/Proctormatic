@@ -8,3 +8,13 @@
   background-color: black;
   opacity: 0.4;
 }
+
+.Content {
+  margin-top: 75px;
+  height: calc(100vh - 75px);
+  min-height: 675px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  overflow-y: auto;
+}

@@ -2,9 +2,20 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Home from '../../pages/Home';
+import Home from '../Home';
+import { useAuthStore } from '../../store/useAuthStore'; // store import 추가
+
+// 테스트 헬퍼 함수: store와 localStorage를 모두 초기화
+const clearStores = () => {
+  localStorage.clear();
+  useAuthStore.setState({ user: null }); // store 초기 상태로 리셋
+};
 
 describe('Home 페이지 테스트', () => {
+  // 각 테스트 실행 전에 store와 localStorage를 모두 초기화
+  beforeEach(() => {
+    clearStores();
+  });
 
   // 1. header가 정상적으로 렌더링 되는지 확인
   it('HeaderWhite가 정상적으로 렌더링 되는지 확인', () => {
@@ -13,8 +24,7 @@ describe('Home 페이지 테스트', () => {
         <Home />
       </Router>
     );
-  
-    // "로그인 / 가입"이 정상적으로 렌더링 되는지를 확인하면 헤더의 렌더링 여부 확인 가능
+
     expect(screen.getByText('로그인 / 가입')).toBeInTheDocument();
   });
   
@@ -25,10 +35,10 @@ describe('Home 페이지 테스트', () => {
         <Home />
       </Router>
     );
-  
+
     const loginButton = screen.getByText('로그인 / 가입');
     fireEvent.click(loginButton);
-  
+
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
   
@@ -39,26 +49,76 @@ describe('Home 페이지 테스트', () => {
         <Home />
       </Router>
     );
-  
+
     fireEvent.click(screen.getByText('로그인 / 가입'));
-  
+
     const backdrop = screen.getByTestId('backdrop');
     fireEvent.click(backdrop);
-  
+
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
-  
-  // 4. 각 역할별로 로그인 했을때 정상적으로 해당 페이지로 이동이 되는지 여부
-  it('taker 역할이 선택되면 login이 호출되고 /taker로 이동해야 합니다.', () => {
+
+  // 4. 주최자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
+  it('주최자 역할이 선택되면 store에 역할이 저장되고, "시험 관리하기" 버튼이 표시되어야 합니다.', () => {
     render(
       <Router>
         <Home />
       </Router>
     );
-  
-    fireEvent.click(screen.getByText('로그인 / 가입')); // 수정된 부분
+
+    fireEvent.click(screen.getByText('로그인 / 가입'));
     
-    // 이후 역할 선택과 navigate 함수 호출을 테스트할 수 있음
+    const hostButton = screen.getByText('주최자');
+    fireEvent.click(hostButton);
+
+    // store의 상태 확인
+    expect(useAuthStore.getState().user?.role).toBe('host');
+
+    expect(screen.getByText('시험 관리하기')).toBeInTheDocument();
+  });
+
+  // 5. 응시자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
+  it('응시자 역할이 선택되면 store에 역할이 저장되고, "시험 입실하기" 버튼이 표시되어야 합니다.', () => {
+    render(
+      <Router>
+        <Home />
+      </Router>
+    );
+
+    fireEvent.click(screen.getByText('로그인 / 가입'));
+    
+    const takerButton = screen.getByText('응시자');
+    fireEvent.click(takerButton);
+
+    // store의 상태 확인
+    expect(useAuthStore.getState().user?.role).toBe('taker');
+
+    expect(screen.getByText('시험 입실하기')).toBeInTheDocument();
+  });
+
+  // 6. 로그아웃 테스트 추가 (모달 안에서의 로그아웃)
+  it('로그아웃 시 store가 초기화되고 로그인 버튼이 다시 표시되어야 합니다.', () => {
+    // 먼저 로그인
+    render(
+      <Router>
+        <Home />
+      </Router>
+    );
+
+    fireEvent.click(screen.getByText('로그인 / 가입'));
+    fireEvent.click(screen.getByText('응시자'));
+
+    // 모달이 열려있는지 확인
+    const nameButton = screen.getByRole('name');
+    fireEvent.click(nameButton);
+
+    // 모달 안에서 로그아웃 버튼 클릭
+    const logoutButton = screen.getByText('로그아웃');
+    fireEvent.click(logoutButton);
+
+    // store가 초기화되었는지 확인
+    expect(useAuthStore.getState().user).toBeNull();
+    // 로그인 버튼이 다시 표시되는지 확인
+    expect(screen.getByText('로그인 / 가입')).toBeInTheDocument();
   });
 });
-

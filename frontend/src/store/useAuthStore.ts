@@ -1,5 +1,6 @@
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { CustomToast } from '@/components/CustomToast';
 
 interface User {
   role: string;
@@ -16,12 +17,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       login: (role: string) => set({ user: { role } }),
-      logout: () => set({ user: null }),
+      logout: () => {
+        set({ user: null });
+        localStorage.removeItem('auth-storage'); // localStorage도 함께 클리어
+        CustomToast("로그아웃 되었습니다."); // 로그아웃 메시지 출력
+      },
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      // 선택적으로 특정 상태만 저장하고 싶다면:
       partialize: (state) => ({ user: state.user }),
     }
   )
