@@ -1,6 +1,7 @@
 import styles from "@/styles/Buttons.module.css";
 
 // 사용예시
+// import CustomButton from 'src\components\CustomButton';
 /* <CustomButton
 label="버튼 클릭"
 onClick={() => alert("Button clicked!")}
@@ -17,7 +18,7 @@ interface CustomButtonProps {
     | "danger_outline"
     | "whitefill";
   type?: "rectangular" | "oval";
-  label: string;
+  children: React.ReactNode;
   onClick?: () => void;
 }
 
@@ -25,7 +26,7 @@ const CustomButton = ({
   state = "default",
   style = "primary_fill",
   type = "oval",
-  label,
+  children,
   onClick,
 }: CustomButtonProps) => {
   return (
@@ -36,7 +37,7 @@ const CustomButton = ({
       onClick={state !== "disabled" ? onClick : undefined}
       style={{ cursor: state === "disabled" ? "not-allowed" : "pointer" }}
     >
-      {label}
+      {children}
     </div>
   );
 };
