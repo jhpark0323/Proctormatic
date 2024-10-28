@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .serializers import TakerSerializer
+from .serializers import TakerSerializer, TakerTokenSerializer
 
 
 @swagger_auto_schema(
@@ -98,8 +98,13 @@ def add_taker(request):
     if request.method == 'POST':
         serializer = TakerSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
+            taker = serializer.save()
+            access_token = TakerTokenSerializer.get_access_token(taker)
+
+            return Response({
+                'access': str(access_token),
+            }, status=status.HTTP_201_CREATED)
+
         return Response("잘못된 요청입니다.", status=status.HTTP_400_BAD_REQUEST)
 
 def is_valid_email(email):
