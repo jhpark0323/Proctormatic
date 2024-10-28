@@ -171,12 +171,6 @@ def create_exam(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -223,7 +217,7 @@ def scheduled_exam_list(request):
     # 페이지네이션 처리
     paginated_exams = paginate_queryset(exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = ScheduledExamListSerializer(paginated_exams, many=True)
@@ -278,12 +272,6 @@ def scheduled_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -322,7 +310,8 @@ def ongoing_exam_list(request):
     # 페이지네이션 처리
     paginated_exams = paginate_queryset(ongoing_exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = OngoingExamListSerializer(paginated_exams, many=True)
@@ -376,12 +365,6 @@ def ongoing_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -425,10 +408,9 @@ def completed_exam_list(request):
     page_number = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('size', 10))
 
-    # 페이지네이션 처리
     paginated_exams = paginate_queryset(exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = CompletedExamListSerializer(paginated_exams, many=True)
@@ -607,9 +589,14 @@ def get_user_info_from_token(request):
 
 def paginate_queryset(queryset, page_number, page_size):
     paginator = Paginator(queryset, page_size)
-    if page_number > paginator.num_pages or page_number < 1:
+    
+    # 음수 페이지 번호는 잘못된 요청으로 처리
+    if page_number < 1:
         return None
+    
+    # 정상적인 경우 해당 페이지 반환
     return paginator.get_page(page_number)
+
 
 def send_exam_email(email, exam):
     subject = f"[시험 예약 완료] {exam.title}"
