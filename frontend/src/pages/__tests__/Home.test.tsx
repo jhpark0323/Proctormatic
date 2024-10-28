@@ -78,7 +78,7 @@ describe('Home 페이지 테스트', () => {
   });
 
   // 5. 응시자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
-  it('응시자 역할이 선택되면 store에 역할이 저장되고, "시험 응시하기" 버튼이 표시되어야 합니다.', () => {
+  it('응시자 역할이 선택되면 store에 역할이 저장되고, "시험 입실하기" 버튼이 표시되어야 합니다.', () => {
     render(
       <Router>
         <Home />
@@ -96,7 +96,7 @@ describe('Home 페이지 테스트', () => {
     expect(screen.getByText('시험 입실하기')).toBeInTheDocument();
   });
 
-  // 6. 로그아웃 테스트 추가
+  // 6. 로그아웃 테스트 추가 (모달 안에서의 로그아웃)
   it('로그아웃 시 store가 초기화되고 로그인 버튼이 다시 표시되어야 합니다.', () => {
     // 먼저 로그인
     render(
@@ -108,7 +108,11 @@ describe('Home 페이지 테스트', () => {
     fireEvent.click(screen.getByText('로그인 / 가입'));
     fireEvent.click(screen.getByText('응시자'));
 
-    // 로그아웃 실행
+    // 모달이 열려있는지 확인
+    const nameButton = screen.getByRole('name');
+    fireEvent.click(nameButton);
+
+    // 모달 안에서 로그아웃 버튼 클릭
     const logoutButton = screen.getByText('로그아웃');
     fireEvent.click(logoutButton);
 
