@@ -1,15 +1,15 @@
-import styles from '../styles/Modal.module.css';
+import styles from '../styles/LoginModal.module.css';
 import cancelButtonImg from '../assets/cancleButton.png';
 import React from 'react';
 
-interface ModalProps {
+interface LoginModalProps {
   onClose: () => void;
   title: string;
   subtitle: string | string[];
   onLogin: (role: string) => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ onClose, title, subtitle, onLogin }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle, onLogin }) => {
   const handleLogin = (role: string) => {
     localStorage.setItem('userRole', role);
     onLogin(role);
@@ -56,4 +56,4 @@ const Modal: React.FC<ModalProps> = ({ onClose, title, subtitle, onLogin }) => {
 };
 
 
-export default Modal;
+export default LoginModal;

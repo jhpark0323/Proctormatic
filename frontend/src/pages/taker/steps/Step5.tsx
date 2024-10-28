@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from '../../../styles/Step.module.css';
+import styles from '@/styles/Step.module.css';
+import CustomButton from '@/components/CustomButton';
 
 const Step5: React.FC = () => {
   return (
@@ -10,7 +11,7 @@ const Step5: React.FC = () => {
       </div>
       <div className={styles.StepInner}></div>
       <div className={styles.StepFooter}>
-        <button>확인했습니다</button>
+        <CustomButton>확인했습니다</CustomButton>
       </div>
     </>
   );
