@@ -343,7 +343,7 @@ def handle_token(request):
     operation_summary="이메일 찾기",
     request_body=FindEmailRequestSerializer,
     responses={
-        200: openapi.Response('이메일을 검색 결과입니다.', schema=FindEmailResponseSerializer),
+        200: openapi.Response('이메일 검색 결과입니다.', schema=FindEmailResponseSerializer),
         400: openapi.Response('잘못된 형식', schema=FindEmailRequestSerializer),
     }
 )
