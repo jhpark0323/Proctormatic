@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Notification, Question
-from django.contrib.auth import get_user_model
+from .models import Notification, Question, Faq
+
 
 class NotificationCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,3 +27,8 @@ class QuestionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         exclude = ['user', 'content']
+
+class FaqCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faq
+        fields = '__all__'
