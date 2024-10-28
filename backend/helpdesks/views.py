@@ -87,7 +87,6 @@ from django.core.paginator import Paginator
 @permission_classes([AllowAny])
 def notification(request):
     if request.method == 'POST':
-        # print(request.auth['role'])
         if request.auth['role'] != 'host':
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = NotificationCreateSerializer(data=request.data)
