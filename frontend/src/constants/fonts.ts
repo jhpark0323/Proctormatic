@@ -52,6 +52,12 @@ const fonts = {
     lineHeight: "140%",
     fontFamily: "Pretendard",
   },
+  HEADING_SM_BOLD: {
+    fontWeight: "bold",
+    fontSize: "18px",
+    lineHeight: "140%",
+    fontFamily: "Pretendard",
+  },
   HEADING_SM: {
     fontWeight: "semibold",
     fontSize: "18px",
