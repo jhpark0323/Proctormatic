@@ -8,11 +8,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Exam
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer
 from django.core.paginator import Paginator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
 
 # Swagger 설정 추가 - 시험 생성 엔드포인트
 @swagger_auto_schema(
@@ -441,6 +442,88 @@ def completed_exam_list(request):
             "totalPage": Paginator(exams, page_size).num_pages
         }
     }, status=status.HTTP_200_OK)
+
+
+# Swagger 설정 추가 - 시험 세부 정보 조회 엔드포인트
+@swagger_auto_schema(
+    method='get',
+    operation_summary="시험 세부 정보 조회",
+    operation_description="특정 시험의 세부 정보를 조회합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        200: openapi.Response('시험 조회 성공', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description="상태 코드"),
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지"),
+                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
+                    'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
+                    'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
+                    'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
+                    'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
+                    'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
+                    'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
+                    'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
+                    'taker_list': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Items(type=openapi.TYPE_OBJECT),
+                        description="응시자 리스트"
+                    )
+                })
+            }
+        )),
+        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+        404: openapi.Response('존재하지 않는 시험입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="시험을 찾을 수 없음")
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def exam_detail(request, pk):
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
+    if not user_id:
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 특정 ID의 시험 정보 가져오기
+    exam = get_object_or_404(Exam, pk=pk, user_id=user_id)
+
+    # 시리얼라이저로 직렬화
+    serializer = ExamDetailSerializer(exam)
+    
+    # 응답 데이터 구성
+    return Response({
+        "status": 200,
+        "message": "시험 조회 성공",
+        "result": serializer.data
+    }, status=status.HTTP_200_OK)
+
 
 User = get_user_model()  # User 모델 가져오기
 
