@@ -224,12 +224,10 @@ def scheduled_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-        "result": {
             "scheduledExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
             "totalPage": Paginator(exams, page_size).num_pages
-        }
     }, status=status.HTTP_200_OK)
 
 
@@ -324,14 +322,10 @@ def ongoing_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-        "status": 200,
-        "message": "진행 중인 시험 목록 조회 성공",
-        "result": {
             "ongoingExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
             "totalPage": Paginator(ongoing_exams, page_size).num_pages
-        }
     }, status=status.HTTP_200_OK)
 
 # 완료된 시험 조회 API
@@ -433,12 +427,10 @@ def completed_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-        "result": {
             "completedExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
             "totalPage": Paginator(exams, page_size).num_pages
-        }
     }, status=status.HTTP_200_OK)
 
 
@@ -516,9 +508,7 @@ def exam_detail(request, pk):
     serializer = ExamDetailSerializer(exam)
     
     # 응답 데이터 구성
-    return Response({
-        "result": serializer.data
-    }, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 User = get_user_model()  # User 모델 가져오기
