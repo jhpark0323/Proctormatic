@@ -132,6 +132,7 @@ def notification(request):
     }
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def check_notification(request, notification_id):
     try:
         notification = Notification.objects.get(pk=notification_id)
