@@ -28,9 +28,21 @@ const fonts = {
     lineHeight: "140%",
     fontFamily: "Pretendard",
   },
+  HEADING_LG_BOLD: {
+    fontWeight: "bold",
+    fontSize: "24px",
+    lineHeight: "140%",
+    fontFamily: "Pretendard",
+  },
   HEADING_LG: {
     fontWeight: "semibold",
     fontSize: "24px",
+    lineHeight: "140%",
+    fontFamily: "Pretendard",
+  },
+  HEADING_MD_BOLD: {
+    fontWeight: "bold",
+    fontSize: "20px",
     lineHeight: "140%",
     fontFamily: "Pretendard",
   },
@@ -158,10 +170,10 @@ export const injectFonts = () => {
   const root = document.documentElement;
 
   // Set default font (MD_MEDIUM)
-  root.style.setProperty('--font-weight', fonts.LG_MEDIUM.fontWeight);
-  root.style.setProperty('--font-size', fonts.LG_MEDIUM.fontSize);
-  root.style.setProperty('--line-height', fonts.LG_MEDIUM.lineHeight);
-  root.style.setProperty('--font-family', fonts.LG_MEDIUM.fontFamily);
+  root.style.setProperty("--font-weight", fonts.LG_MEDIUM.fontWeight);
+  root.style.setProperty("--font-size", fonts.LG_MEDIUM.fontSize);
+  root.style.setProperty("--line-height", fonts.LG_MEDIUM.lineHeight);
+  root.style.setProperty("--font-family", fonts.LG_MEDIUM.fontFamily);
 
   // CSS 변수 이름 형식 수정
   Object.entries(fonts).forEach(([key, value]) => {
@@ -174,7 +186,7 @@ export const injectFonts = () => {
 
 // 사용하기 쉽게 CSS 클래스로 변환하는 유틸리티 함수 추가
 export const createFontStyles = () => {
-  let styles = '';
+  let styles = "";
   Object.entries(fonts).forEach(([key, value]) => {
     styles += `
       .font-${key.toLowerCase()} {
@@ -190,7 +202,7 @@ export const createFontStyles = () => {
 
 // styles.css에서 사용할 CSS
 export const generateGlobalStyles = () => {
-  const styleSheet = document.createElement('style');
+  const styleSheet = document.createElement("style");
   styleSheet.textContent = createFontStyles();
   document.head.appendChild(styleSheet);
 };
