@@ -38,3 +38,7 @@
 .UserInfo > span {
   margin-right: 10px;
 }
+
+.UserRole > span {
+  color: #2276DC;
+}

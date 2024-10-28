@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '../styles/HeaderWhite.module.css';
+import CustomButton from './CustomButton';
 
 interface HeaderWhiteProps {
   onLoginClick: () => void;
@@ -18,19 +19,22 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick, userRole, onLog
         {userRole ? (
           <div className={styles.UserInfo}>
             <span className={styles.UserRole}>
-              {userRole}로 로그인됨
+              <span>{userRole}</span> 님
             </span>
-            <button className={styles.ActionButton} onClick={onLogoutClick}>
+            <div>
+              gd
+            </div>
+            {/* <button className={styles.ActionButton} onClick={onLogoutClick}>
               로그아웃
-            </button>
+            </button> */}
             {userRole === 'taker' ? (
-              <button className={styles.ActionButton} onClick={() => navigate('/taker')}>
+              <CustomButton onClick={() => navigate('/taker')}>
                 시험 입실하기
-              </button>
+              </CustomButton>
             ) : userRole === 'host' ? (
-              <button className={styles.ActionButton} onClick={() => navigate('/host')}>
+              <CustomButton onClick={() => navigate('/host')}>
                 시험 관리하기
-              </button>
+              </CustomButton>
             ) : null}
           </div>
         ) : (
