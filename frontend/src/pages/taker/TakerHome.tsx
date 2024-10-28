@@ -9,7 +9,7 @@ import { HiOutlineDocumentSearch } from "react-icons/hi";
 import { MdOutlinePersonOutline } from "react-icons/md";
 import { FaAngleLeft } from "react-icons/fa6";
 
-import Step1 from './steps/step1';
+import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
 import Step3 from './steps/Step3';
 import Step4 from './steps/Step4';
