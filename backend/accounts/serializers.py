@@ -1,3 +1,4 @@
+from django.core.validators import EmailValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from datetime import datetime
@@ -68,3 +69,14 @@ class FindEmailResponseSerializer(serializers.ModelSerializer):
 
     def get_joined_on(self, instance):
         return instance.created_at.strftime('%Y-%m-%d')
+
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    name = serializers.CharField(required=True, error_messages={
+        'required': '성명을 입력해주세요.',
+        'blank': '성명을 입력해주세요.',
+    })
+    email = serializers.EmailField(required=True, error_messages={
+        'required': '이메일을 입력해주세요.',
+        'blank': '이메일을 입력해주세요.',
+        'invalid': '잘못된 이메일 형식입니다.',
+    })
