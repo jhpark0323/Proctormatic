@@ -223,8 +223,18 @@ def handle_email_verification(request):
         openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
     ],
     responses={
-        204: openapi.Response('회원 탈퇴를 완료했습니다.', schema=openapi.TYPE_STRING),
-        403: openapi.Response('권한이 없습니다.', schema=openapi.TYPE_STRING)
+        204: openapi.Response('회원 탈퇴를 완료했습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ))
     }
 )
 @api_view(['GET', 'POST', 'PUT', 'PATCH'])
@@ -333,6 +343,9 @@ def handle_token(request):
         user = authenticate(email=email, password=password)
         if user is None:
             return Response({'message': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = CustomTokenObtainPairSerializer()
         serializer.user = user
