@@ -487,8 +487,13 @@ def exam_detail(request, pk):
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
-    # 특정 ID의 시험 정보 가져오기
-    exam = get_object_or_404(Exam, pk=pk, user_id=user_id)
+    # 특정 ID의 시험 정보가 존재하는지 확인
+    if not Exam.objects.filter(pk=pk, user_id=user_id).exists():
+        # 객체가 존재하지 않을 경우 사용자 정의 메시지 반환
+        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 객체가 존재할 경우 가져오기
+    exam = Exam.objects.get(pk=pk, user_id=user_id)
 
     # 시리얼라이저로 직렬화
     serializer = ExamDetailSerializer(exam)
