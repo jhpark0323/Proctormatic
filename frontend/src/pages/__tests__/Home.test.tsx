@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Home from '../../pages/home';
+import Home from '../Home';
 import { useAuthStore } from '../../store/useAuthStore'; // store import 추가
 
 // 테스트 헬퍼 함수: store와 localStorage를 모두 초기화

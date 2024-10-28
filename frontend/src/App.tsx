@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { CustomToast } from "@/components/CustomToast";
-import Home from "./pages/home";
+import Home from "@/pages/Home";
 import TakerHome from "./pages/taker/TakerHome";
 import TakerHome2 from "./pages/taker/TakerHome2";
 import HostHome from "./pages/host/HostHome";
