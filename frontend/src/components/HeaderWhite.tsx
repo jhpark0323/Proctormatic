@@ -33,7 +33,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({
         {userRole ? (
           <div className={styles.UserInfo}>
             <div className={styles.UserRoleContainer}>
-              <span className={styles.UserRole} onClick={toggleModal}>
+              <span className={styles.UserRole} onClick={toggleModal} role='name'>
                 <span>{userRole}</span> 님
               </span>
               {isModalOpen && (

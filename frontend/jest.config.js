@@ -19,7 +19,9 @@ export default {
     '^.+\\.svg$': 'jest-svg-transformer',
     '\\.(css|less|scss)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|webp|avif|svg)$': '<rootDir>/src/__mocks__/fileMock.js',
-    '^@/assets/(.*)$': '<rootDir>/src/__mocks__/fileMock.js'
+    '^@/assets/(.*)$': '<rootDir>/src/assets/$1',
+    '^@/components/(.*)$': '<rootDir>/src/components/$1',
+    '^@/store/(.*)$': '<rootDir>/src/store/$1',
   },
   moduleDirectories: ['node_modules', 'src'],
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
