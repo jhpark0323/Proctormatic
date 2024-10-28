@@ -72,7 +72,7 @@ from .serializers import TakerSerializer, TakerTokenSerializer
                 }
             )
         ),
-        403: openapi.Response(  # Adding the new response for the token issuance failure
+        403: openapi.Response(
             description="시험이 종료되었습니다.",
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
