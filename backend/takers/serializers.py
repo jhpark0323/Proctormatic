@@ -31,6 +31,5 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError("시험이 종료되었습니다. 토큰을 발급할 수 없습니다.")
 
         token['exp'] = int(exam_end_datetime_utc.astimezone(timezone.utc).timestamp())
-        token['iat'] = int(current_time.timestamp())
 
         return token

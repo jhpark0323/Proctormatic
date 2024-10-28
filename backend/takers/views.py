@@ -1,5 +1,5 @@
 import re
-from django.shortcuts import get_object_or_404
+import os
 from exams.models import Exam
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework import status
@@ -10,9 +10,8 @@ from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
-import os
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.tokens import AccessToken
+
+
 
 
 @swagger_auto_schema(
