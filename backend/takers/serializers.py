@@ -19,7 +19,6 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
     def get_access_token(cls, taker):
         token = super().get_token(taker)
         token['token_type'] = 'access'
-        token['user_id'] = taker.id
         token['role'] = "taker"
 
         exam = Exam.objects.get(id=taker.exam.id)

@@ -1,18 +1,18 @@
 import re
 import os
+import jwt
+from django.conf import settings
 from exams.models import Exam
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes, authentication_classes
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from .authentication import CustomJWTAuthentication
 from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
-
-
-
 
 @swagger_auto_schema(
     method='get',
@@ -75,9 +75,17 @@ from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSeria
                 }
             )
         ),
+        403: openapi.Response(
+            description="시험이 종료되었습니다.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, example="시험이 종료되었습니다. 토큰을 발급할 수 없습니다.")
+                }
+            )
+        ),
     }
 )
-
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
@@ -102,21 +110,27 @@ def add_taker(request):
     if request.method == 'POST':
         serializer = TakerSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response({'message' : '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            taker = serializer.save()
+            access_token = TakerTokenSerializer.get_access_token(taker)
 
+            return Response({
+                'access': str(access_token),
+            }, status=status.HTTP_201_CREATED)
+
+        return Response("잘못된 요청입니다.", status=status.HTTP_400_BAD_REQUEST)
+
+swagger_jwt_auth = openapi.Parameter(
+    'Authorization',
+    openapi.IN_HEADER,
+    description='JWT Bearer Token. Format: "Bearer <token>"',
+    type=openapi.TYPE_STRING,
+    required=True
+)
 @swagger_auto_schema(
     method='patch',
     operation_summary="신분증 등록",
     manual_parameters=[
-        openapi.Parameter(
-            'id',
-            openapi.IN_FORM,
-            description='응시자 ID',
-            type=openapi.TYPE_INTEGER,
-            required=True
-        ),
+        swagger_jwt_auth,
         openapi.Parameter(
             'idPhoto',
             openapi.IN_FORM,
@@ -146,7 +160,6 @@ def add_taker(request):
                 type=openapi.TYPE_OBJECT,
                 properties={
                     'access': openapi.Schema(type=openapi.TYPE_STRING, description='Access Token'),
-                    # refresh token 필드 삭제
                 }
             )
         ),
@@ -166,10 +179,6 @@ def add_taker(request):
                     'status': 400,
                     'message': "잘못된 요청입니다."
                 },
-                'exam_finished': {
-                    'status': 400,
-                    'message': "시험이 종료되었습니다. 토큰을 발급할 수 없습니다."
-                }
             }
         ),
         401: openapi.Response(
@@ -191,21 +200,25 @@ def add_taker(request):
     }
 )
 @api_view(['PATCH'])
+@authentication_classes([CustomJWTAuthentication])
 @permission_classes([AllowAny])
 @parser_classes([MultiPartParser])
 def update_taker(request):
-    required_fields = ['id', 'idPhoto', 'birth', 'verification_rate']
+    user_id, user_role = get_user_info_from_token(request)
+    required_fields = ['idPhoto', 'birth', 'verification_rate']
     for field in required_fields:
         if field not in request.data:
             return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    taker_id = request.data.get('id')
+    taker_id = user_id
+
     taker = Taker.objects.filter(id=taker_id).first()
     if not taker:
         return Response({'message': '응시자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-    folder_path = os.path.join('prome', str(taker_id))
+    exam_id = taker.exam_id
 
+    folder_path = os.path.join('prome', str(exam_id), str(taker_id))
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
@@ -215,7 +228,7 @@ def update_taker(request):
         file_name = f'{taker_id}_id_photo{file_extension}'
 
         file_path = os.path.join(folder_path, file_name)
-        print(file_path)
+
         with open(file_path, 'wb+') as destination:
             for chunk in id_photo_file.chunks():
                 destination.write(chunk)
@@ -225,12 +238,7 @@ def update_taker(request):
     serializer = UpdateTakerSerializer(taker, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
-
-        access_token = TakerTokenSerializer.get_access_token(taker)
-
-        return Response({
-            'access': str(access_token),
-        }, status=status.HTTP_200_OK)
+        return Response( status=status.HTTP_200_OK)
 
     return Response({'message': '잘못된 요청입니다.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -239,3 +247,22 @@ def is_valid_email(email):
     if re.match(email_regex, email):
         return True
     return False
+
+def get_user_info_from_token(request):
+    token = request.META.get('HTTP_AUTHORIZATION')
+    if not token:
+        return None, None
+
+    token_parts = token.split(" ")
+    if len(token_parts) != 2:
+        return None, None
+
+    payload = jwt.decode(token_parts[1], settings.SECRET_KEY, algorithms=["HS256"], options={"verify_exp": True})
+
+    user_id = payload.get('user_id')
+    role = payload.get('role')
+    taker = Taker.objects.filter(id=user_id).first() if user_id else None
+
+    if taker:
+        return user_id, role
+    return None, None
