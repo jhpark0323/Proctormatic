@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from datetime import datetime
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -39,3 +40,31 @@ class EditMarketingSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('marketing',)
+
+class FindEmailRequestSerializer(serializers.ModelSerializer):
+    birth = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ('name', 'birth',)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+
+        birth_str = validated_data.get('birth')
+        try:
+            validated_data['birth'] = datetime.strptime(birth_str, '%y%m%d').date()
+        except ValueError:
+            raise serializers.ValidationError({"message": "날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다."})
+
+        return validated_data
+
+class FindEmailResponseSerializer(serializers.ModelSerializer):
+    joined_on = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'joined_on',)
+
+    def get_joined_on(self, instance):
+        return instance.created_at.strftime('%Y-%m-%d')
