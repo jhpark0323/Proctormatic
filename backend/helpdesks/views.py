@@ -1,10 +1,10 @@
 from .models import Notification
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer
 from django.contrib.auth import get_user_model
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.paginator import Paginator
@@ -59,6 +59,15 @@ from django.core.paginator import Paginator
     operation_summary="공지사항 등록",
     operation_description="새로운 공지사항을 등록합니다.",
     request_body=NotificationCreateSerializer,
+        manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer 액세스 토큰",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ],
     responses={
         201: openapi.Response('성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -75,8 +84,12 @@ from django.core.paginator import Paginator
     }
 )
 @api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
 def notification(request):
     if request.method == 'POST':
+        # print(request.auth['role'])
+        if request.auth['role'] != 'host':
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = NotificationCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -110,7 +123,7 @@ def notification(request):
                 'content': openapi.Schema(type=openapi.TYPE_STRING),
                 'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
             }
-        ))
+        )),
         404: openapi.Response('존재하지 않는 공지사항입니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
