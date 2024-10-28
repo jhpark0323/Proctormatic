@@ -126,7 +126,7 @@ def create_exam(request):
         "message": "시험이 성공적으로 예약되었습니다."
     }, status=status.HTTP_201_CREATED)
 
-# Swagger 설정 추가 - 예약된 시험 조회 엔드포인트
+# 예약된 시험 목록 조회 API
 @swagger_auto_schema(
     method='get',
     operation_summary="예약된 시험 목록 조회",
@@ -169,14 +169,16 @@ def create_exam(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
+        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
+            }
+        )),
     }
 )
 @api_view(['GET'])
 def scheduled_exam_list(request):
-    """
-    예약된 시험 목록을 조회하는 API입니다.
-    현재 시간 기준으로 아직 시작되지 않은 시험만 반환하며, 페이지네이션 기능을 제공합니다.
-    """
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
@@ -207,9 +209,14 @@ def scheduled_exam_list(request):
     # 두 쿼리셋을 결합하고 정렬
     exams = (future_exams | today_future_exams).order_by('date', 'start_time')
 
+    # 페이지 번호와 사이즈 가져오기
+    page_number = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('size', 10))
+
     # 페이지네이션 처리
-    paginator = Paginator(exams, int(request.query_params.get('size', 10)))
-    paginated_exams = paginator.get_page(int(request.query_params.get('page', 1)))
+    paginated_exams = paginate_queryset(exams, page_number, page_size)
+    if paginated_exams is None:
+        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = ScheduledExamListSerializer(paginated_exams, many=True)
@@ -220,12 +227,12 @@ def scheduled_exam_list(request):
             "scheduledExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
-            "totalPage": paginator.num_pages
+            "totalPage": Paginator(exams, page_size).num_pages
         }
     }, status=status.HTTP_200_OK)
 
 
-# Swagger 설정 추가 - 진행 중인 시험 조회 엔드포인트
+# 진행 중인 시험 조회 API
 @swagger_auto_schema(
     method='get',
     operation_summary="진행 중인 시험 조회",
@@ -270,14 +277,16 @@ def scheduled_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
+        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
+            }
+        )),
     }
 )
 @api_view(['GET'])
 def ongoing_exam_list(request):
-    """
-    진행 중인 시험 목록을 조회하는 API입니다.
-    현재 시간이 입장 가능 시간과 종료 시간 사이에 있는 시험만 반환하며, 페이지네이션 기능을 제공합니다.
-    """
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
@@ -300,11 +309,16 @@ def ongoing_exam_list(request):
         end_time__gte=current_time
     ).order_by('date', 'start_time')
 
-    # 페이지네이션 처리
-    paginator = Paginator(ongoing_exams, int(request.query_params.get('size', 10)))
-    paginated_exams = paginator.get_page(int(request.query_params.get('page', 1)))
+    # 페이지 번호와 사이즈 가져오기
+    page_number = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('size', 10))
 
-    # 새로운 시리얼라이저 사용
+    # 페이지네이션 처리
+    paginated_exams = paginate_queryset(ongoing_exams, page_number, page_size)
+    if paginated_exams is None:
+        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 시리얼라이저를 사용한 직렬화 처리
     serializer = OngoingExamListSerializer(paginated_exams, many=True)
 
     # 응답 데이터 구성
@@ -315,11 +329,11 @@ def ongoing_exam_list(request):
             "ongoingExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
-            "totalPage": paginator.num_pages
+            "totalPage": Paginator(ongoing_exams, page_size).num_pages
         }
     }, status=status.HTTP_200_OK)
 
-# Swagger 설정 추가 - 완료된 시험 조회 엔드포인트
+# 완료된 시험 조회 API
 @swagger_auto_schema(
     method='get',
     operation_summary="완료된 시험 목록 조회",
@@ -364,14 +378,16 @@ def ongoing_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
+        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
+            }
+        )),
     }
 )
 @api_view(['GET'])
 def completed_exam_list(request):
-    """
-    완료된 시험 목록을 조회하는 API입니다.
-    현재 시간을 기준으로 종료된 시험만 반환하며, 페이지네이션 기능을 제공합니다.
-    """
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
@@ -402,11 +418,16 @@ def completed_exam_list(request):
     # 두 쿼리셋을 결합하고 정렬
     exams = (completed_exams | today_completed_exams).order_by('-date', '-end_time')
 
-    # 페이지네이션 처리
-    paginator = Paginator(exams, int(request.query_params.get('size', 10)))
-    paginated_exams = paginator.get_page(int(request.query_params.get('page', 1)))
+    # 페이지 번호와 사이즈 가져오기
+    page_number = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('size', 10))
 
-    # 새로운 시리얼라이저 사용
+    # 페이지네이션 처리
+    paginated_exams = paginate_queryset(exams, page_number, page_size)
+    if paginated_exams is None:
+        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 시리얼라이저를 사용한 직렬화 처리
     serializer = CompletedExamListSerializer(paginated_exams, many=True)
 
     # 응답 데이터 구성
@@ -417,10 +438,9 @@ def completed_exam_list(request):
             "completedExamList": serializer.data,
             "prev": paginated_exams.has_previous(),
             "next": paginated_exams.has_next(),
-            "totalPage": paginator.num_pages
+            "totalPage": Paginator(exams, page_size).num_pages
         }
     }, status=status.HTTP_200_OK)
-
 
 User = get_user_model()  # User 모델 가져오기
 
@@ -428,9 +448,15 @@ def get_user_info_from_token(request):
     user = request.user
     if user.is_authenticated:  # 사용자가 인증되었는지 확인
         user_id = user.id  # 기본적으로 User 모델의 PK는 'id'
-        user_role = request.auth['role'] # 커스텀 필드 'role'을 가져옴
+        user_role = request.auth['role']  # 커스텀 필드 'role'을 가져옴
         return user_id, user_role
     return None, None
+
+def paginate_queryset(queryset, page_number, page_size):
+    paginator = Paginator(queryset, page_size)
+    if page_number > paginator.num_pages or page_number < 1:
+        return None
+    return paginator.get_page(page_number)
 
 def send_exam_email(email, exam):
     subject = f"[시험 예약 완료] {exam.title}"
