@@ -140,18 +140,18 @@ def create_coin_code(request):
                 },
             ),
         ),
+        400: openapi.Response('잘못된 페이지 또는 사이즈 요청', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
         403: openapi.Response('권한이 없습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
                 'message': openapi.Schema(type=openapi.TYPE_STRING)
             }
-        )),
-        404: openapi.Response('잘못된 페이지 요청입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
+        ))
     }
 )
 @api_view(['GET'])
@@ -173,8 +173,10 @@ def coin_history(request):
     paginator = Paginator(history, size)
     paginated_history = paginator.get_page(page)
 
-    if int(page) > paginator.num_pages:
-        return Response({'message': '요청한 페이지가 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     serializer = CoinHistorySerializer(paginated_history, many=True)
     return Response({
