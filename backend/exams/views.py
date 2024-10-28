@@ -146,7 +146,6 @@ def create_exam(request):
         200: openapi.Response('예약된 시험 목록 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                     'scheduledExamList': openapi.Schema(
                         type=openapi.TYPE_ARRAY,
                         items=openapi.Items(type=openapi.TYPE_OBJECT),
@@ -155,7 +154,6 @@ def create_exam(request):
                     'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
                     'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
                     'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-                })
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
@@ -250,9 +248,6 @@ def scheduled_exam_list(request):
         200: openapi.Response('진행 중인 시험 목록 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description="상태 코드"),
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지"),
-                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                     'ongoingExamList': openapi.Schema(
                         type=openapi.TYPE_ARRAY,
                         items=openapi.Items(type=openapi.TYPE_OBJECT),
@@ -261,7 +256,6 @@ def scheduled_exam_list(request):
                     'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
                     'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
                     'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-                })
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
@@ -347,9 +341,6 @@ def ongoing_exam_list(request):
         200: openapi.Response('완료된 시험 목록 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description="상태 코드"),
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지"),
-                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                     'completedExamList': openapi.Schema(
                         type=openapi.TYPE_ARRAY,
                         items=openapi.Items(type=openapi.TYPE_OBJECT),
@@ -358,7 +349,6 @@ def ongoing_exam_list(request):
                     'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
                     'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
                     'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-                })
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
@@ -451,9 +441,6 @@ def completed_exam_list(request):
         200: openapi.Response('시험 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'status': openapi.Schema(type=openapi.TYPE_INTEGER, description="상태 코드"),
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지"),
-                'result': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
                     'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
                     'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
                     'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
@@ -467,7 +454,6 @@ def completed_exam_list(request):
                         items=openapi.Items(type=openapi.TYPE_OBJECT),
                         description="응시자 리스트"
                     )
-                })
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
