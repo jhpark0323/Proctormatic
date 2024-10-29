@@ -2,11 +2,15 @@
 import { create } from 'zustand';
 
 interface PhotoState {
-  photo: string | null;
-  setPhoto: (photo: string | null) => void;
+  photoStep8: string | null;
+  photoStep9: string | null;
+  setPhotoStep8: (photo: string | null) => void;
+  setPhotoStep9: (photo: string | null) => void;
 }
 
 export const usePhotoStore = create<PhotoState>((set) => ({
-  photo: null,
-  setPhoto: (photo) => set({ photo }),
+  photoStep8: null,
+  photoStep9: null,
+  setPhotoStep8: (photo) => set({ photoStep8: photo }),
+  setPhotoStep9: (photo) => set({ photoStep9: photo }),
 }));
