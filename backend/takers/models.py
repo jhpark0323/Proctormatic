@@ -11,3 +11,7 @@ class Taker(models.Model):
     verification_rate = models.IntegerField(null=True, blank=True)
     entry_time = models.TimeField(null=True, blank=True)
     exit_time = models.TimeField(null=True, blank=True)
+
+    @property
+    def is_authenticated(self):
+        return True

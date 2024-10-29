@@ -11,10 +11,10 @@ class CustomJWTAuthentication(JWTAuthentication):
 
         user = Taker.objects.filter(id=user_id).first()
 
-        if not user:
-            raise AuthenticationFailed("해당하는 유저를 찾을 수 없습니다.")
-
         if user_role == 'host':
             raise PermissionDenied("권한이 없습니다.")
+
+        if not user:
+            raise AuthenticationFailed("해당하는 유저를 찾을 수 없습니다.")
 
         return user
