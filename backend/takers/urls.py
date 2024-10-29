@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('', views.add_taker),
+    path('photo/', views.update_taker),
 ]

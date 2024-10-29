@@ -1,5 +1,3 @@
-# Create your models here.
-
 from django.db import models
 from exams.models import Exam
 

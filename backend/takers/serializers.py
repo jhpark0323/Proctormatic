@@ -9,6 +9,11 @@ class TakerSerializer(serializers.ModelSerializer):
         model = Taker
         fields = ['name', 'email', 'entry_time','exam']
 
+class UpdateTakerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Taker
+        fields = ['birth', 'id_photo', 'verification_rate']
+
 class TakerTokenSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_access_token(cls, taker):
