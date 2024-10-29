@@ -5,7 +5,7 @@ from .models import Notification, Question, Faq
 class NotificationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ['title', 'content']
+        fields = '__all__'
 
 class NotificationListSerializer(serializers.ModelSerializer):
     class Meta:
