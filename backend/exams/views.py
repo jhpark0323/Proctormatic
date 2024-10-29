@@ -2,18 +2,18 @@ import datetime
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.text import slugify
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Exam
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer
+from takers.models import Taker
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer
 from django.core.paginator import Paginator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.shortcuts import get_object_or_404
 
 # Swagger 설정 추가 - 시험 생성 엔드포인트
 @swagger_auto_schema(
@@ -625,6 +625,75 @@ def exam_detail(request, pk):
 
     # 추가로 명확히 응답을 설정
     return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 응시 결과 조회 API
+@swagger_auto_schema(
+    method='get',
+    operation_summary="응시 결과 조회",
+    operation_description="특정 시험에 대한 특정 응시자의 응시 결과를 조회합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        200: openapi.Response('응시 결과 조회 성공', TakerDetailSerializer),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+        404: openapi.Response('존재하지 않는 응시자 또는 시험입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="데이터 없음 메시지")
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def taker_result_view(request, eid, tid):
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
+    if not user_id:
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 탈퇴한 유저일 경우
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 시험 존재 여부 확인
+    if not Exam.objects.filter(id=eid).exists():
+        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 응시자 존재 여부 확인
+    if not Taker.objects.filter(id=tid, exam_id=eid).exists():
+        return Response({"message": "존재하지 않는 응시자입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Taker 객체 가져오기
+    taker = Taker.objects.get(id=tid, exam_id=eid)
+
+    # 시리얼라이저를 사용한 직렬화 처리
+    serializer = TakerDetailSerializer(taker)
+    
+    # 응답 데이터 구성
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 User = get_user_model()  # User 모델 가져오기
