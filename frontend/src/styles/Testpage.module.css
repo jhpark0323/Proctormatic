@@ -1,0 +1,16 @@
+.mytestHeader {
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mytestHeaderWrap {
+  display: flex;
+  justify-content: space-between;
+}
+
+.myName {
+  color: var(--PRIMARY);
+  margin-right: 0.5rem;
+}
