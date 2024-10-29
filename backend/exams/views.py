@@ -562,6 +562,7 @@ def exam_detail(request, pk):
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    # 탈퇴한 유저일 경우
     user = User.objects.get(id=user_id)
     if not user.is_active:
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
@@ -615,7 +616,7 @@ def exam_detail(request, pk):
     elif request.method == "DELETE":
          # 진행 중인 시험은 삭제 불가
         current_time = datetime.datetime.now().time()
-        if exam.date == datetime.date.today() and exam.start_time <= current_time <= exam.end_time:
+        if exam.date == datetime.date.today() and exam.entry_time <= current_time <= exam.end_time:
             return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
         
         # 시험 삭제
@@ -623,7 +624,7 @@ def exam_detail(request, pk):
         return Response({"message": "시험이 성공적으로 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
 
     # 추가로 명확히 응답을 설정
-    return Response({"message": "올바르지 않은 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 User = get_user_model()  # User 모델 가져오기
