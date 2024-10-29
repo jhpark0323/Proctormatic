@@ -109,10 +109,10 @@ def add_taker(request):
 
     if request.method == 'POST':
         serializer = TakerSerializer(data=request.data)
+
         if serializer.is_valid():
             taker = serializer.save()
             access_token = TakerTokenSerializer.get_access_token(taker)
-
             return Response({
                 'access': str(access_token),
             }, status=status.HTTP_201_CREATED)
