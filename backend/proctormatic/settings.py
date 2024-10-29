@@ -134,11 +134,11 @@ WSGI_APPLICATION = 'proctormatic.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'proctormatic',
-        'USER': 'root',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': env('MYSQL_DATABASE', default='proctormatic'),
+        'USER': env('MYSQL_USER', default='root'),
+        'PASSWORD': env('MYSQL_PASSWORD', default='1234'),
+        'HOST': env('MYSQL_HOST', default='localhost'),
+        'PORT': env('MYSQL_PORT', default='3306'),
     }
 }
 
