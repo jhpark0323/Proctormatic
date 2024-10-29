@@ -1,6 +1,6 @@
-from .models import Notification, Question
+from .models import Notification, Question, Faq
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
-    FaqCreateSerializer
+    FaqCreateSerializer, FaqListSerializer
 from .serializers import QuestionCreateSerializer, QuestionListSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -257,6 +257,13 @@ def question(request):
         return Response(data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
+    method='get',
+    operation_summary="자주 묻는 질문 목록 조회",
+    responses={
+        200: FaqListSerializer(many=True),
+    }
+)
+@swagger_auto_schema(
     method='post',
     operation_summary="자주 묻는 질문 등록",
     request_body=FaqCreateSerializer,
@@ -269,10 +276,15 @@ def question(request):
         ))
     }
 )
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def faq(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
+        faq_list = Faq.objects.all()
+        serializer = FaqListSerializer(faq_list, many=True)
+        return Response({'faqList': serializer.data}, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
         serializer = FaqCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
