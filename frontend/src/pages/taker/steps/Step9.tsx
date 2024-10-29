@@ -3,6 +3,7 @@ import * as faceapi from 'face-api.js';
 import styles from '@/styles/Step.module.css';
 import CustomButton from '@/components/CustomButton';
 import { usePhotoStore } from '@/store/usePhotoStore';
+import { FaCamera } from "react-icons/fa";
 
 interface Step9Props {
   onNext: () => void;
@@ -112,7 +113,7 @@ const handleCapture = useCallback(async () => {
               <canvas ref={canvasRef} style={{ display: 'none' }} />
               <div className={styles.buttonContainer}>
                 <CustomButton onClick={handleCapture} state={!modelsLoaded ? 'disabled' : 'default'}>
-                  촬영하기
+                  <FaCamera />
                 </CustomButton>
               </div>
             </>
