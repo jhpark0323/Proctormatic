@@ -1,3 +1,4 @@
+// Step8.tsx
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import styles from '@/styles/Step.module.css';
 import CustomButton from '@/components/CustomButton';
@@ -6,7 +7,7 @@ import { usePhotoStore } from '@/store/usePhotoStore';
 const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const photoCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { photo, setPhoto } = usePhotoStore();
+  const { photoStep8, setPhotoStep8 } = usePhotoStore();
   const [isPhotoTaken, setIsPhotoTaken] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -15,7 +16,6 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   const startWebcam = async () => {
     if (!stream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        console.log("웹캠 접근 시도 중...");
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             width: { ideal: 640 },
@@ -23,14 +23,12 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
             facingMode: 'user'
           } 
         });
-        console.log("웹캠 접근 성공");
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
         setError(null);
       } catch (error) {
-        console.error("웹캠을 사용할 수 없습니다:", error);
         setError("웹캠을 사용할 수 없습니다. 카메라 접근 권한을 확인해주세요.");
       }
     }
@@ -50,10 +48,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   }, [isPhotoTaken]);
 
   const capturePhoto = useCallback(() => {
-    if (!isVideoLoaded) {
-      console.log("비디오가 아직 로드되지 않았습니다.");
-      return;
-    }
+    if (!isVideoLoaded) return;
 
     if (videoRef.current && photoCanvasRef.current) {
       const context = photoCanvasRef.current.getContext('2d');
@@ -68,7 +63,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         const imageDataUrl = canvas.toDataURL('image/png');
-        setPhoto(imageDataUrl);
+        setPhotoStep8(imageDataUrl);
         setIsPhotoTaken(true);
 
         if (stream) {
@@ -77,14 +72,14 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         }
       }
     }
-  }, [isVideoLoaded, stream, setPhoto]);
+  }, [isVideoLoaded, stream, setPhotoStep8]);
 
   const retakePhoto = useCallback(() => {
     setIsPhotoTaken(false);
-    setPhoto(null);
+    setPhotoStep8(null);
     setIsVideoLoaded(false);
     setError(null);
-  }, [setPhoto]);
+  }, [setPhotoStep8]);
 
   return (
     <>
@@ -93,7 +88,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         <div className={styles.StepSubTitle}>본인 확인을 위해 셀프 이미지를 촬영해요.</div>
       </div>
       <div className={styles.StepInner}>
-        <div className={styles.Step8Video}>
+        <div className={styles.StepVideo}>
           {error && (
             <div className="text-red-500 p-4 text-center">
               {error}
@@ -105,46 +100,34 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
                 ref={videoRef} 
                 autoPlay 
                 playsInline
-                className={styles.Step8VideoInner} 
-                onLoadedMetadata={() => {
-                  console.log("비디오 메타데이터가 로드되었습니다.");
-                  setIsVideoLoaded(true);
-                }}
+                className={styles.StepVideoInner} 
+                onLoadedMetadata={() => setIsVideoLoaded(true)}
               />
-              <canvas 
-                ref={photoCanvasRef} 
-                style={{ display: 'none' }}
-              />
+              <canvas ref={photoCanvasRef} style={{ display: 'none' }} />
               <div className={styles.buttonContainer}>
-                <button 
-                  onClick={capturePhoto}
-                  disabled={!isVideoLoaded}
-                >
+                <CustomButton onClick={capturePhoto} state={!isVideoLoaded ? 'disabled' : 'default' }>
                   사진 찍기
-                </button>
+                </CustomButton>
               </div>
             </>
           ) : (
             <>
-              <div className={styles.Step8VideoInner}>
+              <div className={styles.StepVideoInner}>
                 <img 
-                  src={photo || ''} 
+                  src={photoStep8 || ''} 
                   alt="촬영된 사진"
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 />
               </div>
               <div className={styles.buttonContainer}>
-                <button onClick={retakePhoto}>다시 찍기</button>
+                <CustomButton onClick={retakePhoto}>다시 찍기</CustomButton>
               </div>
             </>
           )}
         </div>
       </div>
       <div className={styles.StepFooter}>
-        <CustomButton 
-          onClick={onNext}
-          state={!isPhotoTaken ? 'disabled' : 'default'}
-        >
+        <CustomButton onClick={onNext} state={!isPhotoTaken ? 'disabled' : 'default'}>
           다음
         </CustomButton>
       </div>
