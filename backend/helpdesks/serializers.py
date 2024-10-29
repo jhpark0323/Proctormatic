@@ -32,3 +32,8 @@ class FaqCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Faq
         fields = '__all__'
+
+class FaqListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faq
+        fields = ('id', 'title',)
