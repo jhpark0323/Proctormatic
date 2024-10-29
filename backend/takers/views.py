@@ -237,13 +237,11 @@ swagger_jwt_auth = openapi.Parameter(
 @permission_classes([AllowAny])
 @parser_classes([MultiPartParser])
 def update_taker(request):
-    user_id, user_role = get_user_info_from_token(request)
+    taker_id = request.auth['user_id']
     required_fields = ['idPhoto', 'birth', 'verification_rate']
     for field in required_fields:
         if field not in request.data:
             return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    taker_id = user_id
 
     taker = Taker.objects.filter(id=taker_id).first()
     if not taker:
@@ -280,22 +278,3 @@ def is_valid_email(email):
     if re.match(email_regex, email):
         return True
     return False
-
-def get_user_info_from_token(request):
-    token = request.META.get('HTTP_AUTHORIZATION')
-    if not token:
-        return None, None
-
-    token_parts = token.split(" ")
-    if len(token_parts) != 2:
-        return None, None
-
-    payload = jwt.decode(token_parts[1], settings.SECRET_KEY, algorithms=["HS256"], options={"verify_exp": True})
-
-    user_id = payload.get('user_id')
-    role = payload.get('role')
-    taker = Taker.objects.filter(id=user_id).first() if user_id else None
-
-    if taker:
-        return user_id, role
-    return None, None
