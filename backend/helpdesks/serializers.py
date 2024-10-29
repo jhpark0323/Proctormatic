@@ -34,6 +34,11 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at')
 
+class QuestionEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('category', 'title', 'content',)
+
 class FaqCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Faq

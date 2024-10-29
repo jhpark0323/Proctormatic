@@ -1,6 +1,6 @@
 from .models import Notification, Question, Faq
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
-    FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer
+    FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer, QuestionEditSerializer
 from .serializers import QuestionCreateSerializer, QuestionListSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
@@ -291,7 +291,38 @@ def question(request):
         ))
     }
 )
-@api_view(['GET'])
+@swagger_auto_schema(
+    method='put',
+    operation_summary="질문 수정",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING),
+        openapi.Parameter('question_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER, required=True)
+    ],
+    request_body=QuestionEditSerializer,
+    responses={
+        200: openapi.Response('질문이 수정되었습니다.', schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        ),
+        400: openapi.Response('잘못된 요청', schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'error': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        ),
+        404: openapi.Response('없는 질문 요청', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ))
+    }
+)
+@api_view(['GET', 'PUT'])
 def question_detail(request, question_id):
     user_id = request.auth['user_id']
 
@@ -303,6 +334,13 @@ def question_detail(request, question_id):
     if request.method == 'GET':
         serializer = QuestionSerializer(question)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PUT':
+        serializer = QuestionEditSerializer(question, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '질문이 수정되었습니다.'}, status=status.HTTP_200_OK)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -338,6 +376,7 @@ def faq(request):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '자주 묻는 질문이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+
 
 @swagger_auto_schema(
     method='get',
