@@ -234,7 +234,6 @@ swagger_jwt_auth = openapi.Parameter(
 
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
-@permission_classes([AllowAny])
 @parser_classes([MultiPartParser])
 def update_taker(request):
     taker_id = request.auth['user_id']
@@ -341,7 +340,6 @@ def update_taker(request):
 )
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
-@permission_classes([AllowAny])
 @parser_classes([MultiPartParser])
 def add_web_cam(request):
     taker_id = request.auth['user_id']
