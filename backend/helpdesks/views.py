@@ -306,7 +306,28 @@ def faq(request):
         ))
     }
 )
-@api_view(['GET'])
+@swagger_auto_schema(
+    method='delete',
+    operation_summary="자주 묻는 질문 삭제",
+    manual_parameters=[
+        openapi.Parameter('faq_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER, required=True)
+    ],
+    responses={
+        204: openapi.Response('자주 묻는 질문 삭제 성공', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        404: openapi.Response('자주 묻는 질문이 존재하지 않음', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ))
+    }
+)
+@api_view(['GET', 'DELETE'])
 @permission_classes([AllowAny])
 def faq_detail(request, faq_id):
     if request.method == 'GET':
@@ -316,3 +337,10 @@ def faq_detail(request, faq_id):
             return Response({'message': '자주 묻는 질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = FaqSerializer(faq)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'DELETE':
+        try:
+            faq = Faq.objects.get(id=faq_id)
+        except:
+            return Response({'message': '자주 묻는 질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        faq.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
