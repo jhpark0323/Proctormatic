@@ -163,17 +163,7 @@ def handle_email_verification(request):
 @swagger_auto_schema(
     method='post',
     operation_summary="회원가입",
-    request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'name': openapi.Schema(type=openapi.TYPE_STRING),
-            'email': openapi.Schema(type=openapi.TYPE_STRING),
-            'password': openapi.Schema(type=openapi.TYPE_STRING),
-            'birth': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
-            'policy': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-            'marketing': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-        }
-    ),
+    request_body=UserSerializer,
     responses={
         201: openapi.Response('회원가입이 완료되었습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -245,7 +235,9 @@ def handle_user(request):
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
-        return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
     else:
         if not request.user.is_authenticated:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
@@ -383,17 +375,18 @@ def handle_token(request):
 def find_email(request):
     request_serializer = FindEmailRequestSerializer(data=request.data)
     if request_serializer.is_valid():
-        name = request_serializer.data.get('name')
-        birth = request_serializer.data.get('birth')
-        user_list = User.objects.filter(name=name, birth=birth, is_active=1).order_by('-created_at')
+        name = request_serializer.validated_data.get('name')
+        birth = request_serializer.validated_data.get('birth')
+        user_list = User.objects.filter(name=name, birth=birth, is_active=True).order_by('-created_at')
 
         response_serializer = FindEmailResponseSerializer(user_list, many=True)
         return Response({
             'emailList': response_serializer.data,
             'size': len(response_serializer.data)
         }, status=status.HTTP_200_OK)
-    else:
-        return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    error_message = next(iter(request_serializer.errors.values()))[0]
+    return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(

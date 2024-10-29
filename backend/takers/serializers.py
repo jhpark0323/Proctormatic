@@ -9,6 +9,15 @@ class TakerSerializer(serializers.ModelSerializer):
         model = Taker
         fields = ['name', 'email', 'entry_time','exam']
 
+    def create(self, validated_data):
+        email = validated_data.get('email')
+        exam = validated_data.get('exam')
+
+        if Taker.objects.filter(email=email, exam_id=exam.id).exists():
+            raise serializers.ValidationError('이미 등록된 사용자입니다.')
+
+        return super().create(validated_data)
+
 class UpdateTakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Taker
