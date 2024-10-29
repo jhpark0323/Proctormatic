@@ -28,6 +28,12 @@ class QuestionListSerializer(serializers.ModelSerializer):
         model = Question
         exclude = ['user', 'content']
 
+class QuestionSerializer(serializers.ModelSerializer):
+    organizer = serializers.CharField(source='user.name', read_only=True)
+    class Meta:
+        model = Question
+        fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at')
+
 class FaqCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Faq
