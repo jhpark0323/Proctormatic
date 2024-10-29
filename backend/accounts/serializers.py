@@ -19,9 +19,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
 
 class UserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        error_messages={
+            'invalid': "잘못된 이메일 형식입니다."
+        }
+    )
+    birth = serializers.DateField(
+        error_messages={
+            'invalid': "생년월일을 확인해주세요.",
+            'invalid_date': "생년월일을 확인해주세요."
+        }
+    )
+
     class Meta:
         model = User
-        fields = ['name', 'email', 'password', 'birth', 'policy', 'marketing']
+        fields = ('name', 'email', 'password', 'birth', 'policy', 'marketing',)
         extra_kwargs = {'password': {'write_only': True, 'min_length': 8}}
 
     def create(self, validated_data):
@@ -42,22 +54,29 @@ class EditMarketingSerializer(serializers.ModelSerializer):
         fields = ('marketing',)
 
 class FindEmailRequestSerializer(serializers.ModelSerializer):
-    birth = serializers.CharField()
+    birth = serializers.CharField(
+        error_messages={
+            'invalid': "날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다."
+        }
+    )
 
     class Meta:
         model = User
         fields = ('name', 'birth',)
 
-    def to_internal_value(self, data):
-        validated_data = super().to_internal_value(data)
+    def validate_birth(self, value):
+        if not value.isdigit() or len(value) != 6:
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다.")
 
-        birth_str = validated_data.get('birth')
         try:
-            validated_data['birth'] = datetime.strptime(birth_str, '%y%m%d').date()
+            birth_date = datetime.strptime(value, '%y%m%d')
         except ValueError:
-            raise serializers.ValidationError({"message": "날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다."})
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다.")
 
-        return validated_data
+        if birth_date > datetime.now():
+            raise serializers.ValidationError("생년월일을 확인해주세요.")
+
+        return birth_date
 
 class FindEmailResponseSerializer(serializers.ModelSerializer):
     joined_on = serializers.SerializerMethodField()
