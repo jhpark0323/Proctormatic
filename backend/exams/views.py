@@ -516,13 +516,53 @@ def completed_exam_list(request):
         )),
     }
 )
-@api_view(['GET', 'PUT'])
+@swagger_auto_schema(
+    method='delete',
+    operation_summary="시험 삭제",
+    operation_description="특정 시험을 삭제합니다. 시험 ID를 경로 파라미터로 전달해야 하며, 권한이 필요합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT Token>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        204: openapi.Response('시험이 성공적으로 삭제되었습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        409: openapi.Response('진행 중인 시험은 삭제할 수 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+    }
+)
+@api_view(['GET', 'PUT', 'DELETE'])
 def exam_detail(request, pk):
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    # 탈퇴한 유저일 경우
     user = User.objects.get(id=user_id)
     if not user.is_active:
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
@@ -573,8 +613,18 @@ def exam_detail(request, pk):
 
         return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
 
+    elif request.method == "DELETE":
+         # 진행 중인 시험은 삭제 불가
+        current_time = datetime.datetime.now().time()
+        if exam.date == datetime.date.today() and exam.entry_time <= current_time <= exam.end_time:
+            return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
+        
+        # 시험 삭제
+        exam.delete()
+        return Response({"message": "시험이 성공적으로 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+
     # 추가로 명확히 응답을 설정
-    return Response({"message": "올바르지 않은 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 User = get_user_model()  # User 모델 가져오기
