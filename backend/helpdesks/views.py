@@ -2,6 +2,7 @@ from .models import Notification, Question, Faq
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
     FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer
 from .serializers import QuestionCreateSerializer, QuestionListSerializer
+from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,6 +10,9 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.paginator import Paginator
+
+
+User = get_user_model()
 
 @swagger_auto_schema(
     method='get',
@@ -289,8 +293,10 @@ def question(request):
 )
 @api_view(['GET'])
 def question_detail(request, question_id):
+    user_id = request.auth['user_id']
+
     try:
-        question = Question.objects.get(pk=question_id)
+        question = Question.objects.get(pk=question_id, user_id=user_id)
     except:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
