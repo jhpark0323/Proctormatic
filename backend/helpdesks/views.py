@@ -322,7 +322,24 @@ def question(request):
         ))
     }
 )
-@api_view(['GET', 'PUT'])
+@swagger_auto_schema(
+    method='delete',
+    operation_summary="질문 삭제",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING),
+        openapi.Parameter('question_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER, required=True)
+    ],
+    responses={
+        204: openapi.Response('질문 삭제 성공'),
+        404: openapi.Response('질문이 존재하지 않음', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ))
+    }
+)
+@api_view(['GET', 'PUT', 'DELETE'])
 def question_detail(request, question_id):
     user_id = request.auth['user_id']
 
@@ -341,6 +358,10 @@ def question_detail(request, question_id):
             serializer.save()
             return Response({'message': '질문이 수정되었습니다.'}, status=status.HTTP_200_OK)
         return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        question.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @swagger_auto_schema(
