@@ -18,5 +18,4 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Nginx 기본 설정 유지
-EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
