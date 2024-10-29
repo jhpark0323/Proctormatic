@@ -6,4 +6,5 @@ urlpatterns = [
     path('notification/<notification_id>/', views.check_notification, name='check_notification'),
     path('question/', views.question, name='question'),
     path('faq/', views.faq),
+    path('faq/<faq_id>/', views.faq_detail),
 ]

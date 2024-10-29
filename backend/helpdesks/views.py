@@ -1,6 +1,6 @@
 from .models import Notification, Question, Faq
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
-    FaqCreateSerializer, FaqListSerializer
+    FaqCreateSerializer, FaqListSerializer, FaqSerializer
 from .serializers import QuestionCreateSerializer, QuestionListSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -289,3 +289,30 @@ def faq(request):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '자주 묻는 질문이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="자주 묻는 질문 조회",
+    manual_parameters=[
+        openapi.Parameter('faq_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER, required=True)
+    ],
+    responses={
+        200: FaqSerializer(),
+        404: openapi.Response('없는 질문 요청', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ))
+    }
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def faq_detail(request, faq_id):
+    if request.method == 'GET':
+        try:
+            faq = Faq.objects.get(id=faq_id)
+        except:
+            return Response({'message': '자주 묻는 질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = FaqSerializer(faq)
+        return Response(serializer.data, status=status.HTTP_200_OK)
