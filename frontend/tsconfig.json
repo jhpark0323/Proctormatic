@@ -2,7 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "target": "es6",
-    "module": "commonjs",
+    "module": "esnext",
     "esModuleInterop": true,
     "types": ["@testing-library/jest-dom", "node", "jest"],
     "moduleResolution": "node",
@@ -13,7 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["../src/*"]
+      "@/*": ["*"]
     },
     "outDir": "./dist"
     // "files": [],
