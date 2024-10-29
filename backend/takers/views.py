@@ -234,7 +234,6 @@ swagger_jwt_auth = openapi.Parameter(
 
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
-@permission_classes([AllowAny])
 @parser_classes([MultiPartParser])
 def update_taker(request):
     taker_id = request.auth['user_id']
@@ -272,6 +271,103 @@ def update_taker(request):
         return Response( status=status.HTTP_200_OK)
 
     return Response({'message': '잘못된 요청입니다.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    method='patch',
+    operation_summary="웹캠 파일 추가",
+    manual_parameters=[
+        swagger_jwt_auth,
+        openapi.Parameter(
+            'webCam',
+            openapi.IN_FORM,
+            description='웹캠 녹화 파일 (파일 업로드)',
+            type=openapi.TYPE_FILE,
+            required=True
+        ),
+        openapi.Parameter(
+            'startTime',
+            openapi.IN_FORM,
+            description='녹화 시작 시간',
+            type=openapi.TYPE_STRING,
+            required=True
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="저장 완료",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+            )
+        ),
+        400: openapi.Response(
+            description="잘못된 요청",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='오류 메시지'),
+                }
+            ),
+            examples={
+                'missing_webCam': {
+                    'status': 400,
+                    'message': "webCam 파일이 필요합니다."
+                },
+                'missing_startTime': {
+                    'status': 400,
+                    'message': "startTime 값이 필요합니다."
+                }
+            }
+        ),
+        403: openapi.Response(
+            description="해당하는 role 사용자가 아닙니다.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'status': openapi.Schema(type=openapi.TYPE_INTEGER, description='HTTP 상태 코드'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='오류 메시지'),
+                }
+            ),
+            examples={
+                'forbidden': {
+                    'status': 403,
+                    'message': "권한이 없습니다."
+                }
+            }
+        ),
+    }
+)
+@api_view(['PATCH'])
+@authentication_classes([CustomJWTAuthentication])
+@parser_classes([MultiPartParser])
+def add_web_cam(request):
+    taker_id = request.auth['user_id']
+
+    taker = Taker.objects.filter(id=taker_id).first()
+    exam_id = taker.exam_id
+
+    if 'webCam' not in request.FILES:
+        return Response('잘못된 요청입니다.', status=400)
+
+    web_cam_file = request.FILES['webCam']
+    start_time = request.data.get('startTime')
+
+    if not start_time:
+        return Response('잘못된 요청입니다.', status=400)
+
+    taker_id = request.auth.get('user_id', 'default_user')
+    _, file_extension = os.path.splitext(web_cam_file.name)
+    file_name = f'{taker_id}_webcam_{start_time}{file_extension}'
+    folder_path = os.path.join('prome', str(exam_id), str(taker_id))
+    os.makedirs(folder_path, exist_ok=True)
+    file_path = os.path.join(folder_path, file_name)
+
+    with open(file_path, 'wb+') as destination:
+        for chunk in web_cam_file.chunks():
+            destination.write(chunk)
+
+    return Response(status=status.HTTP_200_OK)
 
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
