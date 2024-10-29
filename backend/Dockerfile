@@ -1,13 +1,10 @@
 FROM python:3.11
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY requirements.txt /usr/src/app/
+COPY . .
+
 RUN pip3 install -r requirements.txt
-
-COPY . /usr/src/app/
-
-WORKDIR /usr/src/app/proctomatic
 
 CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
 
