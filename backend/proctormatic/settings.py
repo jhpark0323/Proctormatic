@@ -27,17 +27,17 @@ environ.Env.read_env(
 )
 
 REDIS_HOST = env('REDIS_HOST')
-REDIS_PORT = env('REDIS_PORT')
-REDIS_DB = env('REDIS_DB')
+REDIS_PORT = env.int('REDIS_PORT', default=6379)
+REDIS_DB = env.int('REDIS_DB', default=1)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--@ooei&dsv(9mzsfh6^j3+58f6^%l7(bo-yk@5h0*^fkij0s(i'
+SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure--@ooei&dsv(9mzsfh6^j3+58f6^%l7(bo-yk@5h0*^fkij0s(i')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = []
 
@@ -138,9 +138,11 @@ DATABASES = {
         'USER': env('MYSQL_USER', default='root'),
         'PASSWORD': env('MYSQL_PASSWORD', default='1234'),
         'HOST': env('MYSQL_HOST', default='localhost'),
-        'PORT': 3306,
+        'PORT': env.int('MYSQL_PORT', default=3306),
     }
 }
+
+
 
 CACHES = {
     "default": {
