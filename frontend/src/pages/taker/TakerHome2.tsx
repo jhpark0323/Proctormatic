@@ -9,12 +9,14 @@ import { MdDevices } from "react-icons/md";
 import { IoCameraOutline } from "react-icons/io5";
 import { TbCameraSelfie } from "react-icons/tb";
 import { RiIdCardLine } from "react-icons/ri";
+import { AiOutlineRobot } from "react-icons/ai";
 
 
 import Step6 from './steps/Step6';
 import Step7 from './steps/Step7';
 import Step8 from './steps/Step8';
 import Step9 from './steps/Step9';
+import Step10 from './steps/Step10';
 
 
 const TakerHome2 = () => {
@@ -35,7 +37,9 @@ const TakerHome2 = () => {
       case 8:
         return <Step8 onNext={() => setStep(9)} />;
       case 9:
-        return <Step9 />;
+        return <Step9 onNext={() => setStep(10)} />;
+      case 10:
+        return <Step10 />;
       default:
         return null;
     }
@@ -63,10 +67,13 @@ const TakerHome2 = () => {
               <IoCameraOutline size={22} />카메라 연결
             </div>
             <div className={styles.SideStep} style={getStepStyle(8)}>
-              <TbCameraSelfie size={22} />본인 사진 촬영
+              <TbCameraSelfie size={22} />사진 촬영
             </div>
             <div className={styles.SideStep} style={getStepStyle(9)}>
               <RiIdCardLine size={22} />신분증 촬영
+            </div>
+            <div className={styles.SideStep} style={getStepStyle(10)}>
+              <AiOutlineRobot size={22} />AI 본인 인증
             </div>
             {/* <div className={styles.SideStep} style={getStepStyle(5)}>
               <MdOutlinePersonOutline size={22} />응시자 정보 입력
