@@ -1,20 +1,19 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/useAuthStore';
-import HeaderBlue from "../../components/HeaderBlue";
-import styles from '../../styles/TakerHome.module.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
+import HeaderBlue from "@/components/HeaderBlue";
+import styles from "@/styles/TakerHome.module.css";
 import { MdOutlineEmail } from "react-icons/md";
 import { PiWarningBold, PiInfoBold } from "react-icons/pi";
 import { HiOutlineDocumentSearch } from "react-icons/hi";
 import { MdOutlinePersonOutline } from "react-icons/md";
 import { FaAngleLeft } from "react-icons/fa6";
 
-import Step1 from './steps/Step1';
-import Step2 from './steps/Step2';
-import Step3 from './steps/Step3';
-import Step4 from './steps/Step4';
-import Step5 from './steps/Step5';
-
+import Step1 from "@/pages/taker/steps/Step1";
+import Step2 from "@/pages/taker/steps/Step2";
+import Step3 from "@/pages/taker/steps/Step3";
+import Step4 from "@/pages/taker/steps/Step4";
+import Step5 from "@/pages/taker/steps/Step5";
 
 const TakerHome = () => {
   const { user } = useAuthStore();
@@ -43,8 +42,8 @@ const TakerHome = () => {
   };
 
   const getStepStyle = (currentStep: number) => ({
-    color: step === currentStep ? 'black' : 'var(--GRAY_400)',
-    fontSize: step === currentStep ? '20px' : '18px',
+    color: step === currentStep ? "black" : "var(--GRAY_400)",
+    fontSize: step === currentStep ? "20px" : "18px",
   });
 
   return (
@@ -52,25 +51,35 @@ const TakerHome = () => {
       <HeaderBlue userRole={user?.role} />
       <div className={styles.Content}>
         <div className={styles.ContentHeader}>
-          <FaAngleLeft size={23} style={{ cursor: 'pointer' }} onClick={handleBackClick} />시험장 입실하기
+          <FaAngleLeft
+            size={23}
+            style={{ cursor: "pointer" }}
+            onClick={handleBackClick}
+          />
+          시험장 입실하기
         </div>
         <div className={styles.ContentInner}>
           {/* 사이드바 부분 */}
           <div className={styles.InnerSide} role="complementary">
             <div className={styles.SideStep} style={getStepStyle(1)}>
-              <MdOutlineEmail size={22} />URL 입력하기
+              <MdOutlineEmail size={22} />
+              URL 입력하기
             </div>
             <div className={styles.SideStep} style={getStepStyle(2)}>
-              <PiInfoBold size={22} />시험 주의사항
+              <PiInfoBold size={22} />
+              시험 주의사항
             </div>
             <div className={styles.SideStep} style={getStepStyle(3)}>
-              <PiWarningBold size={22} />부정행위 안내
+              <PiWarningBold size={22} />
+              부정행위 안내
             </div>
             <div className={styles.SideStep} style={getStepStyle(4)}>
-              <HiOutlineDocumentSearch size={22} />시험정보 확인
+              <HiOutlineDocumentSearch size={22} />
+              시험정보 확인
             </div>
             <div className={styles.SideStep} style={getStepStyle(5)}>
-              <MdOutlinePersonOutline size={22} />응시자 정보 입력
+              <MdOutlinePersonOutline size={22} />
+              응시자 정보 입력
             </div>
           </div>
 
