@@ -111,13 +111,17 @@ def add_taker(request):
         serializer = TakerSerializer(data=request.data)
 
         if serializer.is_valid():
-            expected_taker_count = Exam.objects.filter(id=serializer.validated_data['exam'].id).values_list('expected_taker', flat=True).first()
-            current_taker_count = Taker.objects.filter(exam=serializer.validated_data['exam'].id).count()
+            exam = Exam.objects.get(id=serializer.validated_data['exam'].id)
 
-            if current_taker_count >= expected_taker_count:
+            if exam.total_taker >= exam.expected_taker:
                 return Response("참가자 수를 초과했습니다.", status=status.HTTP_429_TOO_MANY_REQUESTS)
+
             taker = serializer.save()
             access_token = TakerTokenSerializer.get_access_token(taker)
+
+            exam.total_taker += 1
+            exam.save(update_fields=['total_taker'])
+
             return Response({
                 'access': str(access_token),
             }, status=status.HTTP_201_CREATED)
