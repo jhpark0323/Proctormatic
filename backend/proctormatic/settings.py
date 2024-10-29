@@ -138,7 +138,7 @@ DATABASES = {
         'USER': env('MYSQL_USER', default='root'),
         'PASSWORD': env('MYSQL_PASSWORD', default='1234'),
         'HOST': env('MYSQL_HOST', default='localhost'),
-        'PORT': int(env('MYSQL_PORT', default='3306'),)
+        'PORT': int(env('MYSQL_PORT', default='3306')),
     }
 }
 
