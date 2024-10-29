@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import HeaderBlue from "../../components/HeaderBlue";
@@ -19,7 +19,29 @@ import Step9 from './steps/Step9';
 import Step10 from './steps/Step10';
 
 
+import * as faceapi from 'face-api.js';
+
 const TakerHome2 = () => {
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      if (modelsLoaded) return;
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models')
+        ]);
+        setModelsLoaded(true);
+      } catch (error) {
+        console.error('Error loading models in TakerHome2:', error);
+      }
+    };
+    loadModels();
+  }, [modelsLoaded]);
+
+
   const { user } = useAuthStore();
   const [step, setStep] = useState(6);
   const navigate = useNavigate();
@@ -39,7 +61,7 @@ const TakerHome2 = () => {
       case 9:
         return <Step9 onNext={() => setStep(10)} />;
       case 10:
-        return <Step10 />;
+        return <Step10 modelsLoaded={modelsLoaded} />;
       default:
         return null;
     }

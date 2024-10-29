@@ -1,8 +1,10 @@
-// Step8.tsx
 import React, { useRef, useEffect, useCallback, useState } from 'react';
+import * as faceapi from 'face-api.js';
 import styles from '@/styles/Step.module.css';
 import CustomButton from '@/components/CustomButton';
 import { usePhotoStore } from '@/store/usePhotoStore';
+import { CustomToast } from '@/components/CustomToast';
+import { FaCamera } from "react-icons/fa";
 
 const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -12,16 +14,17 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
 
   const startWebcam = async () => {
     if (!stream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
             width: { ideal: 640 },
             height: { ideal: 480 },
             facingMode: 'user'
-          } 
+          }
         });
         setStream(mediaStream);
         if (videoRef.current) {
@@ -34,7 +37,14 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     }
   };
 
+  const loadModels = async () => {
+    const MODEL_URL = '/models';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    setModelsLoaded(true);
+  };
+
   useEffect(() => {
+    loadModels();
     if (!isPhotoTaken) {
       startWebcam();
     }
@@ -47,32 +57,47 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     };
   }, [isPhotoTaken]);
 
-  const capturePhoto = useCallback(() => {
-    if (!isVideoLoaded) return;
+  const capturePhoto = useCallback(async () => {
+    if (!isVideoLoaded || !modelsLoaded) return;
 
     if (videoRef.current && photoCanvasRef.current) {
       const context = photoCanvasRef.current.getContext('2d');
       if (context) {
         const video = videoRef.current;
         const canvas = photoCanvasRef.current;
-        
+
         const videoAspectRatio = video.videoWidth / video.videoHeight;
         canvas.width = 640;
         canvas.height = canvas.width / videoAspectRatio;
-        
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageDataUrl = canvas.toDataURL('image/png');
-        setPhotoStep8(imageDataUrl);
-        setIsPhotoTaken(true);
 
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
-          setStream(null);
-        }
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageDataUrl = canvas.toDataURL('image/png');
+
+        const img = new Image();
+        img.src = imageDataUrl;
+        img.onload = async () => {
+          const detections = await faceapi.detectAllFaces(
+            img,
+            new faceapi.TinyFaceDetectorOptions()
+          );
+
+          if (detections.length > 0) {
+            setPhotoStep8(imageDataUrl);
+            setIsPhotoTaken(true);
+
+            if (stream) {
+              stream.getTracks().forEach((track) => track.stop());
+              setStream(null);
+            }
+          } else {
+            CustomToast("얼굴 인식에 실패했습니다. 다시 촬영해 주세요.");
+            setIsPhotoTaken(false);
+          }
+        };
       }
     }
-  }, [isVideoLoaded, stream, setPhotoStep8]);
+  }, [isVideoLoaded, stream, setPhotoStep8, modelsLoaded]);
 
   const retakePhoto = useCallback(() => {
     setIsPhotoTaken(false);
@@ -105,8 +130,8 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
               />
               <canvas ref={photoCanvasRef} style={{ display: 'none' }} />
               <div className={styles.buttonContainer}>
-                <CustomButton onClick={capturePhoto} state={!isVideoLoaded ? 'disabled' : 'default' }>
-                  사진 찍기
+                <CustomButton onClick={capturePhoto} state={!isVideoLoaded || !modelsLoaded ? 'disabled' : 'default' }>
+                  <FaCamera color='white' />
                 </CustomButton>
               </div>
             </>
