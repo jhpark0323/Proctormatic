@@ -14,7 +14,7 @@ class TakerSerializer(serializers.ModelSerializer):
         exam = validated_data.get('exam')
 
         if Taker.objects.filter(email=email, exam_id=exam.id).exists():
-            raise serializers.ValidationError('이미 등록된 사용자입니다.')
+            raise serializers.ValidationError({"message": "이미 등록된 사용자입니다."})
 
         return super().create(validated_data)
 
