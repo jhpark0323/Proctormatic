@@ -5,6 +5,7 @@ import HeaderWhite from "@/components/HeaderWhite";
 import Modal from "@/components/LoginModal";
 import styles from "@/styles/Home.module.css";
 import SwiperComponent from "@/components/Swiper";
+import TestDetail from "./host/testpages/TestDetail";
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,7 +27,8 @@ const Home = () => {
 
   return (
     <>
-      <HeaderWhite
+      <TestDetail />
+      {/* <HeaderWhite
         onLoginClick={openModal}
         userRole={user?.role}
         onLogoutClick={handleLogout}
@@ -52,7 +54,7 @@ const Home = () => {
           data-testid="backdrop"
           onClick={closeModal}
         ></div>
-      )}
+      )} */}
     </>
   );
 };
