@@ -1,6 +1,7 @@
 import styles from "@/styles/Buttons.module.css";
 import cancleButton from "@/assets/cancleButton.png";
 import { useState } from "react";
+import { IoSearchSharp } from "react-icons/io5";
 
 // 사용 예시
 /* 
@@ -11,7 +12,7 @@ import { useState } from "react";
         helpMessage="이름을 입력하세요"
         placeholder="홍길동"
         maxLength=10
-        trailingIcon={true}
+        trailingIcon="delete"
         onChange={(value) => setName(value)}
       >
         {name}
@@ -22,11 +23,12 @@ interface TextfieldProps {
   label?: string;
   helpMessage?: string;
   placeholder?: string;
-  trailingIcon?: boolean;
+  trailingIcon?: "delete" | "search";
   type?: "underline" | "default";
   maxLength?: number;
   children?: React.ReactNode;
   onChange?: (value: string) => void;
+  handleSearch?: () => void;
 }
 
 const Textfield = ({
@@ -38,6 +40,7 @@ const Textfield = ({
   children = "",
   type = "default",
   onChange,
+  handleSearch,
 }: TextfieldProps) => {
   const [inputValue, setInputValue] = useState(children?.toString() || "");
   const handleClear = () => {
@@ -48,6 +51,14 @@ const Textfield = ({
     setInputValue(newValue);
     if (onChange) {
       onChange(newValue); // 값 변경 시 부모 컴포넌트로 전달
+    }
+  };
+
+  const handleIconClick = () => {
+    if (trailingIcon === "delete") {
+      handleClear();
+    } else if (trailingIcon === "search") {
+      handleSearch;
     }
   };
 
@@ -71,13 +82,20 @@ const Textfield = ({
         />
 
         {/* 트레일링 아이콘 */}
-        {trailingIcon && (
+        {trailingIcon === "delete" && (
           <img
             src={cancleButton}
             alt="icon"
             className={styles["trailing-icon"]}
-            onClick={handleClear} // 아이콘 클릭 시 내용 지우기
-            style={{ cursor: "pointer" }} // 커서 스타일 변경
+            onClick={handleClear}
+            style={{ cursor: "pointer" }}
+          />
+        )}
+        {trailingIcon === "search" && (
+          <IoSearchSharp
+            className={styles["trailing-icon"]}
+            onClick={handleSearch}
+            style={{ cursor: "pointer", opacity: 0.5 }}
           />
         )}
       </div>

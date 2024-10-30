@@ -15,3 +15,4 @@ class Exam(models.Model):
     cheer_msg = models.CharField(max_length=255, null=True, blank=True)  # 응원 메시지 (nullable)
     cost = models.IntegerField()  # 서비스 요금
     created_at = models.DateTimeField(auto_now_add=True)  # 생성일
+    is_deleted = models.BooleanField(default=False)

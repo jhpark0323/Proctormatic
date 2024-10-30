@@ -1,4 +1,4 @@
-import { Navigation, Scrollbar } from 'swiper/modules';
+import { Navigation, Autoplay } from 'swiper/modules';
 import Landing1 from '../assets/Landing1.png';
 import semiLogo from '../assets/semiLogo.png';
 import cLab from '../assets/cLab.png';
@@ -16,15 +16,15 @@ const SwiperComponent = () => {
 
   return (
     <Swiper
-      modules={[Navigation, Scrollbar]}
+      modules={[Navigation, Autoplay]}
       spaceBetween={50}
       slidesPerView={1}
       slidesPerGroup={1} // 슬라이드 그룹 개수 조정
-      scrollbar={{ draggable: true }}
       pagination={{ clickable: true }} // 점 추가 및 클릭 가능 설정
       loop={!isTestEnvironment} // 테스트 환경이 아닐 때만 loop 활성화
       className={styles.SwiperComponent}
       data-testid="swiper-component" // Swiper에 data-testid 추가
+      autoplay={{ delay: 3000, disableOnInteraction: false }}
     >
       {/* 첫번째 슬라이드 */}
       <SwiperSlide>

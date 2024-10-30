@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Notification, Question
-from django.contrib.auth import get_user_model
+from .models import Notification, Question, Faq
+
 
 class NotificationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ['title', 'content']
+        fields = '__all__'
 
 class NotificationListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,3 +21,35 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['category', 'title', 'content']
+
+class QuestionListSerializer(serializers.ModelSerializer):
+    organizer = serializers.CharField(source='user.name', read_only=True)
+    class Meta:
+        model = Question
+        exclude = ['user', 'content']
+
+class QuestionSerializer(serializers.ModelSerializer):
+    organizer = serializers.CharField(source='user.name', read_only=True)
+    class Meta:
+        model = Question
+        fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at')
+
+class QuestionEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('category', 'title', 'content',)
+
+class FaqCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faq
+        fields = '__all__'
+
+class FaqListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faq
+        fields = ('id', 'title',)
+
+class FaqSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faq
+        fields = ('title', 'content',)

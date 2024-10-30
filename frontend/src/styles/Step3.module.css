@@ -1,0 +1,36 @@
+.StepInner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.StepInner > div {
+  width: 100%;
+  height: 15%;
+  background-color: var(--GRAY_200);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.StepInner > div > div {
+  margin-left: 10px;
+}
+
+.StepInner > div > p > span {
+  color: var(--DELETE);
+}
+
+.backImg {
+  background-color: white;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 30px;
+  border: 1px solid gray;
+}

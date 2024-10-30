@@ -1,0 +1,162 @@
+.faqContainer {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8% 0;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.faqContent {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.faqWrap {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 70vw;
+}
+
+.faqItem {
+  width: 32%;
+  height: 5.5vh;
+  border: 1px solid var(--GRAY_400);
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.separator {
+  height: 1px;
+  width: 80vw;
+  margin-left: 10vw;
+  background-color: var(--GRAY_400);
+}
+
+.manualContainer {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8% 0;
+  gap: 2rem;
+}
+
+.manualWrap {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 70vw;
+}
+
+.manualItem {
+  width: 32%;
+  height: 5.7vh;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--NAVY);
+  color: var(--WHITE);
+}
+
+.questionContainer {
+  background-color: var(--BACKGROUND);
+  padding: 3rem 0;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.questionTitle {
+  width: 100%;
+}
+
+.questionWrap {
+  background-color: var(--WHITE);
+  width: 80%;
+  height: 75vh;
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.questionContent {
+  width: 90%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.questionHeader {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.category {
+  width: fit-content;
+}
+
+.searchBox {
+  width: fit-content;
+}
+
+.categoryItem {
+  cursor: pointer;
+}
+
+.questionTable {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tableTitle {
+  border-bottom: 1px solid var(--BLACK);
+}
+
+.tableTitle th {
+  height: 5vh;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-bottom: 1px solid var(--BLACK);
+}
+
+.tableBody {
+  height: 20vh;
+  border-collapse: collapse;
+  border-bottom: 1px solid var(--BLACK);
+}
+
+.tableBody tr {
+  border-collapse: collapse;
+  border-bottom: 1px solid var(--BLACK);
+}
+
+.tableSeparator {
+  height: 3px;
+  width: 100%;
+  background-color: var(--BLACK);
+}

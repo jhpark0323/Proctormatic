@@ -51,3 +51,11 @@ class ExamDetailSerializer(serializers.ModelSerializer):
             }
             for taker in takers
         ]
+
+class TakerDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Taker
+        fields = [
+            'name', 'email', 'birth', 'id_photo', 'web_cam', 
+            'verification_rate', 'entry_time', 'exit_time'
+        ]

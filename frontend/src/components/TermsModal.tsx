@@ -91,6 +91,7 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, onConfirm }) =
           onClose();
         }
       }}
+      role='dialog'
     >
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>

@@ -2,18 +2,19 @@ import datetime
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.text import slugify
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Exam
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer
+from takers.models import Taker
+from coins.models import Coin
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer
 from django.core.paginator import Paginator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.shortcuts import get_object_or_404
 
 # Swagger 설정 추가 - 시험 생성 엔드포인트
 @swagger_auto_schema(
@@ -68,6 +69,14 @@ def create_exam(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    expected_taker = request.data.get("expected_taker", 0)
+    if expected_taker > 999:
+        return Response({"message": "총 응시자는 999명을 넘을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -82,9 +91,6 @@ def create_exam(request):
 
     # 시리얼라이저에서 cost를 가져옴
     exam_cost = serializer.validated_data.get('cost', 0)
-
-    # user의 현재 코인을 가져옴 (데이터베이스에서 user_id로 사용자 조회)
-    user = User.objects.get(id=user_id)
     user_coin_amount = user.coin_amount
 
     # user의 코인이 exam 비용보다 작은지 확인
@@ -119,6 +125,14 @@ def create_exam(request):
     # URL 자동 생성
     exam_instance.url = f"https://proctormatic.kr/exams/{exam_instance.id}/{slugify(exam_instance.title)}"
     exam_instance.save()
+
+    # Coin 내역 기록
+    Coin.objects.create(
+        user_id=user_id,
+        exam_id=exam_instance.id,
+        type='use',  # 사용 내역으로 기록
+        amount=exam_cost
+    )
 
     # 이메일로 시험 정보 전송
     send_exam_email(user.email, exam_instance)
@@ -168,12 +182,6 @@ def create_exam(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -182,6 +190,11 @@ def scheduled_exam_list(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -195,14 +208,16 @@ def scheduled_exam_list(request):
     # 오늘 이후의 시험들
     future_exams = Exam.objects.filter(
         user_id=user_id,
-        date__gt=current_date
+        date__gt=current_date,
+        is_deleted=False
     )
 
     # 오늘 중에서 시작 시간이 현재 시간 이후인 시험들
     today_future_exams = Exam.objects.filter(
         user_id=user_id,
         date=current_date,
-        start_time__gt=current_time
+        start_time__gt=current_time,
+        is_deleted=False
     )
 
     # 두 쿼리셋을 결합하고 정렬
@@ -215,7 +230,7 @@ def scheduled_exam_list(request):
     # 페이지네이션 처리
     paginated_exams = paginate_queryset(exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = ScheduledExamListSerializer(paginated_exams, many=True)
@@ -270,12 +285,6 @@ def scheduled_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -284,6 +293,11 @@ def ongoing_exam_list(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -299,7 +313,8 @@ def ongoing_exam_list(request):
         user_id=user_id,
         date=current_date,
         entry_time__lte=current_time,
-        end_time__gte=current_time
+        end_time__gte=current_time,
+        is_deleted=False
     ).order_by('date', 'start_time')
 
     # 페이지 번호와 사이즈 가져오기
@@ -309,7 +324,8 @@ def ongoing_exam_list(request):
     # 페이지네이션 처리
     paginated_exams = paginate_queryset(ongoing_exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = OngoingExamListSerializer(paginated_exams, many=True)
@@ -363,12 +379,6 @@ def ongoing_exam_list(request):
                 'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
             }
         )),
-        404: openapi.Response('유효하지 않은 페이지 번호입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="페이지 번호가 유효하지 않음")
-            }
-        )),
     }
 )
 @api_view(['GET'])
@@ -377,6 +387,11 @@ def completed_exam_list(request):
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -390,14 +405,16 @@ def completed_exam_list(request):
     # 종료된 시험들 필터링
     completed_exams = Exam.objects.filter(
         user_id=user_id,
-        date__lt=current_date
+        date__lt=current_date,
+        is_deleted=False
     )
 
     # 오늘 날짜의 시험 중에서 종료 시간이 지난 시험들 추가
     today_completed_exams = Exam.objects.filter(
         user_id=user_id,
         date=current_date,
-        end_time__lt=current_time
+        end_time__lt=current_time,
+        is_deleted=False
     )
 
     # 두 쿼리셋을 결합하고 정렬
@@ -407,10 +424,9 @@ def completed_exam_list(request):
     page_number = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('size', 10))
 
-    # 페이지네이션 처리
     paginated_exams = paginate_queryset(exams, page_number, page_size)
     if paginated_exams is None:
-        return Response({"message": "유효하지 않은 페이지 번호입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = CompletedExamListSerializer(paginated_exams, many=True)
@@ -424,7 +440,7 @@ def completed_exam_list(request):
     }, status=status.HTTP_200_OK)
 
 
-# Swagger 설정 추가 - 시험 세부 정보 조회 엔드포인트
+# Swagger 설정 추가 - 시험 세부 정보 조회 및 수정 엔드포인트
 @swagger_auto_schema(
     method='get',
     operation_summary="시험 세부 정보 조회",
@@ -441,19 +457,19 @@ def completed_exam_list(request):
         200: openapi.Response('시험 조회 성공', openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
-                    'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
-                    'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
-                    'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
-                    'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
-                    'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
-                    'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
-                    'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
-                    'taker_list': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Items(type=openapi.TYPE_OBJECT),
-                        description="응시자 리스트"
-                    )
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
+                'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
+                'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
+                'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
+                'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
+                'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
+                'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
+                'taker_list': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT),
+                    description="응시자 리스트"
+                )
             }
         )),
         401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
@@ -476,27 +492,248 @@ def completed_exam_list(request):
         )),
     }
 )
-@api_view(['GET'])
+@swagger_auto_schema(
+    method='put',
+    operation_summary="시험 정보 수정",
+    operation_description="특정 시험의 정보를 수정합니다.",
+    request_body=ExamSerializer,
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        200: openapi.Response('수정이 완료되었습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지")
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+        409: openapi.Response('시간 또는 비용 관련 오류입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="시간 또는 비용 오류 메시지")
+            }
+        )),
+    }
+)
+@swagger_auto_schema(
+    method='delete',
+    operation_summary="시험 삭제",
+    operation_description="특정 시험을 삭제합니다. 시험 ID를 경로 파라미터로 전달해야 하며, 권한이 필요합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT Token>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        204: openapi.Response('시험이 성공적으로 삭제되었습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+        409: openapi.Response('진행 중인 시험은 삭제할 수 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )),
+    }
+)
+@api_view(['GET', 'PUT', 'DELETE'])
 def exam_detail(request, pk):
     # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
         return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
+    # 탈퇴한 유저일 경우
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
-    # 특정 ID의 시험 정보가 존재하는지 확인
-    if not Exam.objects.filter(pk=pk, user_id=user_id).exists():
-        # 객체가 존재하지 않을 경우 사용자 정의 메시지 반환
+    # 특정 ID의 시험이 존재하는지 확인
+    exam = Exam.objects.filter(pk=pk, user_id=user_id, is_deleted=False).first()
+    if not exam:
         return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
 
-    # 객체가 존재할 경우 가져오기
-    exam = Exam.objects.get(pk=pk, user_id=user_id)
+    if request.method == 'GET':
+        # GET 요청 처리: 시험 세부 정보 조회
+        serializer = ExamDetailSerializer(exam)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # 시리얼라이저로 직렬화
-    serializer = ExamDetailSerializer(exam)
+    elif request.method == 'PUT':
+        # PUT 요청 처리: 특정 시험 수정
+        serializer = ExamSerializer(exam, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response({"message": "요청 데이터가 유효하지 않습니다. 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # expected_taker 값이 999를 넘지 않도록 검증
+        expected_taker = serializer.validated_data.get("expected_taker", exam.expected_taker)
+        if expected_taker > 999:
+            return Response({"message": "총 응시자는 999명을 넘을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 기존 비용과 수정된 비용의 차이 계산
+        original_cost = exam.cost
+        new_cost = serializer.validated_data['cost']
+        cost_difference = new_cost - original_cost
+
+        # 시험 생성자의 현재 코인을 가져옴
+        exam_creator = exam.user
+        creator_coin_amount = exam_creator.coin_amount
+
+        # 시험 생성자의 코인이 비용 차액을 충당할 수 있는지 확인
+        if creator_coin_amount < cost_difference:
+            return Response({"message": "적립금이 부족합니다. 충전해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 차액에 따른 코인 사용 내역 추가
+        if cost_difference > 0:
+            transaction_type = "use"
+        elif cost_difference < 0:
+            transaction_type = "refund"
+        exam_creator.coin_amount = creator_coin_amount - cost_difference
+        exam_creator.save()
+
+        # Coin 내역 기록
+        if cost_difference != 0:
+            Coin.objects.create(
+                user_id=exam_creator.id,
+                exam_id=exam.id,
+                type=transaction_type,
+                amount=abs(cost_difference)
+            )
+
+        # 데이터 수정 및 저장
+        serializer.save()
+
+        return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
+
+    elif request.method == "DELETE":
+         # 진행 중인 시험은 삭제 불가
+        current_time = datetime.datetime.now().time()
+        if exam.date == datetime.date.today() and exam.entry_time <= current_time <= exam.end_time:
+            return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
+        
+        # 시험 비용을 반환하고 코인 사용 내역에 기록
+        exam_creator = exam.user
+        exam_creator.coin_amount += exam.cost
+        exam_creator.save()
+
+        # Coin 내역 기록 (삭제에 따른 반환)
+        Coin.objects.create(
+            user_id=exam_creator.id,
+            exam_id=exam.id,
+            type="refund",
+            amount=exam.cost
+        )
+
+        # 시험 삭제
+        exam.is_deleted = True
+        exam.save()
+        return Response({"message": "시험이 성공적으로 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+
+    # 추가로 명확히 응답을 설정
+    return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 응시 결과 조회 API
+@swagger_auto_schema(
+    method='get',
+    operation_summary="응시 결과 조회",
+    operation_description="특정 시험에 대한 특정 응시자의 응시 결과를 조회합니다.",
+    manual_parameters=[
+        openapi.Parameter(
+            'Authorization',
+            openapi.IN_HEADER,
+            description="Bearer <JWT 토큰>",
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={
+        200: openapi.Response('응시 결과 조회 성공', TakerDetailSerializer),
+        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
+            }
+        )),
+        404: openapi.Response('존재하지 않는 응시자 또는 시험입니다.', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description="데이터 없음 메시지")
+            }
+        )),
+    }
+)
+@api_view(['GET'])
+def taker_result_view(request, eid, tid):
+    # JWT에서 user ID와 role을 추출
+    user_id, user_role = get_user_info_from_token(request)
+    if not user_id:
+        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # 탈퇴한 유저일 경우
+    user = User.objects.get(id=user_id)
+    if not user.is_active:
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
+    if user_role != 'host':
+        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+    # 삭제된 시험 여부 확인
+    exam_exists = Exam.objects.filter(id=eid, is_deleted=False).exists()
+    if not exam_exists:
+        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 응시자 존재 여부 확인
+    taker = Taker.objects.filter(id=tid, exam_id=eid).first()
+    if not taker:
+        return Response({"message": "존재하지 않는 응시자입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 시리얼라이저를 사용한 직렬화 처리
+    serializer = TakerDetailSerializer(taker)
     
     # 응답 데이터 구성
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -514,8 +751,12 @@ def get_user_info_from_token(request):
 
 def paginate_queryset(queryset, page_number, page_size):
     paginator = Paginator(queryset, page_size)
-    if page_number > paginator.num_pages or page_number < 1:
+    
+    # 음수 페이지 번호는 잘못된 요청으로 처리
+    if page_number < 1:
         return None
+    
+    # 정상적인 경우 해당 페이지 반환
     return paginator.get_page(page_number)
 
 def send_exam_email(email, exam):

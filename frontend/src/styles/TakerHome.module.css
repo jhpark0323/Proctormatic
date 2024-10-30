@@ -45,7 +45,7 @@
   flex: 0 0 80%; /* 남은 공간을 채우도록 설정 */
   background-color: white;
   margin-right: 30px;
-  padding: 50px 75px;
+  padding: 50px 75px 25px 75px;
   border-radius: 20px;
   box-sizing: border-box; /* padding 포함하여 width 계산 */
   display: flex;

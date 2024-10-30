@@ -6,12 +6,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.hashers import check_password
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer, EditMarketingSerializer, \
-    FindEmailRequestSerializer, FindEmailResponseSerializer
+    FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordRequestSerializer, \
+    ResetPasswordEmailCheckSerializer
 
 User = get_user_model()
 
@@ -161,17 +163,7 @@ def handle_email_verification(request):
 @swagger_auto_schema(
     method='post',
     operation_summary="회원가입",
-    request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'name': openapi.Schema(type=openapi.TYPE_STRING),
-            'email': openapi.Schema(type=openapi.TYPE_STRING),
-            'password': openapi.Schema(type=openapi.TYPE_STRING),
-            'birth': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
-            'policy': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-            'marketing': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-        }
-    ),
+    request_body=UserSerializer,
     responses={
         201: openapi.Response('회원가입이 완료되었습니다.', openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -214,7 +206,28 @@ def handle_email_verification(request):
         )),
     }
 )
-@api_view(['GET', 'POST', 'PUT'])
+@swagger_auto_schema(
+    method='patch',
+    operation_summary="회원 탈퇴",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    responses={
+        204: openapi.Response('회원 탈퇴를 완료했습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ))
+    }
+)
+@api_view(['GET', 'POST', 'PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
@@ -222,7 +235,9 @@ def handle_user(request):
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
-        return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
     else:
         if not request.user.is_authenticated:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
@@ -230,10 +245,10 @@ def handle_user(request):
         user_id = request.auth['id']
         user = User.objects.get(pk=user_id)
 
-        if request.method == 'GET':
-            if not user.is_active:
-                return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
+        if request.method == 'GET':
             serializer = UserInfoSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -245,6 +260,10 @@ def handle_user(request):
                 user.save()
                 return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
 
+        elif request.method == 'PATCH':
+            user.is_active = False
+            user.save()
+            return Response({'message': '회원 탈퇴를 완료했습니다.'}, status=status.HTTP_204_NO_CONTENT)
 
 @swagger_auto_schema(
     method='post',
@@ -317,6 +336,9 @@ def handle_token(request):
         if user is None:
             return Response({'message': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = CustomTokenObtainPairSerializer()
         serializer.user = user
         token_data = serializer.validate({})
@@ -338,6 +360,7 @@ def handle_token(request):
                 return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 @swagger_auto_schema(
     method='post',
     operation_summary="이메일 찾기",
@@ -352,17 +375,91 @@ def handle_token(request):
 def find_email(request):
     request_serializer = FindEmailRequestSerializer(data=request.data)
     if request_serializer.is_valid():
-        name = request_serializer.data.get('name')
-        birth = request_serializer.data.get('birth')
-        user_list = User.objects.filter(name=name, birth=birth, is_active=1).order_by('-created_at')
+        name = request_serializer.validated_data.get('name')
+        birth = request_serializer.validated_data.get('birth')
+        user_list = User.objects.filter(name=name, birth=birth, is_active=True).order_by('-created_at')
 
         response_serializer = FindEmailResponseSerializer(user_list, many=True)
         return Response({
             'emailList': response_serializer.data,
             'size': len(response_serializer.data)
         }, status=status.HTTP_200_OK)
-    else:
-        return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    error_message = next(iter(request_serializer.errors.values()))[0]
+    return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="비밀번호 재설정 이메일 인증번호 발송",
+    request_body=ResetPasswordRequestSerializer,
+    responses={
+        200: openapi.Response('인증번호를 발송했습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        400: openapi.Response('잘못된 이메일 형식 또는 이름 및 이메일 미제공', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        404: openapi.Response('가입된 회원이 아닙니다. 성명과 이메일을 확인해주세요.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+    }
+)
+@swagger_auto_schema(
+    method='put',
+    operation_summary="비밀번호 재설정",
+    manual_parameters=[
+        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ],
+    request_body=ResetPasswordEmailCheckSerializer,
+    responses={
+        200: openapi.Response('비밀번호가 성공적으로 변경되었습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        400: openapi.Response('비밀번호 미입력 또는 불일치', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        403: openapi.Response('권한이 없습니다.', schema=openapi.Schema(type=openapi.TYPE_STRING)),
+        409: openapi.Response('기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.', schema=openapi.Schema(type=openapi.TYPE_STRING))
+    }
+)
+@api_view(['POST', 'PUT'])
+@permission_classes([AllowAny])
+def reset_password(request):
+    if request.method == 'POST':
+        serializer = ResetPasswordRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            name = serializer.validated_data.get('name')
+            email = serializer.validated_data.get('email')
+
+            if not User.objects.filter(name=name, email=email, is_active=0).exists():
+                return Response({'message': '가입된 회원이 아닙니다. 성명과 이메일을 확인해주세요.'}, status=status.HTTP_404_NOT_FOUND)
+
+            code = generate_verification_code()
+            send_verification_email(email, code)
+            save_verification_code_to_redis(email, code)
+
+            return Response({'message': '인증번호를 발송했습니다.'}, status=status.HTTP_200_OK)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+        if not request.user.is_authenticated:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        user_id = request.auth['id']
+        user = User.objects.get(pk=user_id)
+
+        if not user.is_active:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ResetPasswordEmailCheckSerializer(data=request.data)
+        if serializer.is_valid():
+            password1 = serializer.validated_data.get('password1')
+            password2 = serializer.validated_data.get('password2')
+
+            if password1 != password2:
+                return Response({'message': '비밀번호가 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if len(password1) < 8:
+                return Response({'message': '비밀번호는 최소 8자리입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if check_password(password1, user.password):
+                return Response({'message': '기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
+
+            user.set_password(password1)
+            user.save()
+            return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
 
 
 def is_valid_email(email):
