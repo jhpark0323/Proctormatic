@@ -12,6 +12,7 @@ from .models import Taker
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
+from django.utils.datetime_safe import datetime
 
 @swagger_auto_schema(
     method='post',
@@ -358,6 +359,41 @@ def update_taker(request):
     taker = Taker.objects.filter(id=taker_id).first()
     if not taker:
         return Response({'message': '응시자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if 'birth' in request.data:
+        birth = request.data['birth']
+        if len(birth) == 6:
+            current_year = datetime.now().year
+            current_year_last_two = current_year % 100
+            birth_year_two_digits = int(birth[:2])
+
+            if birth_year_two_digits == current_year_last_two:
+                birth_month = int(birth[2:4])
+                birth_day = int(birth[4:6])
+                today = datetime.now()
+
+                if (birth_month < today.month) or (birth_month == today.month and birth_day < today.day):
+                    birth_year = 2000 + birth_year_two_digits
+                else:
+                    birth_year = 1900 + birth_year_two_digits
+            elif birth_year_two_digits < current_year_last_two:
+                birth_year = 2000 + birth_year_two_digits
+            else:
+                birth_year = 1900 + birth_year_two_digits
+
+            birth_month = int(birth[2:4])
+            birth_day = int(birth[4:6])
+
+            if not (1 <= birth_month <= 12):
+                return Response({'message': '잘못된 생년월일입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            days_in_month = [31,
+                             29 if (birth_year % 4 == 0 and (birth_year % 100 != 0 or birth_year % 400 == 0)) else 28,
+                             31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            if not (1 <= birth_day <= days_in_month[birth_month - 1]):
+                return Response({'message': '잘못된 생년월일입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            request.data['birth'] = f'{birth_year}{birth[2:]}'
 
     exam_id = taker.exam_id
 
