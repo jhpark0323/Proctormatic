@@ -16,12 +16,6 @@
       "@/*": ["*"]
     },
     "outDir": "./dist"
-    // "files": [],
-    // "references": [
-    //   { "path": "./tsconfig.app.json" },
-    //   { "path": "./tsconfig.node.json" }
-    // ],
-    // "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
-    // "exclude": ["node_modules"]
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"]
 }
