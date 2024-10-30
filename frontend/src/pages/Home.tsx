@@ -27,8 +27,7 @@ const Home = () => {
 
   return (
     <>
-      <TestDetail />
-      {/* <HeaderWhite
+      <HeaderWhite
         onLoginClick={openModal}
         userRole={user?.role}
         onLogoutClick={handleLogout}
@@ -54,7 +53,7 @@ const Home = () => {
           data-testid="backdrop"
           onClick={closeModal}
         ></div>
-      )} */}
+      )}
     </>
   );
 };
