@@ -12,7 +12,12 @@
     "test:ci": "node --experimental-vm-modules --experimental-json-modules node_modules/jest/bin/jest.js --ci"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.1.5",
+    "@mui/x-date-pickers": "^7.22.0",
     "axios": "^1.7.7",
+    "date-fns": "^2.29.3",
     "face-api.js": "^0.22.2",
     "normalize.css": "^8.0.1",
     "react": "^18.3.1",
