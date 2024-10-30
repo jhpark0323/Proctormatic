@@ -107,6 +107,9 @@
 }
 
 .makeTestContentBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
   width: 70%;
 }
 
@@ -116,11 +119,44 @@
 
 .timeWrap {
   display: flex;
+  margin-top: 0.5rem;
+  justify-content: space-between;
+}
+
+.endTimeWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.newTestInfoBox {
+  border-radius: 1rem;
+  border: 1px solid var(--GRAY_300);
+  display: flex;
+  justify-content: center;
+  gap: 8rem;
+  padding: 2rem;
+}
+
+.newTestInfoTitle {
+  color: var(--GRAY_500);
+  margin-bottom: 1rem;
+}
+
+.newTestSeperate {
+  width: 20px;
+  height: 100%;
+  background-color: var(--GRAY_300);
 }
 
 .peopelNumWrap {
   display: flex;
   justify-content: space-between;
+}
+
+.coinAmount {
+  color: var(--PRIMARY);
+  margin-right: 0.3rem;
 }
 
 .submitButton {
