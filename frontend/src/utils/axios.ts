@@ -1,8 +1,7 @@
 import axios from "axios";
 
 // 서버의 baseURL을 입력해주세요
-// const baseURL = import.meta.env.VITE_API_URL;
-const baseURL = "";
+const baseURL = import.meta.env.VITE_API_URL;
 
 const axiosInstance = axios.create({
   baseURL,
