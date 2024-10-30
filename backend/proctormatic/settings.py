@@ -87,6 +87,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'https://k11s209.p.ssafy.io:5173',
+    'https://k11s209.p.ssafy.io',
+    'https://k11s209.p.ssafy.io:80'
 ]
 
 SWAGGER_SETTINGS = {
