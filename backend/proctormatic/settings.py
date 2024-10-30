@@ -88,8 +88,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'https://k11s209.p.ssafy.io:5173',
     'https://k11s209.p.ssafy.io',
-    'https://k11s209.p.ssafy.io:80'
+    'http://k11s209.p.ssafy.io',
+    'http://localhost:8000',
+    'http://k11s209.p.ssafy.io:8000'
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
