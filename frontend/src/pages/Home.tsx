@@ -5,7 +5,6 @@ import HeaderWhite from "@/components/HeaderWhite";
 import Modal from "@/components/LoginModal";
 import styles from "@/styles/Home.module.css";
 import SwiperComponent from "@/components/Swiper";
-import TestDetail from "./host/testpages/TestDetail";
 
 const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
