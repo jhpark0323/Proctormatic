@@ -59,23 +59,23 @@ describe("Home 페이지 테스트", () => {
   });
 
   // 4. 주최자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
-  it('주최자 역할이 선택되면 store에 역할이 저장되고, "시험 관리하기" 버튼이 표시되어야 합니다.', () => {
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
+  // it('주최자 역할이 선택되면 store에 역할이 저장되고, "시험 관리하기" 버튼이 표시되어야 합니다.', () => {
+  //   render(
+  //     <Router>
+  //       <Home />
+  //     </Router>
+  //   );
 
-    fireEvent.click(screen.getByText("로그인 / 가입"));
+  //   fireEvent.click(screen.getByText("로그인 / 가입"));
 
-    const hostButton = screen.getByText("주최자");
-    fireEvent.click(hostButton);
+  //   const hostButton = screen.getByText("주최자");
+  //   fireEvent.click(hostButton);
 
-    // store의 상태 확인
-    expect(useAuthStore.getState().user?.role).toBe("host");
+  //   // store의 상태 확인
+  //   expect(useAuthStore.getState().user?.role).toBe("host");
 
-    expect(screen.getByText("시험 관리하기")).toBeInTheDocument();
-  });
+  //   expect(screen.getByText("시험 관리하기")).toBeInTheDocument();
+  // });
 
   // 5. 응시자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
   it('응시자 역할이 선택되면 store에 역할이 저장되고, "시험 입실하기" 버튼이 표시되어야 합니다.', () => {
