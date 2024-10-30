@@ -1,3 +1,4 @@
+/* 내 시험 보기 */
 .mytestHeader {
   background-color: var(--WHITE);
   display: flex;
@@ -79,4 +80,85 @@
   display: flex;
   justify-content: center;
   margin: 2rem 0;
+}
+
+/* MakeTest */
+.makeTestContainer {
+  background-color: var(--BACKGROUND);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.goBack {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.makeTestBox {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  padding: 5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.makeTestContentBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 70%;
+}
+
+.makeTestName {
+  color: var(--PRIMARY);
+}
+
+.timeWrap {
+  display: flex;
+  margin-top: 0.5rem;
+  justify-content: space-between;
+}
+
+.endTimeWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.newTestInfoBox {
+  border-radius: 1rem;
+  border: 1px solid var(--GRAY_300);
+  display: flex;
+  justify-content: center;
+  gap: 8rem;
+  padding: 2rem;
+}
+
+.newTestInfoTitle {
+  color: var(--GRAY_500);
+  margin-bottom: 1rem;
+}
+
+.newTestSeperate {
+  width: 20px;
+  height: 100%;
+  background-color: var(--GRAY_300);
+}
+
+.peopelNumWrap {
+  display: flex;
+  justify-content: space-between;
+}
+
+.coinAmount {
+  color: var(--PRIMARY);
+  margin-right: 0.3rem;
+}
+
+.submitButton {
+  text-align: center;
 }

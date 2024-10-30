@@ -2,6 +2,7 @@ import HostHeader from "@/components/HostHeader";
 import Helpdesk from "./Helpdesk";
 import Mypage from "./mypages/Mypage";
 import MyTest from "./testpages/MyTest";
+import MakeTest from "./testpages/MakeTest";
 
 const HostHome = () => {
   return (
@@ -11,7 +12,8 @@ const HostHome = () => {
         {/* <Helpdesk /> */}
         {/* <Mypage /> */}
         <div style={{ marginTop: "75px" }}>
-          <MyTest />
+          {/* <MyTest /> */}
+          <MakeTest />
         </div>
       </div>
       {/* <div>
