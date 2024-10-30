@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/exam/', include('exams.urls')),
     path('api/helpdesk/', include('helpdesks.urls')),
     path('api/taker/', include('takers.urls')),
+    path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
 ]
