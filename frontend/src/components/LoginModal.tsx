@@ -3,12 +3,18 @@ import React, { useState } from 'react';
 import CustomButton from '@/components/CustomButton';
 import cancelButton from '@/assets/cancleButtonImg.svg';
 import cancelButtonImg from '@/assets/cancleButton.png';
+import axiosInstance from '@/utils/axios';
+import { AxiosError } from "axios";
 
 interface LoginModalProps {
   onClose: () => void;
   title: string;
   subtitle: string | string[];
-  onLogin: (role: string, credentials?: { email: string; password: string }) => void;
+  onLogin: (role: string) => void;
+}
+
+interface ErrorResponse {
+  message: string;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle, onLogin }) => {
@@ -21,24 +27,61 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle, onLog
     if (role === 'host') {
       setCurrentView('hostLogin');
     } else {
-      localStorage.setItem('userRole', role);
+      localStorage.setItem('userRole', role); // 간단하게 역할(role)을 저장
       onLogin(role);
     }
   };
 
-  const handleHostLoginSubmit = () => {
+  const handleHostLoginSubmit = async () => {
     setError('');
-    
+
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
       return;
     }
-    
-    // 주최자 로그인 로직 실행
-    onLogin('host', { email, password });
+
+    try {
+      const response = await axiosInstance.post('/users/login/', {
+        email,
+        password,
+      });
+
+      if (response.status === 200) {
+        const { access } = response.data;
+        localStorage.setItem('accessToken', access);
+        localStorage.setItem('userRole', 'host'); // 로그인 성공 시 'host'로 저장
+        onLogin('host');
+      }
+    } catch (err) {
+      const axiosError = err as AxiosError<ErrorResponse>;
+      if (axiosError.response && axiosError.response.status === 400) {
+        setError(axiosError.response.data?.message || '로그인 실패');
+      } else {
+        setError('로그인 중 문제가 발생했습니다.');
+      }
+    }
   };
 
-  // 주최자 로그인 화면 렌더링
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (error) setError('');
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (error) setError('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleHostLoginSubmit();
+    }
+  };
+
+  const clearPassword = () => {
+    setPassword('');
+  };
+
   const renderHostLoginForm = () => (
     <>
       <div className={styles.loginInputSection}>
@@ -49,21 +92,29 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle, onLog
             type="text"
             placeholder='이메일 주소 입력'
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
+            onKeyPress={handleKeyPress}
           />
         </div>
-        <div style={{ marginTop: '5px' }}>
+        <div style={{ marginTop: '5px', position: 'relative' }}>
           <input
             className={styles.modalInput}
             type="password"
             placeholder='비밀번호 입력'
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handlePasswordChange}
+            onKeyPress={handleKeyPress}
             autoComplete='off'
           />
-          <img src={cancelButton} className={styles.resetBtnImg} alt="reset" />
+          <img
+            src={cancelButton}
+            className={styles.resetBtnImg}
+            alt="reset"
+            onClick={clearPassword}
+            style={{ cursor: 'pointer', position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }}
+          />
         </div>
-        {error && <p className={styles.errorText}>{error}</p>}
+        {error && <span className={styles.errorText}>{error}</span>}
       </div>
 
       <div className={styles.subBtnBox}>
