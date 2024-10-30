@@ -103,7 +103,6 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 CORS_ALLOW_ALL_ORIGINS = True
 
 SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
     'SECURITY_DEFINITIONS': {
         'Bearer': {
             'type': 'apiKey',
