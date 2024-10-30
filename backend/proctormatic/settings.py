@@ -104,12 +104,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization',
+        'basic': {
+            'type': 'basic'
         }
     },
+    'USE_SESSION_AUTH': False,
+    'VALIDATOR_URL': None,
+    'DOC_EXPANSION': 'none',
+    'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
 }
 
 REST_FRAMEWORK = {
