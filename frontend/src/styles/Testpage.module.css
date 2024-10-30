@@ -1,0 +1,82 @@
+.mytestHeader {
+  background-color: var(--WHITE);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5rem 0;
+}
+
+.mytestHeaderWrap {
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+}
+
+.myInfoWrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.myName {
+  color: var(--PRIMARY);
+  margin-right: 0.5rem;
+}
+
+.testInfoBox {
+  border: 1px solid var(--GRAY_300);
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6rem;
+  padding: 3rem 6rem;
+}
+
+.seperate {
+  width: 1px;
+  height: 100%;
+  background-color: var(--GRAY_300);
+}
+
+.testInfoItem {
+  text-align: center;
+}
+
+.testInfoTitle {
+  margin-bottom: 1rem;
+}
+
+.testWrap {
+  background-color: var(--BACKGROUND);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 0;
+}
+
+.testBox {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  width: 80%;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.testCategory {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.testContent {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
