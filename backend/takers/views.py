@@ -362,38 +362,13 @@ def update_taker(request):
 
     if 'birth' in request.data:
         birth = request.data['birth']
-        if len(birth) == 6:
-            current_year = datetime.now().year
-            current_year_last_two = current_year % 100
-            birth_year_two_digits = int(birth[:2])
+        parsed_birth, error_message = parse_birth_date(birth)
 
-            if birth_year_two_digits == current_year_last_two:
-                birth_month = int(birth[2:4])
-                birth_day = int(birth[4:6])
-                today = datetime.now()
+        if error_message:
+            return Response({'message': error_message},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-                if (birth_month < today.month) or (birth_month == today.month and birth_day < today.day):
-                    birth_year = 2000 + birth_year_two_digits
-                else:
-                    birth_year = 1900 + birth_year_two_digits
-            elif birth_year_two_digits < current_year_last_two:
-                birth_year = 2000 + birth_year_two_digits
-            else:
-                birth_year = 1900 + birth_year_two_digits
-
-            birth_month = int(birth[2:4])
-            birth_day = int(birth[4:6])
-
-            if not (1 <= birth_month <= 12):
-                return Response({'message': '잘못된 생년월일입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            days_in_month = [31,
-                             29 if (birth_year % 4 == 0 and (birth_year % 100 != 0 or birth_year % 400 == 0)) else 28,
-                             31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            if not (1 <= birth_day <= days_in_month[birth_month - 1]):
-                return Response({'message': '잘못된 생년월일입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            request.data['birth'] = f'{birth_year}{birth[2:]}'
+        request.data['birth'] = parsed_birth
 
     exam_id = taker.exam_id
 
@@ -523,3 +498,42 @@ def is_valid_email(email):
     if re.match(email_regex, email):
         return True
     return False
+
+
+def parse_birth_date(birth):
+    if len(birth) != 6:
+        return None, '잘못된 생년월일입니다.'
+
+    current_year = datetime.now().year
+    current_year_last_two = current_year % 100
+    birth_year_two_digits = int(birth[:2])
+
+    if birth_year_two_digits == current_year_last_two:
+        birth_month = int(birth[2:4])
+        birth_day = int(birth[4:6])
+        today = datetime.now()
+
+        if (birth_month < today.month) or (birth_month == today.month and birth_day < today.day):
+            birth_year = 2000 + birth_year_two_digits
+        else:
+            birth_year = 1900 + birth_year_two_digits
+    elif birth_year_two_digits < current_year_last_two:
+        birth_year = 2000 + birth_year_two_digits
+    else:
+        birth_year = 1900 + birth_year_two_digits
+
+    birth_month = int(birth[2:4])
+    birth_day = int(birth[4:6])
+
+    if not (1 <= birth_month <= 12):
+        return None, '잘못된 생년월일입니다.'
+
+    days_in_month = [
+        31, 29 if (birth_year % 4 == 0 and (birth_year % 100 != 0 or birth_year % 400 == 0)) else 28,
+        31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+    ]
+
+    if not (1 <= birth_day <= days_in_month[birth_month - 1]):
+        return None, '잘못된 생년월일입니다.'
+
+    return f'{birth_year}{birth[2:]}', None
