@@ -2,9 +2,7 @@ import { fonts } from "@/constants";
 import styles from "@/styles/Testpage.module.css";
 import { FaAngleDown } from "react-icons/fa";
 
-interface MyTestProps {}
-
-const MyTest = ({}: MyTestProps) => {
+const MyTest = () => {
   return (
     <div className={styles.container}>
       <div className={styles.mytestHeader}>

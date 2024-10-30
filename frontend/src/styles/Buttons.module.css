@@ -68,14 +68,10 @@
 /* 텍스트 필드 */
 .textfield-container {
   display: flex;
-  width: 240px;
+  width: 100%;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-}
-
-.textfield-label {
-  font-size: 14px;
 }
 
 .textfield-input {
@@ -84,6 +80,10 @@
   border-radius: 4px;
   border: 1px solid var(--GRAY_300);
   background-color: var(--WHITE);
+}
+
+.textfield-input::placeholder {
+  font-size: 0.8rem;
 }
 
 /* underline 타입일 때 적용될 스타일 */
