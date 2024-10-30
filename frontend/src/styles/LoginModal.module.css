@@ -83,3 +83,71 @@
   border-radius: 20px;
   box-shadow: var(--shadow-LIGHT_3);
 }
+
+.loginInputSection {
+  width: 360px;
+  margin-bottom: 39px; 
+}
+
+.modalSubTitle {
+  font-weight: var(--font-lg_medium-fontweight);
+  font-size: var(--font-lg_medium-fontsize);
+  line-height: var(--font-lg_medium-lineheight);
+  font-family: var(--font-lg_medium-fontfamily);
+  margin: 0 0 10px;
+}
+
+.modalInput {
+  border: none;
+  border-bottom: 1px solid #dfdfdf;
+  box-sizing: border-box;
+  font-family: var(--font-lg_medium-fontfamily);
+  font-size: var(--font-lg_medium-fontsize);
+  line-height: 24px;
+  outline: none;
+  padding: 6px 0;
+  width: 100%;
+}
+
+.resetBtnImg {
+  position: absolute;
+  right: 0px;
+}
+
+.loginInputSection > div {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.subBtnBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subBtnBox span {
+  font-size: 15px;
+  line-height: 22px;
+  color: rgb(34, 118, 220);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.finding {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgb(110, 110, 110);
+}
+
+.loginButtonContent {
+  margin: 80px auto 0.5px;
+}
+
+@media (min-width: 1140px) {
+  .subBtnBox {
+    width: 360px;
+  }
+}

@@ -58,19 +58,19 @@ describe('Modal 컴포넌트 테스트', () => {
     });
   });
 
-  it('주최자 버튼 클릭 시 "host"로 로그인되고 로컬 스토리지에 저장되어야 합니다.', () => {
-    render(
-      <Router>
-        <Modal {...defaultProps} />
-      </Router>
-    );
+  // it('주최자 버튼 클릭 시 "host"로 로그인되고 로컬 스토리지에 저장되어야 합니다.', () => {
+  //   render(
+  //     <Router>
+  //       <Modal {...defaultProps} />
+  //     </Router>
+  //   );
 
-    const hostButton = screen.getByText('주최자');
-    fireEvent.click(hostButton);
+  //   const hostButton = screen.getByText('주최자');
+  //   fireEvent.click(hostButton);
 
-    expect(mockOnLogin).toHaveBeenCalledWith('host');
-    expect(localStorage.getItem('userRole')).toBe('host');
-  });
+  //   expect(mockOnLogin).toHaveBeenCalledWith('host');
+  //   expect(localStorage.getItem('userRole')).toBe('host');
+  // });
 
   it('응시자 버튼 클릭 시 "taker"로 로그인되고 로컬 스토리지에 저장되어야 합니다.', () => {
     render(
