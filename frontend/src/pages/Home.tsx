@@ -11,13 +11,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, login, logout } = useAuthStore();
 
-  const handleLogin = (role: string, credentials?: { email: string; password: string }) => {
-    if (credentials) {
-      // 여기서 실제 로그인 API 호출 등을 수행할 수 있습니다
-      login(role);
-    } else {
-      login(role);
-    }
+  const handleLogin = (role: string) => {
+    login(role);
     setIsModalOpen(false);
   };
 
@@ -28,6 +23,7 @@ const Home = () => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
   return (
     <>
       <HeaderWhite

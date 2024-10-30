@@ -12,21 +12,13 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      login: (role: string) => set({ user: { role } }),
-      logout: () => {
-        set({ user: null });
-        localStorage.removeItem('auth-storage'); // localStorage도 함께 클리어
-        CustomToast("로그아웃 되었습니다."); // 로그아웃 메시지 출력
-      },
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user }),
-    }
-  )
-);
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  login: (role: string) => set({ user: { role } }),
+  logout: () => {
+    set({ user: null });
+    localStorage.removeItem('userRole');
+    CustomToast("로그아웃 되었습니다.");
+  },
+}));
+
