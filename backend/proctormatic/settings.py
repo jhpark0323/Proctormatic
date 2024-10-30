@@ -74,6 +74,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware'
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,7 +82,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -90,6 +90,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://k11s209.p.ssafy.io:5173',
     'https://k11s209.p.ssafy.io',
     'http://k11s209.p.ssafy.io',
+    'http://k11s209.p.ssafy.io:5173',
     'http://localhost:8000',
     'http://k11s209.p.ssafy.io:8000'
 ]
@@ -98,6 +99,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 # 위험사항
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_REPLACE_HTTPS_REFERER = True
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
