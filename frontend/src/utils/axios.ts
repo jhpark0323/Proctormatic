@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // 서버의 baseURL을 입력해주세요
-const baseURL = import.meta.env.VITE_API_URL;
+const baseURL = 'https://k11s209.p.ssafy.io/api';  // 나중에 환경 변수로 뺄 예정
 
 const axiosInstance = axios.create({
   baseURL,
