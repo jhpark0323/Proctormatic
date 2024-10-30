@@ -42,11 +42,11 @@ swagger_settings = {
 }
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('users/', include('accounts.urls')),
-    path('coin/', include('coins.urls')),
-    path('exam/', include('exams.urls')),
-    path('helpdesk/', include('helpdesks.urls')),
-    path('taker/', include('takers.urls')),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
+    path('api/admin/', admin.site.urls),
+    path('api/users/', include('accounts.urls')),
+    path('api/coin/', include('coins.urls')),
+    path('api/exam/', include('exams.urls')),
+    path('api/helpdesk/', include('helpdesks.urls')),
+    path('api/taker/', include('takers.urls')),
+    path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
 ]
