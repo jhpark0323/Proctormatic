@@ -10,13 +10,12 @@ import CustomButton from "@/components/CustomButton";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker, TimePicker } from "@mui/x-date-pickers";
-import { ko } from "date-fns/locale"; // 한국어 로케일 추가
-import TextField from "@mui/material/TextField";
+import { ko } from "date-fns/locale";
 
 const MakeTest = () => {
   const [isExitPermitted, setIsExitPermitted] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  // const [endDate, setEndDate] = useState<Date | null>(null);
 
   return (
     <div className={styles.makeTestContainer}>
