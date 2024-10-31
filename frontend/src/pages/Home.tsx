@@ -1,28 +1,37 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useState } from "react";
 import HeaderWhite from "@/components/HeaderWhite";
-import Modal from "@/components/LoginModal";
+import LoginModal from "@/components/LoginModal";
+import RegisterModal from "@/components/RegisterModal";
 import styles from "@/styles/Home.module.css";
 import SwiperComponent from "@/components/Swiper";
 
 const Home = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  const openLoginModal = () => setIsLoginModalOpen(true);
+  const closeLoginModal = () => setIsLoginModalOpen(false);
+
+  const openRegisterModal = () => {
+    closeLoginModal(); // LoginModal 닫기
+    setIsRegisterModalOpen(true); // RegisterModal 열기
+  };
+  
+  const closeRegisterModal = () => setIsRegisterModalOpen(false);
 
   return (
     <>
-      <HeaderWhite
-        onLoginClick={openModal}
-      />
+      <HeaderWhite onLoginClick={openLoginModal} />
+
       <div className={styles.Content}>
         <SwiperComponent />
       </div>
 
-      {isModalOpen && (
-        <Modal
-          onClose={closeModal}
+      {/* Login Modal */}
+      {isLoginModalOpen && (
+        <LoginModal
+          onClose={closeLoginModal}
+          onRegisterClick={openRegisterModal}  // 회원가입 클릭 이벤트 전달
           title="AI 온라인 시험 자동 관리감독 서비스"
           subtitle={[
             "어렵고 피곤한 시험 감시와 검증은 그만!",
@@ -30,11 +39,27 @@ const Home = () => {
           ]}
         />
       )}
-      {isModalOpen && (
+      
+      {/* Register Modal */}
+      {isRegisterModalOpen && (
+        <RegisterModal
+          onClose={closeRegisterModal}
+          title="AI 온라인 시험 자동 관리감독 서비스"
+          subtitle= {[
+            "어렵고 피곤한 시험 감시와 검증은 그만!"
+          ]}
+        />
+      )}
+
+      {/* 배경 클릭 시 모달 닫기 */}
+      {(isLoginModalOpen || isRegisterModalOpen) && (
         <div
           className={styles.backdrop}
           data-testid="backdrop"
-          onClick={closeModal}
+          onClick={() => {
+            if (isLoginModalOpen) closeLoginModal();
+            if (isRegisterModalOpen) closeRegisterModal();
+          }}
         ></div>
       )}
     </>

@@ -7,11 +7,12 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 interface LoginModalProps {
   onClose: () => void;
+  onRegisterClick: () => void; // 회원가입 클릭 핸들러 추가
   title: string;
   subtitle: string | string[];
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title, subtitle }) => {
   const [currentView, setCurrentView] = useState<'select' | 'hostLogin' | 'takerLogin'>('select');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -98,7 +99,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle }) => 
       </div>
 
       <div className={styles.subBtnBox}>
-        <span>회원가입</span>
+        <span onClick={onRegisterClick}>회원가입</span> {/* 회원가입 클릭 시 RegisterModal 오픈 */}
         <div className={styles.finding}>
           <span>아이디 찾기</span>
           &nbsp;ㆍ&nbsp;
