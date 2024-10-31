@@ -242,11 +242,7 @@ def handle_user(request):
         if not request.user.is_authenticated:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-        user_id = request.auth['id']
-        user = User.objects.get(pk=user_id)
-
-        if not user.is_active:
-            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        user = find_user_by_token(request)
 
         if request.method == 'GET':
             serializer = UserInfoSerializer(user)
@@ -328,7 +324,7 @@ def handle_token(request):
         if not password:
             return Response({'message': '비밀번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = User.objects.filter(email=email).first()
+        user = User.objects.filter(email=email, is_active=True).first()
         if user is None:
             return Response({'message': '입력한 이메일은 등록되어 있지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -439,11 +435,7 @@ def reset_password(request):
         if not request.user.is_authenticated:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-        user_id = request.auth['id']
-        user = User.objects.get(pk=user_id)
-
-        if not user.is_active:
-            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        user = find_user_by_token(request)
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
         if serializer.is_valid():
@@ -461,6 +453,14 @@ def reset_password(request):
             user.save()
             return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
 
+
+def find_user_by_token(request):
+    user_id = request.auth['user_id']
+    user = User.objects.get(pk=user_id)
+
+    if not user.is_active:
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+    return user
 
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
