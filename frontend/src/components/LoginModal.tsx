@@ -34,33 +34,42 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, title, subtitle, onLog
 
   const handleHostLoginSubmit = async () => {
     setError('');
-
+  
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
       return;
     }
-
+  
     try {
       const response = await axiosInstance.post('/users/login/', {
         email,
         password,
       });
-
+  
       if (response.status === 200) {
-        const { access } = response.data;
+        const { access, refresh } = response.data;
         localStorage.setItem('accessToken', access);
-        localStorage.setItem('userRole', 'host'); // 로그인 성공 시 'host'로 저장
+        localStorage.setItem('refreshToken', refresh);
+        localStorage.setItem('userRole', 'host');
         onLogin('host');
       }
     } catch (err) {
       const axiosError = err as AxiosError<ErrorResponse>;
-      if (axiosError.response && axiosError.response.status === 400) {
-        setError(axiosError.response.data?.message || '로그인 실패');
+      if (axiosError.response) {
+        if (axiosError.response.status === 401) {
+          setError('인증이 만료되었습니다. 다시 로그인해 주세요.');
+        } else if (axiosError.response.status === 400) {
+          setError(axiosError.response.data?.message || '로그인 실패');
+        } else {
+          setError('로그인 중 문제가 발생했습니다.');
+        }
       } else {
-        setError('로그인 중 문제가 발생했습니다.');
+        setError('네트워크 오류가 발생했습니다.');
       }
     }
   };
+  
+  
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);

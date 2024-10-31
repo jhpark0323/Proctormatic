@@ -22,9 +22,12 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("accessToken"); // 엑세스 토큰 삭제
+    localStorage.removeItem("refreshToken"); // 리프레시 토큰 삭제
     onLogoutClick();
     setIsModalOpen(false);
   };
+  
 
   return (
     <div className={styles.Header}>
