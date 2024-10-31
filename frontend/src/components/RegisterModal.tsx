@@ -201,14 +201,12 @@ const handleRegister = async () => {
                 <div className={styles.inputPart}>
                   <div className={styles.emailInput}>
                     <div className={styles.firstLeft}>
-                      <input type="email" style={{ display: 'none' }} aria-hidden="true" />
-                      <input type="password" style={{ display: 'none' }} aria-hidden="true" />
                       <input 
                         type="email" 
                         placeholder="이메일 주소 입력" 
                         value={email}
                         onChange={(e) => validateEmail(e.target.value)}
-                        // autoComplete="off"
+                        autoComplete="new-email"
                       />
                       <div className={`${styles.rowGrayBar} ${emailError ? styles.errorRow : ''}`}></div>
                     </div>
@@ -222,7 +220,7 @@ const handleRegister = async () => {
                       placeholder="비밀번호 입력"
                       value={password}
                       onChange={(e) => validatePassword(e.target.value)}
-                      // autoComplete="off"
+                      autoComplete="new-password"
                     />
                     <div className={`${styles.rowGrayBar} ${passwordError ? styles.errorRow : ''}`}></div>
                   </div>
@@ -234,7 +232,7 @@ const handleRegister = async () => {
                       placeholder="비밀번호 확인" 
                       value={confirmPassword}
                       onChange={(e) => validateConfirmPassword(e.target.value)}
-                      // autoComplete="off"
+                      autoComplete="new-password"
                     />
                     <div className={`${styles.rowGrayBar} ${confirmPasswordError ? styles.errorRow : ''}`}></div>
                   </div>
