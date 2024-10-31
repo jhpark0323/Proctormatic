@@ -10,6 +10,7 @@ import { FaAngleLeft } from "react-icons/fa6";
 
 import MyCoin from "./MyCoin";
 import AccountInfo from "./AccountInfo";
+import HostHeader from "@/components/HostHeader";
 
 const Mypage = () => {
   const { user } = useAuthStore();
@@ -42,6 +43,7 @@ const Mypage = () => {
 
   return (
     <>
+      <HostHeader />
       <div className={styles.Content}>
         <div className={styles.ContentHeader}>
           <FaAngleLeft
