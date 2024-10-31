@@ -75,6 +75,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title
             value={email}
             onChange={handleEmailChange}
             onKeyPress={handleKeyPress}
+            autoComplete='on'
           />
         </div>
         <div style={{ marginTop: '5px', position: 'relative' }}>
@@ -85,7 +86,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title
             value={password}
             onChange={handlePasswordChange}
             onKeyPress={handleKeyPress}
-            autoComplete='off'
+            autoComplete='on'
           />
           <img
             src={cancelButton}
