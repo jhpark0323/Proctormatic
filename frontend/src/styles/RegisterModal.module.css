@@ -136,8 +136,135 @@
 .birthInfo {
   font-size: 12px;
   color: rgb(68, 68, 68);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   margin: 14px 0px 14px;
   box-sizing: border-box;
+}
+
+.emailBox {
+  padding: 0px;
+  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0px 44px;
+  box-sizing: border-box;
+}
+
+.titlePart {
+  font-size: 15px;
+  font-weight: var(--font-MD_MEDIUM-fontweight);
+  line-height: 22px;
+  margin-bottom: 5px;
+}
+
+.inputPart {
+  margin-top: 5px;
+  display: grid;
+}
+
+.emailInput {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pwdInputOne {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pwdInputTwo {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.firstLeft {
+  flex-grow: 1;
+  margin-right: 7px;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputPart input {
+  font-size: 16px;
+  display: flex;
+  flex-grow: 1;
+  height: 37px;
+  border: none;
+}
+
+.rowGrayBar {
+  width: 100%;
+  height: 1px;
+  background-color: rgb(223, 223, 223);
+}
+
+.verifyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 101px;
+  height: 37px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: var(--font-MD_REGULAR-fontweight);
+  line-height: 21px;
+  border-radius: 6px;
+  background-color: rgb(32, 49, 91);
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+}
+
+.errorCase {
+  color: rgb(200, 59, 56);
+  font-size: 12px;
+  line-height: 18px;
+  font-family: var(--font-MD_REGULAR-fontweight);
+  padding-top: 5px;
+}
+
+.infoPart {
+  display: grid;
+  gap: 1px;
+  margin-top: 16px;
+}
+
+.infoInner {
+  font-family: var(--font-MD_REGULAR-fontweight);
+  font-size: 12px;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.buttonBox {
+  margin-top: 48px;
+  padding: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registerButton {
+  align-items: center;
+  background-color: #ed893e;
+  border: none;
+  border-radius: 43px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-family: Medium;
+  font-size: 17px;
+  height: 52px;
+  justify-content: center;
+  line-height: 25px;
+  padding: 0;
+  width: 204px;
+}
+
+.registerButton:disabled {
+  background-color: #d9d9d9;
+  cursor: auto;
 }
