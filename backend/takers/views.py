@@ -9,8 +9,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
 from .models import Taker
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from django.utils.datetime_safe import datetime
 
