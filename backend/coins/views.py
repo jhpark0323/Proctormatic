@@ -56,11 +56,7 @@ User = get_user_model()
 )
 @api_view(['GET', 'POST'])
 def handle_coin(request):
-    user_id = request.auth['id']
-    user = User.objects.get(pk=user_id)
-
-    if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+    user = find_user_by_token(request)
 
     if request.method == 'GET':
         return Response({'coin': user.coin_amount}, status=status.HTTP_200_OK)
@@ -156,14 +152,10 @@ def create_coin_code(request):
 )
 @api_view(['GET'])
 def coin_history(request):
-    user_id = request.auth['id']
-    user = User.objects.get(pk=user_id)
-
-    if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+    user = find_user_by_token(request)
 
     coin_type = request.query_params.get('type')
-    history = Coin.objects.filter(user=user_id).order_by('-created_at')
+    history = Coin.objects.filter(user=user.id).order_by('-created_at')
     if coin_type in ['charge', 'use', 'refund']:
         history = history.filter(type=coin_type)
 
@@ -185,3 +177,12 @@ def coin_history(request):
         "next": paginated_history.has_next(),
         "totalPage": paginator.num_pages,
     }, status=status.HTTP_200_OK)
+
+
+def find_user_by_token(request):
+    user_id = request.auth['user_id']
+    user = User.objects.get(pk=user_id)
+
+    if not user.is_active:
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+    return user

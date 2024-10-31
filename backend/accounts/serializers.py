@@ -11,7 +11,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         token = super().get_token(user)
         token['role'] = 'host'
-        token['id'] = user.id
 
         return {
             'access': str(token.access_token),
