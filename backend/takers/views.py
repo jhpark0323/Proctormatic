@@ -14,13 +14,13 @@ from drf_yasg import openapi
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from django.utils.datetime_safe import datetime
 
-swagger_jwt_auth = openapi.Parameter(
-    'Authorization',
-    openapi.IN_HEADER,
-    description='JWT Bearer Token. Format: "Bearer <token>"',
-    type=openapi.TYPE_STRING,
-    required=True
-)
+# swagger_jwt_auth = openapi.Parameter(
+#     'Authorization',
+#     openapi.IN_HEADER,
+#     description='JWT Bearer Token. Format: "Bearer <token>"',
+#     type=openapi.TYPE_STRING,
+#     required=True
+# )
 
 # @swagger_auto_schema(
 #     method='post',
