@@ -12,6 +12,6 @@ urlpatterns = [
     path('api/exam/', include('exams.urls')),
     path('api/helpdesk/', include('helpdesks.urls')),
     path('api/taker/', include('takers.urls')),
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
