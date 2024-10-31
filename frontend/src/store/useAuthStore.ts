@@ -21,4 +21,3 @@ export const useAuthStore = create<AuthState>((set) => ({
     CustomToast("로그아웃 되었습니다.");
   },
 }));
-
