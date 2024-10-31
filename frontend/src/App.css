@@ -13,3 +13,25 @@ body {
   user-select: none; /*모든 요소에 선택 방지 설정 */
   -webkit-user-drag: none; /* 이미지 등 드래그 방지 */
 }
+
+@media (max-width: 1139px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+::-webkit-scrollbar {
+  /* display: none; */
+  position: fixed;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 100px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #c6c6c6;
+  border-radius: 100px;
+}
+::-webkit-scrollbar-track {
+  border-radius: 1rem;
+}
