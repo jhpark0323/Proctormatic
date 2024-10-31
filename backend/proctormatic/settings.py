@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     # swagger
-    'drf_yasg',
+    'drf_spectacular',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -102,16 +102,26 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 # 위험사항
 CORS_ALLOW_ALL_ORIGINS = True
 
-SWAGGER_SETTINGS = {
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Proctormatic API',
+    'DESCRIPTION': 'Proctormatic API입니다.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMES': False,
+    'SERVERS': [
+        {'url': 'http://localhost:8000/'},
+        {'url': 'https://k11s209.p.ssafy.io/'}
+    ],
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'SECURITY': [
+        {'jwtAuth': []}
+    ],
     'SECURITY_DEFINITIONS': {
-        'basic': {
-            'type': 'basic'
+        'jwtAuth': {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
         }
     },
-    'USE_SESSION_AUTH': False,
-    'VALIDATOR_URL': None,
-    'DOC_EXPANSION': 'none',
-    'SUPPORTED_SUBMIT_METHODS': ['get', 'post', 'put', 'delete', 'patch'],
 }
 
 REST_FRAMEWORK = {
@@ -120,7 +130,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
