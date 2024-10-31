@@ -1,58 +1,74 @@
+from email.policy import default
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from rest_framework import status
 from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from coins.models import Coin, CoinCode
-from coins.serializers import CoinCodeSerializer, CoinCodeCreateSerializer, CoinSerializer, CoinHistorySerializer
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, OpenApiResponse, OpenApiRequest
+from .models import Coin, CoinCode
+from .serializers import CoinCodeSerializer, CoinCodeCreateSerializer, CoinSerializer, CoinHistorySerializer
 
 User = get_user_model()
 
-@swagger_auto_schema(
-    method='get',
-    operation_summary="적립금 조회",
-    manual_parameters=[
-        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ],
-    responses={
-        200: openapi.Response('적립금 조회 성공', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'isAlreadyExists': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-            }
-        ))
-    }
-)
-@swagger_auto_schema(
-    method='post',
-    operation_summary="적립금 충전",
-    manual_parameters=[
-        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ],
-    request_body=CoinCodeCreateSerializer,
-    responses={
-        201: openapi.Response('적립금 충전 완료', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        400: openapi.Response('적립금 코드를 입력해주세요', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        404: openapi.Response('해당 적립금 코드가 존재하지 않습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        ))
-    }
+
+@extend_schema_view(
+    get=extend_schema(
+        summary='적립금 조회',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='적립금 조회 성공',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'coin': {
+                            'type': 'integer',
+                        }
+                    }
+                }
+            )
+        }
+    ),
+    post=extend_schema(
+        summary='적립금 충전',
+        request=CoinCodeCreateSerializer,
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='적립금 충전 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='적립금 코드 미입력',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='적립금 코드 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    )
 )
 @api_view(['GET', 'POST'])
 def handle_coin(request):
@@ -61,41 +77,47 @@ def handle_coin(request):
     if request.method == 'GET':
         return Response({'coin': user.coin_amount}, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        code = request.data.get('code', None)
+        serializer = CoinCodeCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            code = serializer.validated_data.get('code')
 
-        if not code:
-            return Response({'message': '적립금 코드를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not CoinCode.objects.filter(code=code).exists():
+                return Response({'message': '해당 적립금 코드가 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+            coin_code = CoinCode.objects.get(code=code)
 
-        if not CoinCode.objects.filter(code=code).exists():
-            return Response({'message': '해당 적립금 코드가 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
-        coin_code = CoinCode.objects.get(code=code)
+            user.coin_amount += coin_code.amount
+            user.save()
 
-        user.coin_amount += coin_code.amount
-        user.save()
-
-        coin_data = {
-            'user': user.id,
-            'type': 'charge',
-            'amount': coin_code.amount,
-        }
-
-        serializer = CoinSerializer(data=coin_data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response({'message': '적립금 충전 완료'}, status=status.HTTP_201_CREATED)
-
-@swagger_auto_schema(
-    method='post',
-    operation_summary="적립금 코드 등록",
-    request_body=CoinCodeSerializer,
-    responses={
-        201: openapi.Response('코드 생성 완료', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING),
+            coin_data = {
+                'user': user.id,
+                'type': 'charge',
+                'amount': coin_code.amount,
             }
-        ))
-    }
+
+            serializer = CoinSerializer(data=coin_data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': '적립금 충전 완료'}, status=status.HTTP_201_CREATED)
+
+
+@extend_schema_view(
+    post=extend_schema(
+        summary='적립금 코드 등록',
+        request=CoinCodeSerializer,
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='코드 생성 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    )
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -106,49 +128,43 @@ def create_coin_code(request):
         return Response({'message': '코드 생성 완료'}, status=status.HTTP_201_CREATED)
 
 
-@swagger_auto_schema(
-    method='get',
-    operation_summary='적립금 사용내역 조회',
-    manual_parameters=[
-        openapi.Parameter('Authorization', openapi.IN_HEADER, type=openapi.TYPE_STRING),
-        openapi.Parameter('type', openapi.IN_QUERY, type=openapi.TYPE_STRING),
-        openapi.Parameter('page', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, default=1),
-        openapi.Parameter('size', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, default=10),
-    ],
-    responses={
-        200: openapi.Response('적립금 조회 성공', openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'coinList': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Schema(
-                            type=openapi.TYPE_OBJECT,
-                            properties={
-                                'type': openapi.Schema(type=openapi.TYPE_STRING),
-                                'amount': openapi.Schema(type=openapi.TYPE_STRING),
-                                'created_at': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
-                            },
-                        )
-                    ),
-                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER),
-                },
+@extend_schema_view(
+    get=extend_schema(
+        summary='적립금 사용내역 조회',
+        parameters=[
+            OpenApiParameter(name='type', type=str, location=OpenApiParameter.QUERY),
+            OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, default=1),
+            OpenApiParameter(name='size', type=int, location=OpenApiParameter.QUERY, default=10),
+        ],
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='적립금 사용내역 조회 성공',
+                response=CoinHistorySerializer(many=True)
             ),
-        ),
-        400: openapi.Response('잘못된 페이지 또는 사이즈 요청', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        ))
-    }
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='잘못된 페이지 또는 사이즈 요청',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['GET'])
 def coin_history(request):
