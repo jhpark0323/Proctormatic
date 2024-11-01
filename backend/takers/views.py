@@ -5,12 +5,15 @@ from exams.models import Exam
 from rest_framework.decorators import api_view, permission_classes, parser_classes, authentication_classes
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
 from .models import Taker
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from django.utils.datetime_safe import datetime
+from django.conf import settings
+
+import boto3
 
 # swagger_jwt_auth = openapi.Parameter(
 #     'Authorization',
@@ -372,6 +375,7 @@ def check_email(request):
 def update_taker(request):
     taker_id = request.auth['user_id']
     required_fields = ['idPhoto', 'birth', 'verification_rate']
+
     for field in required_fields:
         if field not in request.data:
             return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -383,36 +387,36 @@ def update_taker(request):
     if 'birth' in request.data:
         birth = request.data['birth']
         parsed_birth, error_message = parse_birth_date(birth)
-
         if error_message:
-            return Response({'message': error_message},
-                            status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
         request.data['birth'] = parsed_birth
 
-    exam_id = taker.exam_id
-
-    folder_path = os.path.join('prome', str(exam_id), str(taker_id))
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+    s3_client = boto3.client('s3')
 
     if 'idPhoto' in request.FILES:
         id_photo_file = request.FILES['idPhoto']
         _, file_extension = os.path.splitext(id_photo_file.name)
-        file_name = f'{taker_id}_id_photo{file_extension}'
+        file_name = f"idPhoto{file_extension}"
+        s3_path = f"{taker.exam_id}/{taker_id}/{file_name}"
 
-        file_path = os.path.join(folder_path, file_name)
+        try:
+            s3_client.upload_fileobj(
+                id_photo_file,
+                settings.AWS_STORAGE_BUCKET_NAME,
+                s3_path,
+                ExtraArgs={'ContentType': id_photo_file.content_type}
+            )
+            s3_file_url = f"{settings.MEDIA_URL}{s3_path}"
 
-        with open(file_path, 'wb+') as destination:
-            for chunk in id_photo_file.chunks():
-                destination.write(chunk)
+        except Exception as e:
+            return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        request.data['id_photo'] = file_path
+    update_data = {**request.data.dict(), 'id_photo': s3_file_url}
 
-    serializer = UpdateTakerSerializer(taker, data=request.data, partial=True)
+    serializer = UpdateTakerSerializer(taker, data=update_data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response( status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
 
     return Response({'message': '잘못된 요청입니다.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
