@@ -8,7 +8,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
-from .models import Taker
+from .models import Taker, Record
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from django.utils.datetime_safe import datetime
 from django.conf import settings
@@ -500,20 +500,29 @@ def add_web_cam(request):
 
     web_cam_file = request.FILES['webCam']
     start_time = request.data.get('startTime')
+    end_time = request.data.get('endTime')
 
     if not start_time:
         return Response('잘못된 요청입니다.', status=400)
 
-    taker_id = request.auth.get('user_id', 'default_user')
+    s3_client = boto3.client('s3')
     _, file_extension = os.path.splitext(web_cam_file.name)
-    file_name = f'{taker_id}_webcam_{start_time}{file_extension}'
-    folder_path = os.path.join('prome', str(exam_id), str(taker_id))
-    os.makedirs(folder_path, exist_ok=True)
-    file_path = os.path.join(folder_path, file_name)
+    file_name = f'webcam_{start_time}{file_extension}'
+    s3_path = f"{exam_id}/{taker_id}/{file_name}"
 
-    with open(file_path, 'wb+') as destination:
-        for chunk in web_cam_file.chunks():
-            destination.write(chunk)
+    try:
+        s3_client.upload_fileobj(
+            web_cam_file,
+            settings.AWS_STORAGE_BUCKET_NAME,
+            s3_path,
+            ExtraArgs={'ContentType': web_cam_file.content_type}
+        )
+        s3_file_url = f"{settings.MEDIA_URL}{s3_path}"
+        record = Record(taker=taker, url=s3_file_url, start_time=start_time, end_time=end_time)
+        record.save()
+
+    except Exception as e:
+        return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response(status=status.HTTP_200_OK)
 
