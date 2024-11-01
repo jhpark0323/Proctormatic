@@ -50,6 +50,7 @@ import boto3
 #     }
 # )
 @api_view(['POST', 'PATCH'])
+@authentication_classes([CustomJWTAuthentication])
 @permission_classes([AllowAny])
 def add_taker(request):
     if request.method == 'POST':
