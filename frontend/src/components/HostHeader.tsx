@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/HeaderWhite.module.css";
 import CustomButton from "./CustomButton";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface HostHeaderProps {}
 
 const HostHeader: React.FC<HostHeaderProps> = ({}) => {
   const navigate = useNavigate();
-  const userName = "홍길동";
+  const { user } = useAuthStore();
 
   return (
     <div className={styles.Header}>
@@ -30,7 +31,7 @@ const HostHeader: React.FC<HostHeaderProps> = ({}) => {
         <div className={styles.UserInfo}>
           <div className={styles.UserRoleContainer}>
             <span className={styles.UserRole}>
-              <span>{userName}</span> 님
+              <span>{user?.name}</span> 님
             </span>
           </div>
 
