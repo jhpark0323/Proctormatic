@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from datetime import datetime
+from datetime import date, datetime
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -34,6 +34,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('name', 'email', 'password', 'birth', 'policy', 'marketing',)
         extra_kwargs = {'password': {'write_only': True, 'min_length': 8}}
+
+    def validate_birth(self, value):
+        if value > date.today():
+            raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')

@@ -26,7 +26,7 @@ User = get_user_model()
         ],
         responses={
             status.HTTP_200_OK: OpenApiResponse(
-                description='이메일 중복체크 결과입니다.',
+                description='이메일 중복체크 결과',
                 response={
                     'type': 'object',
                     'properties': {
