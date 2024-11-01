@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from '@/styles/RegisterModal.module.css';
 import cancelButtonImg from '@/assets/cancleButton.png';
 import PolicyInner from '@/components/PolicyInner';
 import axiosInstance from '@/utils/axios';
 import { CustomToast } from "@/components/CustomToast";
 import { useRegisterStore } from '@/store/useRegisterStore';
+import EmailModal from '@/components/EmailModal'; // EmailModal 임포트
 
 interface RegisterModalProps {
   onClose: () => void;
@@ -13,6 +14,11 @@ interface RegisterModalProps {
 }
 
 const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle }) => {
+  const [isLoading, setLoading] = useState(false); // 로딩 상태 추가
+  const [isEmailModalOpen, setEmailModalOpen] = useState(false); // EmailModal 상태 추가
+  const [isEmailVerified, setEmailVerified] = useState(false); // 이메일 인증 상태 추가
+
+
   const {
     // Form fields
     name, email, password, confirmPassword,
@@ -47,73 +53,104 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
   const days = Array.from({ length: 31 }, (_, i) => `${i + 1}`);
 
   // 이메일 인증 버튼 핸들러
-  const onVerifyEmail = () => {
-    console.log("이메일 인증 요청:", email);
-    // 이메일 인증 요청 기능 추가
+  const onVerifyEmail = async () => {
+    setLoading(true); // 로딩 시작
+    try {
+      const response = await axiosInstance.post('/users/email/', {
+        email: email
+      });
+      
+      if (response.status === 200) {
+        CustomToast('인증번호가 발송되었습니다.');
+        setEmailModalOpen(true);
+      }
+    } catch (error) {
+      CustomToast('인증번호 발송에 실패했습니다.');
+    } finally {
+      setLoading(false); // 로딩 종료
+    }
+    // // EmailModal 열기
+    // setEmailModalOpen(true);
   };
 
-  // RegisterModal.tsx의 handleRegister 함수 수정
-const handleRegister = async () => {
-  const isValid = validateAllFields();
+  const closeEmailModal = () => {
+    setEmailModalOpen(false); // EmailModal 닫기
+  };
 
-  // 입력값 검증 실패
-  if (!isValid) {
-    if (!name || nameError) {
-      CustomToast("올바른 이름을 입력해주세요.");
-      return;
-    }
-    if (!email || emailError) {
-      CustomToast("올바른 이메일을 입력해주세요.");
-      return;
-    }
-    if (!password || passwordError) {
-      CustomToast("올바른 비밀번호를 입력해주세요.");
-      return;
-    }
-    if (!confirmPassword || confirmPasswordError) {
-      CustomToast("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-    return;
-  }
-
-  // 필수 약관 동의 확인
-  if (!policy) {
-    CustomToast("필수 항목에 동의해주세요.");
-    return;
-  }
-
-  try {
-    const response = await axiosInstance.post('/users/', {
-      name,
-      email,
-      password,
-      birth: birthYear + '-' + birthMonth.padStart(2, '0') + '-' + birthDay.padStart(2, '0'),
-      policy,
-      marketing
-    });
-
-    if (response.status === 201) {
-      CustomToast("회원가입이 완료되었습니다.");
-      onClose();
-    }
-  } catch (error: any) {
-    if (error.response) {
-      switch (error.response.status) {
-        case 400:
-          CustomToast("입력하신 정보를 다시 확인해주세요.");
-          break;
-        case 409:
-          CustomToast("이미 가입된 이메일입니다.");
-          break;
-        default:
-          CustomToast("회원가입 중 오류가 발생했습니다.");
+  const handleRegister = async () => {
+    const isValid = validateAllFields();
+  
+    // 입력값 검증 실패
+    if (!isValid) {
+      if (!name || nameError) {
+        CustomToast("올바른 이름을 입력해주세요.");
+        return;
       }
-    } else {
-      CustomToast("서버와의 통신 중 오류가 발생했습니다.");
+      if (!email || emailError) {
+        CustomToast("올바른 이메일을 입력해주세요.");
+        return;
+      }
+      if (!password || passwordError) {
+        CustomToast("올바른 비밀번호를 입력해주세요.");
+        return;
+      }
+      if (!confirmPassword || confirmPasswordError) {
+        CustomToast("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      return;
     }
-  }
-};
+  
+    // 이메일 인증 여부 확인
+    if (!isEmailVerified) {
+      CustomToast("이메일 인증을 완료해주세요.");
+      return;
+    }
+  
+    // 필수 약관 동의 확인
+    if (!policy) {
+      CustomToast("필수 항목에 동의해주세요.");
+      return;
+    }
+  
+    try {
+      const response = await axiosInstance.post('/users/', {
+        name,
+        email,
+        password,
+        birth: `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`,
+        policy,
+        marketing
+      });
+  
+      if (response.status === 201) {
+        CustomToast("회원가입이 완료되었습니다.");
+        onClose(); // 회원가입 성공 시에만 모달 닫기
+      }
+    } catch (error: any) {
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            CustomToast("입력하신 정보를 다시 확인해주세요.");
+            break;
+          case 409:
+            CustomToast("이미 가입된 이메일입니다.");
+            break;
+          default:
+            CustomToast("회원가입 중 오류가 발생했습니다.");
+        }
+      } else {
+        CustomToast("서버와의 통신 중 오류가 발생했습니다.");
+      }
+    }
+  };
+
+  // EmailModal에서 이메일 인증이 완료되었을 때 호출할 함수
+  const handleEmailVerified = () => {
+    setEmailVerified(true);
+    setEmailModalOpen(false); // 모달 닫기
+  };
+
 
   return (
     <div className={styles.Modal} role="dialog">
@@ -139,7 +176,7 @@ const handleRegister = async () => {
               </div>
             </div>
 
-            <div>
+            <form>
               <div className={styles.formInner}>
                 <div className={styles.formInnerNameBox}>
                   <span className={styles.formInnerName}>주최자 이름 (한글 2 - 10 자)</span>
@@ -210,7 +247,17 @@ const handleRegister = async () => {
                       />
                       <div className={`${styles.rowGrayBar} ${emailError ? styles.errorRow : ''}`}></div>
                     </div>
-                    <div className={styles.verifyButton} onClick={onVerifyEmail}>이메일 인증</div>
+                    <div className={styles.verifyButton} onClick={!isLoading ? onVerifyEmail : undefined}>
+                      {isEmailVerified ? (
+                        <div className={styles.verifiedText}>인증완료</div>
+                      ) : (
+                        isLoading ? (
+                          <div className={styles.loadingSpinner}></div> // 로딩 스피너
+                        ) : (
+                          "이메일 인증"
+                        )
+                      )}
+                    </div>
                   </div>
                   {emailError && <div className={styles.errorCase}>올바르지 않은 이메일 형식이에요.</div>}
                   
@@ -257,18 +304,28 @@ const handleRegister = async () => {
               </div>
 
               <div className={styles.buttonBox}>
-                <button 
+                <button
                   className={styles.registerButton}
                   onClick={handleRegister}
-                  disabled={nameError || emailError || passwordError || confirmPasswordError}
+                  disabled={
+                    nameError || emailError || passwordError || confirmPasswordError || !isEmailVerified || !policy
+                  }
                 >
                   회원가입
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
+
+      {/* EmailModal이 열릴 때 블러 처리 배경과 함께 표시 */}
+      {isEmailModalOpen && (
+        <>
+          <div className={styles.blurBackground}></div> {/* 블러 처리 배경 */}
+          <EmailModal onClose={closeEmailModal} email={email} onVerificationSuccess={handleEmailVerified}/>
+        </>
+      )}
     </div>
   );
 };
