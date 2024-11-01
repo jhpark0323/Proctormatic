@@ -3,65 +3,81 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.text import slugify
 from rest_framework.decorators import api_view
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, OpenApiResponse, OpenApiRequest
 from .models import Exam
 from takers.models import Taker
 from coins.models import Coin
 from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer
 from django.core.paginator import Paginator
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
-# Swagger 설정 추가 - 시험 생성 엔드포인트
-@swagger_auto_schema(
-    method='post',
-    operation_summary="시험 생성",
-    operation_description="새로운 시험을 생성합니다. 요청 데이터에는 시험 제목, 날짜, 시작 시간, 종료 시간, 예상 참가자 수 등이 포함되어야 합니다.",
-    request_body=ExamSerializer,
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT Token>",
-            type=openapi.TYPE_STRING
-        )
-    ],
-    responses={
-        201: openapi.Response('시험이 성공적으로 예약되었습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        400: openapi.Response('요청 데이터가 유효하지 않거나 서비스 요금이 부족한 경우', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        409: openapi.Response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-    }
+User = get_user_model()  # User 모델 가져오기
+
+
+@extend_schema_view(
+    post=extend_schema(
+        summary='시험 생성',
+        request=ExamSerializer,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='시험 예약 성공',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='요청 데이터가 유효하지 않거나 서비스 요금이 부족한 경우',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='응시 시작 시간 설정 오류',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['POST'])
 def create_exam(request):
@@ -72,7 +88,7 @@ def create_exam(request):
     
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
     expected_taker = request.data.get("expected_taker", 0)
     if expected_taker > 999:
@@ -141,48 +157,43 @@ def create_exam(request):
         "message": "시험이 성공적으로 예약되었습니다."
     }, status=status.HTTP_201_CREATED)
 
-# 예약된 시험 목록 조회 API
-@swagger_auto_schema(
-    method='get',
-    operation_summary="예약된 시험 목록 조회",
-    operation_description="사용자가 예약한 미래의 시험 목록을 조회합니다. 현재 시간 기준으로 아직 시작되지 않은 시험만 반환됩니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        ),
-        openapi.Parameter('page', openapi.IN_QUERY, description="페이지 번호 (기본값 1)", type=openapi.TYPE_INTEGER),
-        openapi.Parameter('size', openapi.IN_QUERY, description="페이지 당 항목 수 (기본값 10)", type=openapi.TYPE_INTEGER)
-    ],
-    responses={
-        200: openapi.Response('예약된 시험 목록 조회 성공', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                    'scheduledExamList': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Items(type=openapi.TYPE_OBJECT),
-                        description="예약된 시험 목록"
-                    ),
-                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
-                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
-                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-            }
-        )),
-        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-    }
+
+@extend_schema_view(
+    get=extend_schema(
+        summary='예약된 시험 조회',
+        parameters=[
+            OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, default=1),
+            OpenApiParameter(name='size', type=int, location=OpenApiParameter.QUERY, default=10),
+        ],
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='예약된 시험 목록 조회 성공',
+                response=ScheduledExamListSerializer(many=True)
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['GET'])
 def scheduled_exam_list(request):
@@ -193,7 +204,7 @@ def scheduled_exam_list(request):
     
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
@@ -244,48 +255,42 @@ def scheduled_exam_list(request):
     }, status=status.HTTP_200_OK)
 
 
-# 진행 중인 시험 조회 API
-@swagger_auto_schema(
-    method='get',
-    operation_summary="진행 중인 시험 조회",
-    operation_description="현재 시간이 입장 가능 시간과 종료 시간 사이에 있는 진행 중인 시험 목록을 조회합니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        ),
-        openapi.Parameter('page', openapi.IN_QUERY, description="페이지 번호 (기본값 1)", type=openapi.TYPE_INTEGER),
-        openapi.Parameter('size', openapi.IN_QUERY, description="페이지 당 항목 수 (기본값 10)", type=openapi.TYPE_INTEGER)
-    ],
-    responses={
-        200: openapi.Response('진행 중인 시험 목록 조회 성공', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                    'ongoingExamList': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Items(type=openapi.TYPE_OBJECT),
-                        description="진행 중인 시험 목록"
-                    ),
-                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
-                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
-                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-            }
-        )),
-        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-    }
+@extend_schema_view(
+    get=extend_schema(
+        summary='진행 중인 시험 조회',
+        parameters=[
+            OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, default=1),
+            OpenApiParameter(name='size', type=int, location=OpenApiParameter.QUERY, default=10),
+        ],
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='진행 중인 시험 목록 조회 성공',
+                response=OngoingExamListSerializer(many=True)
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['GET'])
 def ongoing_exam_list(request):
@@ -296,7 +301,7 @@ def ongoing_exam_list(request):
 
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
@@ -338,48 +343,43 @@ def ongoing_exam_list(request):
             "totalPage": Paginator(ongoing_exams, page_size).num_pages
     }, status=status.HTTP_200_OK)
 
-# 완료된 시험 조회 API
-@swagger_auto_schema(
-    method='get',
-    operation_summary="완료된 시험 목록 조회",
-    operation_description="현재 시간을 기준으로 종료된 시험 목록을 조회합니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        ),
-        openapi.Parameter('page', openapi.IN_QUERY, description="페이지 번호 (기본값 1)", type=openapi.TYPE_INTEGER),
-        openapi.Parameter('size', openapi.IN_QUERY, description="페이지 당 항목 수 (기본값 10)", type=openapi.TYPE_INTEGER)
-    ],
-    responses={
-        200: openapi.Response('완료된 시험 목록 조회 성공', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                    'completedExamList': openapi.Schema(
-                        type=openapi.TYPE_ARRAY,
-                        items=openapi.Items(type=openapi.TYPE_OBJECT),
-                        description="완료된 시험 목록"
-                    ),
-                    'prev': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="이전 페이지 존재 여부"),
-                    'next': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="다음 페이지 존재 여부"),
-                    'totalPage': openapi.Schema(type=openapi.TYPE_INTEGER, description="전체 페이지 수")
-            }
-        )),
-        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-    }
+
+@extend_schema_view(
+    get=extend_schema(
+        summary='완료된 시험 조회',
+        parameters=[
+            OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, default=1),
+            OpenApiParameter(name='size', type=int, location=OpenApiParameter.QUERY, default=10),
+        ],
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='완료된  시험 목록 조회 성공',
+                response=CompletedExamListSerializer(many=True)
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['GET'])
 def completed_exam_list(request):
@@ -390,7 +390,7 @@ def completed_exam_list(request):
 
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
@@ -440,136 +440,138 @@ def completed_exam_list(request):
     }, status=status.HTTP_200_OK)
 
 
-# Swagger 설정 추가 - 시험 세부 정보 조회 및 수정 엔드포인트
-@swagger_auto_schema(
-    method='get',
-    operation_summary="시험 세부 정보 조회",
-    operation_description="특정 시험의 세부 정보를 조회합니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        )
-    ],
-    responses={
-        200: openapi.Response('시험 조회 성공', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="시험 ID"),
-                'title': openapi.Schema(type=openapi.TYPE_STRING, description="시험 제목"),
-                'date': openapi.Schema(type=openapi.TYPE_STRING, format='date', description="시험 날짜"),
-                'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 시작 시간"),
-                'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time', description="시험 종료 시간"),
-                'expected_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="예상 참가자 수"),
-                'total_taker': openapi.Schema(type=openapi.TYPE_INTEGER, description="총 참가자 수"),
-                'cheer_msg': openapi.Schema(type=openapi.TYPE_STRING, description="응원 메시지", nullable=True),
-                'taker_list': openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_OBJECT),
-                    description="응시자 리스트"
-                )
-            }
-        )),
-        401: openapi.Response('사용자 정보가 필요합니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="사용자 정보 없음 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-        404: openapi.Response('존재하지 않는 시험입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="시험을 찾을 수 없음")
-            }
-        )),
-    }
-)
-@swagger_auto_schema(
-    method='put',
-    operation_summary="시험 정보 수정",
-    operation_description="특정 시험의 정보를 수정합니다.",
-    request_body=ExamSerializer,
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        )
-    ],
-    responses={
-        200: openapi.Response('수정이 완료되었습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="성공 메시지")
-            }
-        )),
-        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-        409: openapi.Response('시간 또는 비용 관련 오류입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="시간 또는 비용 오류 메시지")
-            }
-        )),
-    }
-)
-@swagger_auto_schema(
-    method='delete',
-    operation_summary="시험 삭제",
-    operation_description="특정 시험을 삭제합니다. 시험 ID를 경로 파라미터로 전달해야 하며, 권한이 필요합니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT Token>",
-            type=openapi.TYPE_STRING
-        )
-    ],
-    responses={
-        204: openapi.Response('시험이 성공적으로 삭제되었습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-        409: openapi.Response('진행 중인 시험은 삭제할 수 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )),
-    }
+@extend_schema_view(
+    get=extend_schema(
+        summary='시험 조회',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='시험 조회 성공',
+                response=ExamDetailSerializer
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='시험 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    ),
+    put=extend_schema(
+        summary='시험 정보 수정',
+        request=ExamSerializer,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='시험 정보 수정 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='잘못된 인증번호 또는 만료된 인증번호',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='시간 또는 비용 입력 오류',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    ),
+    delete=extend_schema(
+        summary='시험 삭제',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='시험 삭제 성공'),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='잘못된 인증번호 또는 만료된 인증번호',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='시간 또는 비용 입력 오류',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
 )
 @api_view(['GET', 'PUT', 'DELETE'])
 def exam_detail(request, pk):
@@ -581,7 +583,7 @@ def exam_detail(request, pk):
     # 탈퇴한 유저일 경우
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -671,40 +673,60 @@ def exam_detail(request, pk):
     return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# 응시 결과 조회 API
-@swagger_auto_schema(
-    method='get',
-    operation_summary="응시 결과 조회",
-    operation_description="특정 시험에 대한 특정 응시자의 응시 결과를 조회합니다.",
-    manual_parameters=[
-        openapi.Parameter(
-            'Authorization',
-            openapi.IN_HEADER,
-            description="Bearer <JWT 토큰>",
-            type=openapi.TYPE_STRING
-        )
-    ],
-    responses={
-        200: openapi.Response('응시 결과 조회 성공', TakerDetailSerializer),
-        400: openapi.Response('잘못된 요청입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="오류 메시지")
-            }
-        )),
-        403: openapi.Response('권한이 없습니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="권한 없음 메시지")
-            }
-        )),
-        404: openapi.Response('존재하지 않는 응시자 또는 시험입니다.', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description="데이터 없음 메시지")
-            }
-        )),
-    }
+@extend_schema_view(
+    get=extend_schema(
+        summary='응시 결과 조회',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='응시 결과 조회 성공',
+                response=TakerDetailSerializer
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='잘못된 요청',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='인증 실패',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description='권한 없음',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='시험 또는 응시자 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    )
 )
 @api_view(['GET'])
 def taker_result_view(request, eid, tid):
@@ -716,7 +738,7 @@ def taker_result_view(request, eid, tid):
     # 탈퇴한 유저일 경우
     user = User.objects.get(id=user_id)
     if not user.is_active:
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
@@ -739,8 +761,6 @@ def taker_result_view(request, eid, tid):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-User = get_user_model()  # User 모델 가져오기
-
 def get_user_info_from_token(request):
     user = request.user
     if user.is_authenticated:  # 사용자가 인증되었는지 확인
@@ -748,6 +768,7 @@ def get_user_info_from_token(request):
         user_role = request.auth['role']  # 커스텀 필드 'role'을 가져옴
         return user_id, user_role
     return None, None
+
 
 def paginate_queryset(queryset, page_number, page_size):
     paginator = Paginator(queryset, page_size)
@@ -758,6 +779,7 @@ def paginate_queryset(queryset, page_number, page_size):
     
     # 정상적인 경우 해당 페이지 반환
     return paginator.get_page(page_number)
+
 
 def send_exam_email(email, exam):
     subject = f"[시험 예약 완료] {exam.title}"

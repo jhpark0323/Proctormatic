@@ -12,6 +12,15 @@ import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// host
+import AccountInfo from "./pages/host/mypages/AccountInfo";
+import MyCoin from "./pages/host/mypages/MyCoin";
+import Mypage from "./pages/host/mypages/Mypage";
+import MakeTest from "./pages/host/testpages/MakeTest";
+import MyTest from "./pages/host/testpages/MyTest";
+import TestDetail from "./pages/host/testpages/TestDetail";
+import Helpdesk from "./pages/host/Helpdesk";
+
 function App() {
   useEffect(() => {
     injectColors(); // 색상 변수를 설정
@@ -40,6 +49,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        {/* taker */}
         <Route
           path="/taker"
           element={
@@ -56,11 +66,69 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        {/* host */}
         <Route
           path="/host"
           element={
             <PrivateRoute allowedRoles={["host"]}>
               <HostHome />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/mypage/"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <Mypage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/myPage/accounfInfo"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <AccountInfo />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/myPage/coinInfo"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <MyCoin />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/newTest/"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <MakeTest />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/myTest/"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <MyTest />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/test/:id"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <TestDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/helpdesk"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <Helpdesk />
             </PrivateRoute>
           }
         />

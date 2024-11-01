@@ -13,13 +13,16 @@ const HostHeader: React.FC<HostHeaderProps> = ({}) => {
     <div className={styles.Header}>
       <img className={styles.Logo} src="/src/assets/mainLogo.svg" alt="Logo" />
       <div className={styles.menu}>
-        <a href="" className={styles.menuIcon}>
+        <a onClick={() => navigate("/host/myTest")} className={styles.menuIcon}>
           내 시험 관리
         </a>
-        <a href="" className={styles.menuIcon}>
+        <a
+          onClick={() => navigate("/host/helpdesk")}
+          className={styles.menuIcon}
+        >
           고객 센터
         </a>
-        <a href="" className={styles.menuIcon}>
+        <a onClick={() => navigate("/host/mypage")} className={styles.menuIcon}>
           마이 페이지
         </a>
       </div>
@@ -31,7 +34,7 @@ const HostHeader: React.FC<HostHeaderProps> = ({}) => {
             </span>
           </div>
 
-          <CustomButton onClick={() => navigate("/host")}>
+          <CustomButton onClick={() => navigate("/host/newTest/")}>
             시험 예약하기
           </CustomButton>
         </div>

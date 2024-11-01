@@ -7,6 +7,13 @@ class CoinCodeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CoinCodeCreateSerializer(serializers.ModelSerializer):
+    code = serializers.CharField(
+        required=True,
+        error_messages={
+            'required': '적립금 코드를 입력해주세요.',
+            'blank': '적립금 코드를 입력해주세요.',
+    })
+
     class Meta:
         model = CoinCode
         fields = ('code',)

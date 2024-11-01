@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from '@/store/useAuthStore';
 
 const baseURL = 'https://k11s209.p.ssafy.io/api';
 
@@ -46,7 +47,7 @@ axiosInstance.interceptors.response.use(
         });
 
         const newAccessToken = tokenResponse.data.access;
-        
+
         // 로컬 스토리지에 새 accessToken 저장
         localStorage.setItem("accessToken", newAccessToken);
 
@@ -56,9 +57,9 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (tokenError) {
         // 새 토큰 발급 실패 시 토큰 삭제 및 로그아웃 처리
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        window.location.href = "/login"; // 로그인 페이지로 이동
+        useAuthStore.getState().logout(); // 로그아웃 처리
+        window.location.href = "/"; // 메인 페이지로 이동
+        console.log('세션이 만료되어 다시 로그인 해주세요')  // 추후 토스트로 알림 메시지 출력하기
         return Promise.reject(tokenError);
       }
     }
