@@ -20,7 +20,7 @@
   padding: 8px 0;
 }
 
-.checkItem {
+.checkItem > label {
   display: flex;
   align-items: center;
 }
