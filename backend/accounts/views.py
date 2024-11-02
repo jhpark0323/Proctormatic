@@ -220,6 +220,17 @@ def handle_email_verification(request):
                     },
                 }
             ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='이미 존재하는 이메일',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
         }
     ),
     put=extend_schema(
@@ -281,6 +292,10 @@ def handle_user(request):
     if request.method == 'POST':
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            if User.objects.filter(email=email).exists():
+                return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 이용해주세요.'}, status=status.HTTP_409_CONFLICT)
+
             serializer.save()
             return Response({"message": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
 
