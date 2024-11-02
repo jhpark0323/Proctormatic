@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.text import slugify
@@ -119,21 +119,30 @@ def create_exam(request):
     user.save()  # 변경사항 저장
 
     # 시험 시작 시간 검증 및 entry_time 계산
+    date = serializer.validated_data.get('date')
     start_time = serializer.validated_data.get('start_time')
-    current_time = datetime.datetime.now().time()
+    current_time = datetime.now()
 
     # 현재 시간과 시험 시작 시간을 비교
-    start_seconds = datetime.datetime.combine(datetime.date.today(), start_time).timestamp()
-    current_seconds = datetime.datetime.combine(datetime.date.today(), current_time).timestamp()
+    start_datetime = datetime.combine(date, start_time)
 
     # 시험 시작 시간이 현재 시간으로부터 30분 이상 남아 있지 않은 경우 처리
-    if (start_seconds - current_seconds) < 1800:
+    if (start_datetime - current_time) < timedelta(minutes=30):
         return Response({
             "message": "응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요. 응시 시작 시간을 변경해주세요."
         }, status=status.HTTP_409_CONFLICT)
 
+    end_time = serializer.validated_data.get('end_time')
+    exit_time = serializer.validated_data.get('exit_time')
+
+    # exit_time은 start_time 이후 & end_time 이전으로 설정되어야 함
+    if not (start_time <= exit_time <= end_time):
+        return Response({
+            'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요. 퇴실 가능 시간을 변경해주세요.'
+        }, status=status.HTTP_409_CONFLICT)
+
     # entry_time 계산 (시험 시작 시간 30분 전)
-    entry_time = (datetime.datetime.combine(datetime.date.today(), start_time) - datetime.timedelta(minutes=30)).time()
+    entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
 
     # 시험 데이터 저장
     exam_instance = serializer.save(user=user, entry_time=entry_time)
@@ -206,13 +215,12 @@ def scheduled_exam_list(request):
     if not user.is_active:
         return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     # 현재 시간 가져오기
-    current_datetime = datetime.datetime.now()
+    current_datetime = datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
@@ -248,10 +256,10 @@ def scheduled_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-            "scheduledExamList": serializer.data,
-            "prev": paginated_exams.has_previous(),
-            "next": paginated_exams.has_next(),
-            "totalPage": Paginator(exams, page_size).num_pages
+        "scheduledExamList": serializer.data,
+        "prev": paginated_exams.has_previous(),
+        "next": paginated_exams.has_next(),
+        "totalPage": Paginator(exams, page_size).num_pages
     }, status=status.HTTP_200_OK)
 
 
@@ -303,13 +311,12 @@ def ongoing_exam_list(request):
     if not user.is_active:
         return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     # 현재 시간 가져오기
-    current_datetime = datetime.datetime.now()
+    current_datetime = datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
@@ -331,16 +338,15 @@ def ongoing_exam_list(request):
     if paginated_exams is None:
         return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = OngoingExamListSerializer(paginated_exams, many=True)
 
     # 응답 데이터 구성
     return Response({
-            "ongoingExamList": serializer.data,
-            "prev": paginated_exams.has_previous(),
-            "next": paginated_exams.has_next(),
-            "totalPage": Paginator(ongoing_exams, page_size).num_pages
+        "ongoingExamList": serializer.data,
+        "prev": paginated_exams.has_previous(),
+        "next": paginated_exams.has_next(),
+        "totalPage": Paginator(ongoing_exams, page_size).num_pages
     }, status=status.HTTP_200_OK)
 
 
@@ -392,13 +398,12 @@ def completed_exam_list(request):
     if not user.is_active:
         return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
     # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
         return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
     # 현재 시간 가져오기
-    current_datetime = datetime.datetime.now()
+    current_datetime = datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
@@ -433,10 +438,10 @@ def completed_exam_list(request):
 
     # 응답 데이터 구성
     return Response({
-            "completedExamList": serializer.data,
-            "prev": paginated_exams.has_previous(),
-            "next": paginated_exams.has_next(),
-            "totalPage": Paginator(exams, page_size).num_pages
+        "completedExamList": serializer.data,
+        "prev": paginated_exams.has_previous(),
+        "next": paginated_exams.has_next(),
+        "totalPage": Paginator(exams, page_size).num_pages
     }, status=status.HTTP_200_OK)
 
 
@@ -646,9 +651,9 @@ def exam_detail(request, pk):
         return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
 
     elif request.method == "DELETE":
-         # 진행 중인 시험은 삭제 불가
-        current_time = datetime.datetime.now().time()
-        if exam.date == datetime.date.today() and exam.entry_time <= current_time <= exam.end_time:
+        # 진행 중인 시험은 삭제 불가
+        current_time = datetime.now().time()
+        if exam.date == date.today() and exam.entry_time <= current_time <= exam.end_time:
             return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
         
         # 시험 비용을 반환하고 코인 사용 내역에 기록
