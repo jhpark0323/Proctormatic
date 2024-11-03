@@ -68,6 +68,17 @@ email_verification_schema = extend_schema_view(
                     },
                 }
             ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='이미 존재하는 이메일',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
         }
     ),
     put=extend_schema(
