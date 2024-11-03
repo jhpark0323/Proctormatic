@@ -1,11 +1,27 @@
 import styles from "@/styles/Mypage.module.css";
 import { fonts } from "@/constants/fonts";
 import CustomButton from "@/components/CustomButton";
+import { useEffect, useState } from "react";
+import axiosInstance from "@/utils/axios";
+import HostModal from "@/components/HostModal";
 
-interface MyCoinProps {}
+const MyCoin = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [myCoin, setMyCoin] = useState(0);
+  useEffect(() => {
+    axiosInstance
+      .get("/coin/")
+      .then((response) => {
+        console.log(response.data);
+        setMyCoin(response.data.coin);
+      })
+      .catch((error) => {
+        console.log("코인 데이터 불러오기 실패: ", error);
+      });
+  }, [myCoin]);
 
-const MyCoin = ({}: MyCoinProps) => {
-  const myCoin = 540;
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   return (
     <>
@@ -19,11 +35,17 @@ const MyCoin = ({}: MyCoinProps) => {
             <div style={{ color: "var(--PRIMARY)" }}>C</div>
           </div>
         </div>
-        <CustomButton>적립금 충전하기</CustomButton>
+        <CustomButton onClick={handleOpenModal}>적립금 충전하기</CustomButton>
       </div>
       <div className={styles.header}>
         <div>적립금 사용 내역</div>
         <div>전체</div>
+
+        {isModalOpen && (
+          <HostModal onClose={handleCloseModal} title="적립금 환불 받기">
+            <div>모달 내용입니다</div>
+          </HostModal>
+        )}
       </div>
     </>
   );
