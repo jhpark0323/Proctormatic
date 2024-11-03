@@ -1,7 +1,7 @@
 import styles from "@/styles/Buttons.module.css";
-import cancleButton from "@/assets/cancleButton.png";
 import { useState } from "react";
 import { IoSearchSharp } from "react-icons/io5";
+import { RiCloseCircleLine } from "react-icons/ri";
 
 // 사용 예시
 /* 
@@ -54,14 +54,6 @@ const Textfield = ({
     }
   };
 
-  const handleIconClick = () => {
-    if (trailingIcon === "delete") {
-      handleClear();
-    } else if (trailingIcon === "search") {
-      handleSearch;
-    }
-  };
-
   return (
     <div className={styles["textfield-container"]}>
       {/* 라벨 */}
@@ -83,12 +75,10 @@ const Textfield = ({
 
         {/* 트레일링 아이콘 */}
         {trailingIcon === "delete" && (
-          <img
-            src={cancleButton}
-            alt="icon"
+          <RiCloseCircleLine
             className={styles["trailing-icon"]}
             onClick={handleClear}
-            style={{ cursor: "pointer" }}
+            style={{ cursor: "pointer", opacity: 0.5 }}
           />
         )}
         {trailingIcon === "search" && (
