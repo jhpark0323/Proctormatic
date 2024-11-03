@@ -108,8 +108,8 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMES': False,
     'SERVERS': [
-        {'url': 'http://localhost:8000/'},
-        {'url': 'https://k11s209.p.ssafy.io/'}
+        {'url': 'https://k11s209.p.ssafy.io/'},
+        {'url': 'http://localhost:8000/'}
     ],
     'SCHEMA_PATH_PREFIX': '/api/',
     'SECURITY': [
