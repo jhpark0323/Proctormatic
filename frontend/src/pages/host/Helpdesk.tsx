@@ -2,37 +2,26 @@ import CustomButton from "@/components/CustomButton";
 import styles from "@/styles/Helpdesk.module.css";
 import { fonts } from "@/constants";
 import Textfield from "@/components/Textfield";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import HostHeader from "@/components/HostHeader";
+import axiosInstance from "@/utils/axios";
 const Helpdesk = () => {
-  // 목업 데이터
-  const faqs = [
-    { id: 1, title: "faq 1" },
-    { id: 2, title: "faq 2" },
-    { id: 3, title: "faq 3" },
-    { id: 4, title: "faq 4" },
-    { id: 5, title: "faq 5" },
-  ];
-
   const categories = ["전체", "공지사항", "이용 방법", "적립금", "기타"];
   const [currentCategory, setCurrentCategory] = useState("전체");
+  const [faqs, setFaqs] = useState([]);
+  const [tableData, setTableData] = useState([]);
 
-  // 목업 데이터
-  const tableData = [
-    {
-      Id: 1,
-      category: "이용 방법",
-      title: "적립금 결제",
-      created_at: "2024-10-16 14:38:56",
-      organizer: "허유정",
-    },
-    {
-      Id: 2,
-      category: "이용 방법",
-      title: "적립금 결제",
-      created_at: "2024-10-17 14:38:40",
-      organizer: "허유정",
-    },
-  ];
+  useEffect(() => {
+    axiosInstance
+      .get("/helpdesk/faq/")
+      .then((response) => {
+        console.log(response.data);
+        setFaqs(response.data);
+      })
+      .catch((error) => {
+        console.error("실패:", error);
+      });
+  }, [faqs]);
 
   const handleCategoryClick = (category: string) => {
     setCurrentCategory(category);
@@ -40,6 +29,7 @@ const Helpdesk = () => {
 
   return (
     <>
+      <HostHeader />
       {/* faq */}
       <div className={styles.faqContainer}>
         <div className={styles.title}>
