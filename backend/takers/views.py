@@ -81,10 +81,15 @@ def check_email(request):
         return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
+        exam_id = request.data.get('id')
         email = request.data.get('email')
+
         if email:
             if not is_valid_email(email):
                 return Response({'message': '이메일 형식을 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if Taker.objects.filter(exam_id=exam_id, email=email).exists():
+                return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.'}, status=status.HTTP_409_CONFLICT)
 
             code = generate_verification_code()
             send_verification_email(email, code)
