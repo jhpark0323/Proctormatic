@@ -8,6 +8,7 @@ import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNavigate } from "react-router-dom";
+import HostModal from "@/components/HostModal";
 
 interface UserProfile {
   name: string;
@@ -52,6 +53,25 @@ const AccountInfo = () => {
           console.error("마케팅 상태 업데이트 실패:", error);
         });
     }
+  };
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const handleOpenDeleteModal = () => setIsDeleteModalOpen(true);
+  const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
+
+  const handleDeleteConfirmed = () => {
+    axiosInstance
+      .patch("/users/")
+      .then(() => {
+        handleCloseDeleteModal();
+        logout();
+        navigate("/");
+        CustomToast("회원탈퇴가 완료되었습니다.");
+      })
+      .catch((error) => {
+        console.log("회원 탈퇴 실패: ", error);
+        CustomToast("다시 시도해주세요.");
+      });
   };
 
   return (
@@ -110,7 +130,7 @@ const AccountInfo = () => {
           />
         </div>
       </div>
-      <div className={styles.infoItem}>
+      <div className={styles.infoItem} onClick={handleOpenDeleteModal}>
         <div className={styles.infoTitle} style={fonts.HEADING_SM_BOLD}>
           회원 탈퇴
         </div>
@@ -118,6 +138,21 @@ const AccountInfo = () => {
           <IoIosArrowForward />
         </div>
       </div>
+      {isDeleteModalOpen && (
+        <HostModal
+          title="회원 탈퇴"
+          buttonLabel="탈퇴하기"
+          handleButton={handleDeleteConfirmed}
+          onClose={handleCloseDeleteModal}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div style={{ marginBottom: "1rem" }}>정말 탈퇴하시겠습니까?</div>
+            <div style={{ color: "var(--GRAY_500)", ...fonts.MD_REGULAR }}>
+              * 탈퇴 시 데이터는 복구가 불가합니다.
+            </div>
+          </div>
+        </HostModal>
+      )}
     </div>
   );
 };
