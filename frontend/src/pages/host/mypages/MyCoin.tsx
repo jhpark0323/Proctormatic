@@ -9,6 +9,12 @@ import CustomButton from "@/components/CustomButton";
 import Textfield from "@/components/Textfield";
 import { CustomToast } from "@/components/CustomToast";
 
+interface CoinHistoryItem {
+  type: "charge" | "use";
+  amount: number;
+  created_at: string;
+}
+
 const MyCoin = () => {
   const [isInputModalOpen, setIsInputModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -26,10 +32,24 @@ const MyCoin = () => {
         console.log("코인 데이터 불러오기 실패: ", error);
       });
   };
+  const [myCoinHistory, setMyCoinHistory] = useState<CoinHistoryItem[]>([]);
+  const fetchMyCoinHistory = () => {
+    axiosInstance
+      .get("/coin/history/")
+      .then((response) => {
+        console.log(response.data);
+        setMyCoinHistory(response.data.coinList || []);
+      })
+      .catch((error) => {
+        console.log("코인 데이터 불러오기 실패: ", error);
+      });
+  };
   useEffect(() => {
     fetchMyCoin();
+    fetchMyCoinHistory();
   }, [myCoin]);
 
+  // 모달
   const handleOpenInputModal = () => setIsInputModalOpen(true);
   const handleCloseInputModal = () => setIsInputModalOpen(false);
   const handleOpenConfirmModal = () => setIsConfirmModalOpen(true);
@@ -66,34 +86,99 @@ const MyCoin = () => {
           적립금 충전하기
         </CustomButton>
       </div>
-      <div className={styles.header}>
+      <div className={styles.header} style={{ marginTop: "2rem" }}>
         <div>적립금 사용 내역</div>
         <div>전체</div>
+      </div>
+      <table className={styles.historyTable}>
+        <thead className={styles.tableHeader}>
+          <tr>
+            <th className={styles.tableCell}>구분</th>
+            <th className={styles.tableCell}>상세 내역</th>
+            <th className={styles.tableCell}>적립금</th>
+          </tr>
+        </thead>
+        <tbody>
+          {myCoinHistory.length === 0 ? ( // 적립금 내역이 없을 때 메시지 표시
+            <tr>
+              <td
+                colSpan={3}
+                className={styles.tableCell}
+                style={{ textAlign: "center" }}
+              >
+                적립금 사용 내역이 없습니다
+              </td>
+            </tr>
+          ) : (
+            myCoinHistory.map((item, index) => (
+              <tr key={index}>
+                <td className={styles.tableCell}>
+                  {item.type === "charge" ? "충전" : "사용"}
+                </td>
+                <td className={styles.tableCell} style={{ textAlign: "left" }}>
+                  <div>
+                    {item.type === "charge" ? "적립금 충전" : "적립금 결제"}
+                  </div>
+                  <div className={styles.subText}>
+                    {new Date(item.created_at).toLocaleString("ko-KR", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </div>
+                </td>
+                <td
+                  className={`${styles.tableCell} ${
+                    item.type === "charge" ? styles.textBlue : styles.textRed
+                  }`}
+                >
+                  {item.type === "charge"
+                    ? `+${item.amount}C`
+                    : `-${item.amount}C`}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
 
-        {isInputModalOpen && (
-          <HostModal
-            onClose={handleCloseInputModal}
-            title="무료 적립금 적립하기"
-            buttonLabel="등록하기"
-            handleButton={handleCodeCheck}
-          >
+      {isInputModalOpen && (
+        <HostModal
+          onClose={handleCloseInputModal}
+          title="무료 적립금 적립하기"
+          buttonLabel="등록하기"
+          handleButton={handleCodeCheck}
+        >
+          <div className={styles.inputModalContainer}>
             <Textfield
               label="이벤트/쿠폰 포인트 코드"
               placeholder="코드 입력"
               trailingIcon="delete"
               onChange={setCode}
             />
-          </HostModal>
-        )}
-        {isConfirmModalOpen && (
-          <HostModal
-            onClose={handleCloseConfirmModal}
-            title="무료 적립금 적립하기"
-          >
-            <div>충전이 완료되었습니다.</div>
-          </HostModal>
-        )}
-      </div>
+            <div className={styles.modalInfo}>
+              <div className={styles.modalInfoText} style={fonts.MD_REGULAR}>
+                * 유효기간이 만료된 코드는 등록이 불가해요.
+              </div>
+              <div className={styles.modalInfoText} style={fonts.MD_REGULAR}>
+                * 이벤트 또는 쿠폰에 따라 계정당 등록 여부와 횟수가 달라질 수
+                있어요.
+              </div>
+            </div>
+          </div>
+        </HostModal>
+      )}
+      {isConfirmModalOpen && (
+        <HostModal
+          onClose={handleCloseConfirmModal}
+          title="무료 적립금 적립하기"
+        >
+          <div>충전이 완료되었습니다.</div>
+        </HostModal>
+      )}
     </>
   );
 };
