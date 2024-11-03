@@ -3,10 +3,48 @@ import styles from "@/styles/Mypage.module.css";
 import { fonts } from "@/constants/fonts";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import { IoIosArrowForward } from "react-icons/io";
+import { useEffect, useState } from "react";
+import axiosInstance from "@/utils/axios";
+import { CustomToast } from "@/components/CustomToast";
 
-interface AccountInfoProps {}
+interface UserProfile {
+  name: string;
+  email: string;
+  birth: string;
+  coin: number;
+  created_at: string;
+  marketing: boolean;
+}
 
-const AccountInfo = ({}: AccountInfoProps) => {
+const AccountInfo = () => {
+  const [userInfo, setUserInfo] = useState<UserProfile | null>(null);
+  useEffect(() => {
+    axiosInstance
+      .get("/users/")
+      .then((response) => {
+        setUserInfo(response.data);
+      })
+      .catch((error) => {
+        console.error("사용자 정보 불러오기 실패:", error);
+      });
+  }, []);
+
+  const handleMarketingToggle = () => {
+    if (userInfo) {
+      const updatedMarketingStatus = !userInfo.marketing;
+      setUserInfo({ ...userInfo, marketing: updatedMarketingStatus });
+
+      axiosInstance
+        .put("/users/", { marketing: updatedMarketingStatus })
+        .then(() => {
+          CustomToast("마케팅 이용 동의 여부가 변경되었습니다.");
+        })
+        .catch((error) => {
+          console.error("마케팅 상태 업데이트 실패:", error);
+        });
+    }
+  };
+
   return (
     <div className={styles.infoContainer}>
       <div className={styles.infoItem}>
@@ -14,7 +52,7 @@ const AccountInfo = ({}: AccountInfoProps) => {
           로그인 ID
         </div>
         <div className={styles.infoContent}>
-          <div>honggildong@gmail.com</div>
+          <div>{userInfo?.email}</div>
           <CustomButton style="primary_outline" type="rectangular">
             로그아웃
           </CustomButton>
@@ -24,13 +62,21 @@ const AccountInfo = ({}: AccountInfoProps) => {
         <div className={styles.infoTitle} style={fonts.HEADING_SM_BOLD}>
           주최자 이름
         </div>
-        <div className={styles.infoContent}>홍길동</div>
+        <div className={styles.infoContent}>{userInfo?.name}</div>
       </div>
       <div className={styles.infoItem}>
         <div className={styles.infoTitle} style={fonts.HEADING_SM_BOLD}>
           생년 월일
         </div>
-        <div className={styles.infoContent}>2000년 1월 1일</div>
+        <div className={styles.infoContent}>
+          {userInfo?.birth
+            ? new Date(userInfo.birth).toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : ""}
+        </div>
       </div>
       <div className={styles.infoItem}>
         <div className={styles.infoTitle} style={fonts.HEADING_SM_BOLD}>
@@ -45,7 +91,10 @@ const AccountInfo = ({}: AccountInfoProps) => {
           마케팅 이용 동의
         </div>
         <div className={styles.infoButton}>
-          <ToggleSwitch />
+          <ToggleSwitch
+            isOn={userInfo?.marketing || false}
+            toggleHandler={handleMarketingToggle}
+          />
         </div>
       </div>
       <div className={styles.infoItem}>

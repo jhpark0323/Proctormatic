@@ -25,7 +25,6 @@ const MyCoin = () => {
     axiosInstance
       .get("/coin/")
       .then((response) => {
-        console.log(response.data);
         setMyCoin(response.data.coin);
       })
       .catch((error) => {
@@ -37,7 +36,6 @@ const MyCoin = () => {
     axiosInstance
       .get("/coin/history/")
       .then((response) => {
-        console.log(response.data);
         setMyCoinHistory(response.data.coinList || []);
       })
       .catch((error) => {
@@ -58,8 +56,7 @@ const MyCoin = () => {
   const handleCodeCheck = () => {
     axiosInstance
       .post("/coin/", { code })
-      .then((response) => {
-        console.log("코드 등록 성공: ", response.data);
+      .then(() => {
         handleCloseInputModal();
         handleOpenConfirmModal();
         fetchMyCoin();
@@ -167,6 +164,7 @@ const MyCoin = () => {
               label="이벤트/쿠폰 포인트 코드"
               placeholder="코드 입력"
               trailingIcon="delete"
+              value={code}
               onChange={setCode}
             />
             <div className={styles.modalInfo}>
