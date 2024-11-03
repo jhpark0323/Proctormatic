@@ -6,6 +6,8 @@ import { IoIosArrowForward } from "react-icons/io";
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   name: string;
@@ -28,6 +30,13 @@ const AccountInfo = () => {
         console.error("사용자 정보 불러오기 실패:", error);
       });
   }, []);
+
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const handleMarketingToggle = () => {
     if (userInfo) {
@@ -53,7 +62,11 @@ const AccountInfo = () => {
         </div>
         <div className={styles.infoContent}>
           <div>{userInfo?.email}</div>
-          <CustomButton style="primary_outline" type="rectangular">
+          <CustomButton
+            style="primary_outline"
+            type="rectangular"
+            onClick={handleLogout}
+          >
             로그아웃
           </CustomButton>
         </div>
