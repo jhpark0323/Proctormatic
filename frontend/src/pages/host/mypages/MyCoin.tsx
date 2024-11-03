@@ -10,7 +10,7 @@ import Textfield from "@/components/Textfield";
 import { CustomToast } from "@/components/CustomToast";
 
 interface CoinHistoryItem {
-  type: "charge" | "use";
+  type: "charge" | "use" | "refund";
   amount: number;
   created_at: string;
 }
@@ -99,7 +99,7 @@ const MyCoin = () => {
           </tr>
         </thead>
         <tbody>
-          {myCoinHistory.length === 0 ? ( // 적립금 내역이 없을 때 메시지 표시
+          {myCoinHistory.length === 0 ? (
             <tr>
               <td
                 colSpan={3}
@@ -113,11 +113,19 @@ const MyCoin = () => {
             myCoinHistory.map((item, index) => (
               <tr key={index}>
                 <td className={styles.tableCell}>
-                  {item.type === "charge" ? "충전" : "사용"}
+                  {item.type === "charge"
+                    ? "충전"
+                    : item.type === "use"
+                    ? "사용"
+                    : "환불"}
                 </td>
                 <td className={styles.tableCell} style={{ textAlign: "left" }}>
                   <div>
-                    {item.type === "charge" ? "적립금 충전" : "적립금 결제"}
+                    {item.type === "charge"
+                      ? "적립금 충전"
+                      : item.type === "use"
+                      ? "적립금 결제"
+                      : "적립금 환불"}
                   </div>
                   <div className={styles.subText}>
                     {new Date(item.created_at).toLocaleString("ko-KR", {
@@ -132,10 +140,12 @@ const MyCoin = () => {
                 </td>
                 <td
                   className={`${styles.tableCell} ${
-                    item.type === "charge" ? styles.textBlue : styles.textRed
+                    item.type === "charge" || item.type === "refund"
+                      ? styles.textBlue
+                      : styles.textRed
                   }`}
                 >
-                  {item.type === "charge"
+                  {item.type === "charge" || item.type === "refund"
                     ? `+${item.amount}C`
                     : `-${item.amount}C`}
                 </td>
