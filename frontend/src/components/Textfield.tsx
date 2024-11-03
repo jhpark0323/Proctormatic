@@ -1,23 +1,7 @@
 import styles from "@/styles/Buttons.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IoSearchSharp } from "react-icons/io5";
 import { RiCloseCircleLine } from "react-icons/ri";
-
-// 사용 예시
-/* 
-  const [name, setName] = useState("윤예리");
-
-      <Textfield
-        label="이름"
-        helpMessage="이름을 입력하세요"
-        placeholder="홍길동"
-        maxLength=10
-        trailingIcon="delete"
-        onChange={(value) => setName(value)}
-      >
-        {name}
-      </Textfield>
-*/
 
 interface TextfieldProps {
   label?: string;
@@ -26,7 +10,7 @@ interface TextfieldProps {
   trailingIcon?: "delete" | "search";
   type?: "underline" | "default";
   maxLength?: number;
-  children?: React.ReactNode;
+  value?: string;
   onChange?: (value: string) => void;
   handleSearch?: () => void;
 }
@@ -37,27 +21,34 @@ const Textfield = ({
   placeholder,
   trailingIcon,
   maxLength,
-  children = "",
+  value = "",
   type = "default",
   onChange,
   handleSearch,
 }: TextfieldProps) => {
-  const [inputValue, setInputValue] = useState(children?.toString() || "");
+  const [inputValue, setInputValue] = useState(value);
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
   const handleClear = () => {
-    setInputValue(""); // 입력 필드 초기화
+    setInputValue("");
+    if (onChange) onChange("");
   };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     if (onChange) {
-      onChange(newValue); // 값 변경 시 부모 컴포넌트로 전달
+      onChange(newValue);
     }
   };
 
   return (
     <div className={styles["textfield-container"]}>
       {/* 라벨 */}
-      <label className={styles["textfield-label"]}>{label}</label>
+      {label && <label className={styles["textfield-label"]}>{label}</label>}
 
       {/* 입력 필드 */}
       <div style={{ position: "relative", width: "100%" }}>
@@ -67,7 +58,6 @@ const Textfield = ({
           value={inputValue}
           onChange={handleChange}
           maxLength={maxLength}
-          defaultValue={children?.toString()} // defaultValue로 설정
           className={`${styles["textfield-input"]} ${
             type === "underline" ? styles["underline"] : ""
           }`}
@@ -91,7 +81,9 @@ const Textfield = ({
       </div>
 
       {/* 도움말 메시지 */}
-      <div className={styles["textfield-help"]}>{helpMessage}</div>
+      {helpMessage && (
+        <div className={styles["textfield-help"]}>{helpMessage}</div>
+      )}
     </div>
   );
 };

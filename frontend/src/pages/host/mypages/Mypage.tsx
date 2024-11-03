@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/useAuthStore";
-import HeaderBlue from "@/components/HeaderBlue";
 import styles from "@/styles/TakerHome.module.css";
 import { FaRegCreditCard } from "react-icons/fa6";
 import { SiPrivateinternetaccess } from "react-icons/si";
@@ -13,7 +11,6 @@ import AccountInfo from "./AccountInfo";
 import HostHeader from "@/components/HostHeader";
 
 const Mypage = () => {
-  const { user } = useAuthStore();
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
@@ -38,7 +35,7 @@ const Mypage = () => {
   const getStepStyle = (currentStep: number) => ({
     color: step === currentStep ? "black" : "var(--GRAY_400)",
     fontSize: step === currentStep ? "20px" : "18px",
-    cursor: "pointer", // 클릭 가능 표시
+    cursor: "pointer",
   });
 
   return (
@@ -59,14 +56,14 @@ const Mypage = () => {
             <div
               className={styles.SideStep}
               style={getStepStyle(1)}
-              onClick={() => setStep(1)} // 클릭 시 step을 1로 설정
+              onClick={() => setStep(1)}
             >
               <FaRegCreditCard size={22} />내 적립금
             </div>
             <div
               className={styles.SideStep}
               style={getStepStyle(2)}
-              onClick={() => setStep(2)} // 클릭 시 step을 2로 설정
+              onClick={() => setStep(2)}
             >
               <SiPrivateinternetaccess size={22} />
               계정 정보
@@ -74,7 +71,7 @@ const Mypage = () => {
             <div
               className={styles.SideStep}
               style={getStepStyle(3)}
-              onClick={() => setStep(3)} // 클릭 시 step을 3로 설정
+              onClick={() => setStep(3)}
             >
               <BiInfoSquare size={22} />
               약관 및 정책
