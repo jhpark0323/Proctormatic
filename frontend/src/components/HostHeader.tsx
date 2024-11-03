@@ -4,9 +4,7 @@ import styles from "../styles/HeaderWhite.module.css";
 import CustomButton from "./CustomButton";
 import { useAuthStore } from "@/store/useAuthStore";
 
-interface HostHeaderProps {}
-
-const HostHeader: React.FC<HostHeaderProps> = ({}) => {
+const HostHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
