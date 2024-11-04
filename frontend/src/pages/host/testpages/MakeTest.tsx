@@ -5,11 +5,11 @@ import styles from "@/styles/Testpage.module.css";
 import { FaArrowLeft } from "react-icons/fa6";
 import Checkbox from "@/components/Checkbox";
 import CustomButton from "@/components/CustomButton";
-import HostHeader from "@/components/HostHeader";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
+import HeaderWhite from "@/components/HeaderWhite";
 
 // 시간, 날짜 input
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -133,7 +133,7 @@ const MakeTest = () => {
 
   return (
     <>
-      <HostHeader />
+      <HeaderWhite />
       <div className={styles.makeTestContainer}>
         <div className={styles.goBack} onClick={() => navigate(-1)}>
           <FaArrowLeft style={{ opacity: "0.5" }} />

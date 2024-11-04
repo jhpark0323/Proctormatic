@@ -3,10 +3,10 @@ import styles from "@/styles/Helpdesk.module.css";
 import { fonts } from "@/constants";
 import Textfield from "@/components/Textfield";
 import { useEffect, useState } from "react";
-import HostHeader from "@/components/HostHeader";
 import axiosInstance from "@/utils/axios";
 import HostModal from "@/components/HostModal";
 import { CustomToast } from "@/components/CustomToast";
+import HeaderWhite from "@/components/HeaderWhite";
 
 interface FAQ {
   id: number;
@@ -168,7 +168,7 @@ const Helpdesk = () => {
 
   return (
     <>
-      <HostHeader />
+      <HeaderWhite />
       <div className={styles.faqContainer}>
         <div className={styles.title}>
           <span style={fonts.HEADING_LG_BOLD}>자주 묻는 질문(FAQ)</span>

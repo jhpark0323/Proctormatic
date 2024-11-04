@@ -87,70 +87,75 @@ const MyCoin = () => {
         <div>적립금 사용 내역</div>
         <div>전체</div>
       </div>
-      <table className={styles.historyTable}>
-        <thead className={styles.tableHeader}>
-          <tr>
-            <th className={styles.tableCell}>구분</th>
-            <th className={styles.tableCell}>상세 내역</th>
-            <th className={styles.tableCell}>적립금</th>
-          </tr>
-        </thead>
-        <tbody>
-          {myCoinHistory.length === 0 ? (
+      <div className={styles.tableWrap}>
+        <table className={styles.historyTable}>
+          <thead className={styles.tableHeader}>
             <tr>
-              <td
-                colSpan={3}
-                className={styles.tableCell}
-                style={{ textAlign: "center" }}
-              >
-                적립금 사용 내역이 없습니다
-              </td>
+              <th className={styles.tableCell}>구분</th>
+              <th className={styles.tableCell}>상세 내역</th>
+              <th className={styles.tableCell}>적립금</th>
             </tr>
-          ) : (
-            myCoinHistory.map((item, index) => (
-              <tr key={index}>
-                <td className={styles.tableCell}>
-                  {item.type === "charge"
-                    ? "충전"
-                    : item.type === "use"
-                    ? "사용"
-                    : "환불"}
-                </td>
-                <td className={styles.tableCell} style={{ textAlign: "left" }}>
-                  <div>
-                    {item.type === "charge"
-                      ? "적립금 충전"
-                      : item.type === "use"
-                      ? "적립금 결제"
-                      : "적립금 환불"}
-                  </div>
-                  <div className={styles.subText}>
-                    {new Date(item.created_at).toLocaleString("ko-KR", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </div>
-                </td>
+          </thead>
+          <tbody>
+            {myCoinHistory.length === 0 ? (
+              <tr>
                 <td
-                  className={`${styles.tableCell} ${
-                    item.type === "charge" || item.type === "refund"
-                      ? styles.textBlue
-                      : styles.textRed
-                  }`}
+                  colSpan={3}
+                  className={styles.tableCell}
+                  style={{ textAlign: "center" }}
                 >
-                  {item.type === "charge" || item.type === "refund"
-                    ? `+${item.amount}C`
-                    : `-${item.amount}C`}
+                  적립금 사용 내역이 없습니다
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              myCoinHistory.map((item, index) => (
+                <tr key={index}>
+                  <td className={styles.tableCell}>
+                    {item.type === "charge"
+                      ? "충전"
+                      : item.type === "use"
+                      ? "사용"
+                      : "환불"}
+                  </td>
+                  <td
+                    className={styles.tableCell}
+                    style={{ textAlign: "left" }}
+                  >
+                    <div>
+                      {item.type === "charge"
+                        ? "적립금 충전"
+                        : item.type === "use"
+                        ? "적립금 결제"
+                        : "적립금 환불"}
+                    </div>
+                    <div className={styles.subText}>
+                      {new Date(item.created_at).toLocaleString("ko-KR", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}
+                    </div>
+                  </td>
+                  <td
+                    className={`${styles.tableCell} ${
+                      item.type === "charge" || item.type === "refund"
+                        ? styles.textBlue
+                        : styles.textRed
+                    }`}
+                  >
+                    {item.type === "charge" || item.type === "refund"
+                      ? `+${item.amount}C`
+                      : `-${item.amount}C`}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {isInputModalOpen && (
         <HostModal

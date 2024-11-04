@@ -2,10 +2,10 @@ import styles from "@/styles/Testpage.module.css";
 import { fonts } from "@/constants";
 import { FaArrowLeft } from "react-icons/fa6";
 import { TbDotsVertical } from "react-icons/tb";
-import HostHeader from "@/components/HostHeader";
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { useNavigate, useParams } from "react-router-dom";
+import HeaderWhite from "@/components/HeaderWhite";
 
 interface Taker {
   taker_id: bigint;
@@ -45,7 +45,7 @@ const TestDetail = () => {
 
   return (
     <>
-      <HostHeader />
+      <HeaderWhite />
       <div className={styles.makeTestContainer}>
         <div className={styles.detailMenuWrap}>
           <div className={styles.goBack} onClick={() => navigate(-1)}>

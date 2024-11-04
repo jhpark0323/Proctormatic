@@ -5,10 +5,10 @@ import { FaRegCreditCard } from "react-icons/fa6";
 import { SiPrivateinternetaccess } from "react-icons/si";
 import { BiInfoSquare } from "react-icons/bi";
 import { FaAngleLeft } from "react-icons/fa6";
+import HeaderWhite from "@/components/HeaderWhite";
 
 import MyCoin from "./MyCoin";
 import AccountInfo from "./AccountInfo";
-import HostHeader from "@/components/HostHeader";
 
 const Mypage = () => {
   const [step, setStep] = useState(1);
@@ -40,7 +40,7 @@ const Mypage = () => {
 
   return (
     <>
-      <HostHeader />
+      <HeaderWhite />
       <div className={styles.Content}>
         <div className={styles.ContentHeader}>
           <FaAngleLeft
