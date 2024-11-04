@@ -5,12 +5,23 @@ import { useEffect, useState } from "react";
 import { FaAngleDown } from "react-icons/fa";
 import axiosInstance from "@/utils/axios";
 
+interface Exam {
+  id: number;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  url: string;
+  expectedTaker: number;
+  totalTaker?: number;
+}
+
 const MyTest = () => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [scheduledExams, setScheduledExams] = useState([]);
-  const [onGoingExams, setOnGoingExams] = useState([]);
-  const [completedExams, setCompletedExams] = useState([]);
+  const [scheduledExams, setScheduledExams] = useState<Exam[]>([]);
+  const [onGoingExams, setOnGoingExams] = useState<Exam[]>([]);
+  const [completedExams, setCompletedExams] = useState<Exam[]>([]);
 
   useEffect(() => {
     axiosInstance
@@ -30,11 +41,82 @@ const MyTest = () => {
       })
       .then((completedExamsResponse) => {
         setCompletedExams(completedExamsResponse.data.completedExamList);
+        console.log(completedExams);
       })
       .catch((error) => {
         console.error("실패:", error);
       });
   }, []);
+
+  const renderExamTable = (exams: Exam[]) => (
+    <table className={styles.historyTable}>
+      <thead className={styles.tableHeader}>
+        <tr>
+          <th className={styles.tableCell}>시험명</th>
+          <th className={styles.tableCell}>날짜와 시간</th>
+          <th className={styles.tableCell}>시험 입장</th>
+          <th className={styles.tableCell}>예상 응시 인원</th>
+        </tr>
+      </thead>
+      <tbody>
+        {exams.map((exam) => (
+          <tr key={exam.id} className="border-t border-gray-200">
+            <td className={styles.tableCell}>{exam.title}</td>
+            <td className={styles.tableCell}>
+              <div>{exam.date}</div>
+              <div>{`${exam.startTime} ~ ${exam.endTime}`}</div>
+            </td>
+            <td className={styles.tableCell}>
+              <a
+                href={exam.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                입장
+              </a>
+            </td>
+            <td className={styles.tableCell}>{exam.expectedTaker}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderCompletedExamTable = (exams: Exam[]) => (
+    <table className={styles.historyTable}>
+      <thead className={styles.tableHeader}>
+        <tr>
+          <th className={styles.tableCell}>시험명</th>
+          <th className={styles.tableCell}>날짜와 시간</th>
+          <th className={styles.tableCell}>업로드 된 영상</th>
+          <th className={styles.tableCell}>결과 보고서</th>
+        </tr>
+      </thead>
+      <tbody>
+        {exams.map((exam) => (
+          <tr key={exam.id} className="border-t border-gray-200">
+            <td className={styles.tableCell}>{exam.title}</td>
+            <td className={styles.tableCell}>
+              <div>{exam.date}</div>
+              <div>{`${exam.startTime} ~ ${exam.endTime}`}</div>
+            </td>
+            <td className={styles.tableCell}>{exam.expectedTaker}</td>
+            <td className={styles.tableCell}>
+              <a
+                href={exam.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                입장
+              </a>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 
   return (
     <>
@@ -92,7 +174,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {scheduledExams.length > 0 ? (
-              <div>표</div>
+              renderExamTable(scheduledExams)
             ) : (
               <div className={styles.testContent}>예정된 시험이 없습니다.</div>
             )}
@@ -103,7 +185,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {onGoingExams.length > 0 ? (
-              <div>표</div>
+              renderExamTable(onGoingExams)
             ) : (
               <div className={styles.testContent}>
                 진행중인 시험이 없습니다.
@@ -116,7 +198,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {completedExams.length > 0 ? (
-              <div>표</div>
+              renderCompletedExamTable(completedExams)
             ) : (
               <div className={styles.testContent}>이전 시험이 없습니다.</div>
             )}
