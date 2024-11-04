@@ -6,6 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTakerStore } from '@/store/TakerAuthStore';
 import axiosInstance from '@/utils/axios';
 import { IoIosCheckmark } from "react-icons/io";
+import { AxiosError } from 'axios';
+
+interface ErrorResponse {
+  message: string;
+}
 
 const Step5: React.FC = () => {
   const { testId } = useTakerStore();
@@ -64,21 +69,22 @@ const Step5: React.FC = () => {
       console.log('이메일을 입력해주세요');
       return;
     }
-
+  
     setIsLoading(true); // 로딩 상태 시작
     try {
       await axiosInstance.post('/taker/email/', {
         id: testId,
         email: formData.email
       });
-      
+  
       setIsEmailSent(true);
       setVerificationError(''); // 에러 메시지 초기화
       setTimer(300);
       setEmailStatus('인증번호가 발송되었습니다.');
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setVerificationError(error.response.data.message || '잘못된 요청입니다.');
+      const axiosError = error as AxiosError<ErrorResponse>;
+      if (axiosError.response && axiosError.response.status === 400) {
+        setVerificationError(axiosError.response.data?.message || '잘못된 요청입니다.');
       } else {
         setVerificationError('네트워크 상태를 확인해주세요.');
       }
@@ -87,21 +93,21 @@ const Step5: React.FC = () => {
       setIsLoading(false); // 로딩 상태 종료
     }
   };
-
+  
   // 인증 코드 확인 처리
   const handleVerificationCodeSubmit = async () => {
     if (!formData.verificationCode) {
       console.log('인증 코드를 입력해주세요');
       return;
     }
-
+  
     setIsLoading(true); // 로딩 상태 시작
     try {
       const response = await axiosInstance.put('/taker/email/', {
         email: formData.email,
         code: formData.verificationCode
       });
-
+  
       if (response.status === 200) {
         console.log('이메일 인증 성공');
         setIsVerified(true);
@@ -110,8 +116,9 @@ const Step5: React.FC = () => {
         setTimer(0);
       }
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setVerificationError(error.response.data.message || '잘못된 요청입니다.');
+      const axiosError = error as AxiosError<ErrorResponse>;
+      if (axiosError.response && axiosError.response.status === 400) {
+        setVerificationError(axiosError.response.data?.message || '잘못된 요청입니다.');
       } else {
         console.error('이메일 인증 실패:', error);
         setVerificationError('네트워크 상태를 확인해주세요.');
