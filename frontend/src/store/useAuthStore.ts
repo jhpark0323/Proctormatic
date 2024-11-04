@@ -6,6 +6,8 @@ import { CustomToast } from '@/components/CustomToast';
 interface User {
   role: string;
   name?: string;
+  email?: string;
+  testId?: string;
 }
 
 interface AuthState {
