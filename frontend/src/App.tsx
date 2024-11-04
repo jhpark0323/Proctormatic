@@ -27,22 +27,22 @@ function App() {
     injectFonts(); // 폰트 변수를 설정
     injectShadows(); // 그림자 변수를 설정
 
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      CustomToast("감시 모듈이 작동중입니다.");
-    };
-    const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-      CustomToast("감시 모듈이 작동중입니다.");
-    };
+    // const handleCopy = (e: ClipboardEvent) => {
+    //   e.preventDefault();
+    //   CustomToast("감시 모듈이 작동중입니다.");
+    // };
+    // const handlePaste = (e: ClipboardEvent) => {
+    //   e.preventDefault();
+    //   CustomToast("감시 모듈이 작동중입니다.");
+    // };
 
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("paste", handlePaste);
+    // document.addEventListener("copy", handleCopy);
+    // document.addEventListener("paste", handlePaste);
 
-    return () => {
-      document.removeEventListener("copy", handleCopy);
-      document.removeEventListener("paste", handlePaste);
-    };
+    // return () => {
+    //   document.removeEventListener("copy", handleCopy);
+    //   document.removeEventListener("paste", handlePaste);
+    // };
   }, []);
 
   return (
