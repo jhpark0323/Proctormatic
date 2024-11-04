@@ -3,9 +3,11 @@ from .models import Exam
 from takers.models import Taker
 
 class ExamSerializer(serializers.ModelSerializer):
+    cheer_msg = serializers.CharField(allow_null=True, required=False)
+
     class Meta:
         model = Exam
-        fields = ['title', 'date', 'start_time', 'end_time', 'exit_time', 'expected_taker', 'cost']
+        fields = ['title', 'date', 'start_time', 'end_time', 'exit_time', 'expected_taker', 'cheer_msg', 'cost']
         read_only_fields = ['user']  # user는 뷰에서 처리되므로 시리얼라이저에서 읽기 전용
 
 class ScheduledExamListSerializer(serializers.ModelSerializer):
@@ -45,6 +47,7 @@ class ExamDetailSerializer(serializers.ModelSerializer):
         takers = Taker.objects.filter(exam_id=obj.id)
         return [
             {
+                "taker_id": taker.id,
                 "name": taker.name,
                 "verification_rate": taker.verification_rate,
                 "upload_rate": 0  # upload_rate는 0으로 고정
@@ -56,6 +59,6 @@ class TakerDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Taker
         fields = [
-            'name', 'email', 'birth', 'id_photo',
+            'name', 'email', 'birth', 'id_photo', 
             'verification_rate', 'entry_time', 'exit_time'
         ]
