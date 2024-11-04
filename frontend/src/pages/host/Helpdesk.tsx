@@ -5,6 +5,8 @@ import Textfield from "@/components/Textfield";
 import { useEffect, useState } from "react";
 import HostHeader from "@/components/HostHeader";
 import axiosInstance from "@/utils/axios";
+import HostModal from "@/components/HostModal";
+import { CustomToast } from "@/components/CustomToast";
 
 interface FAQ {
   id: number;
@@ -77,10 +79,49 @@ const Helpdesk = () => {
     setCurrentCategory(category);
   };
 
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const handlePostModalOpen = () => setIsPostModalOpen(true);
+  const handlePostModalClose = () => setIsPostModalOpen(false);
+
+  const [postCategory, setPostCategory] = useState("카테고리 선택");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const options = ["이용 방법", "적립금", "기타"];
+  const handleDropdownToggle = () => setIsDropdownOpen((prev) => !prev);
+
+  const handleOptionClick = (option: string) => {
+    setPostCategory(option);
+    setIsDropdownOpen(false);
+  };
+
+  const [postTitle, setPostTitle] = useState("");
+  const [postContent, setPostContent] = useState("");
+
+  const handlePostQuestion = () => {
+    axiosInstance
+      .post("/helpdesk/question/", {
+        category: postCategory,
+        title: postTitle,
+        content: postContent,
+      })
+      .then((response) => {
+        CustomToast("질문이 등록되었습니다.");
+        fetchQuestions();
+        fetchNotifications();
+        handlePostModalClose();
+      })
+      .catch((error) => {
+        console.error("질문 등록 실패: ", error);
+        if (error.response && error.response.status === 400) {
+          CustomToast(error.message);
+        } else {
+          CustomToast("다시 시도해 주세요.");
+        }
+      });
+  };
+
   return (
     <>
       <HostHeader />
-      {/* FAQ Section */}
       <div className={styles.faqContainer}>
         <div className={styles.title}>
           <span style={fonts.HEADING_LG_BOLD}>자주 묻는 질문(FAQ)</span>
@@ -98,7 +139,6 @@ const Helpdesk = () => {
 
       <div className={styles.separator}></div>
 
-      {/* Manual Section */}
       <div className={styles.manualContainer}>
         <div className={styles.title}>
           <span style={fonts.HEADING_LG_BOLD}>프록토매틱 매뉴얼</span>
@@ -110,7 +150,6 @@ const Helpdesk = () => {
         </div>
       </div>
 
-      {/* Question & Notification Section */}
       <div className={styles.questionContainer}>
         <div className={styles.questionWrap}>
           <div className={styles.questionTitle}>
@@ -118,24 +157,20 @@ const Helpdesk = () => {
           </div>
 
           <div className={styles.questionContent}>
-            {/* 헤더 */}
             <div className={styles.questionHeader}>
               <div className={styles.category}>
                 {categories.map((category) => (
-                  <>
-                    <span
-                      key={category}
-                      className={styles.categoryItem}
-                      style={{
-                        fontWeight:
-                          currentCategory === category ? "bold" : "normal",
-                      }}
-                      onClick={() => handleCategoryClick(category)}
-                    >
-                      {category}
-                    </span>
-                    <span style={{ cursor: "default" }}> / </span>
-                  </>
+                  <span
+                    key={category}
+                    className={styles.categoryItem}
+                    style={{
+                      fontWeight:
+                        currentCategory === category ? "bold" : "normal",
+                    }}
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    {category}
+                  </span>
                 ))}
               </div>
               <div
@@ -148,7 +183,11 @@ const Helpdesk = () => {
                     trailingIcon="search"
                   />
                 </div>
-                <CustomButton style="primary_fill" type="rectangular">
+                <CustomButton
+                  style="primary_fill"
+                  type="rectangular"
+                  onClick={handlePostModalOpen}
+                >
                   글 작성하기
                 </CustomButton>
               </div>
@@ -156,81 +195,118 @@ const Helpdesk = () => {
 
             {/* Questions & Notifications Table */}
             <div className={styles.questionTable}>
-              <div>
-                <div className={styles.tableSeparator}></div>
-                <table className={styles.table}>
-                  <thead className={styles.tableTitle}>
-                    <tr>
-                      <th>구분</th>
-                      <th>제목</th>
-                      <th>작성자</th>
-                    </tr>
-                  </thead>
-                  <tbody className={styles.tableBody}>
-                    {notifications.map((item, index) => (
-                      <tr
-                        key={index}
-                        style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
+              <table className={styles.table}>
+                <thead className={styles.tableTitle}>
+                  <tr>
+                    <th>구분</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                  </tr>
+                </thead>
+                <tbody className={styles.tableBody}>
+                  {notifications.map((item, index) => (
+                    <tr
+                      key={index}
+                      style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
+                    >
+                      <td
+                        style={{
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          color: "var(--GRAY_600)",
+                        }}
                       >
-                        <td
+                        공지
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: "bold" }}>{item.title}</div>
+                        <div
                           style={{
-                            textAlign: "center",
-                            fontWeight: "bold",
-                            color: "var(--GRAY_600)",
+                            color: "var(--GRAY_500)",
+                            ...fonts.MD_REGULAR,
                           }}
                         >
-                          공지
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                          <div
-                            style={{
-                              color: "var(--GRAY_500)",
-                              ...fonts.MD_REGULAR,
-                            }}
-                          >
-                            {item.created_at}
-                          </div>
-                        </td>
-                        <td />
-                      </tr>
-                    ))}
-                    {questions.map((item, index) => (
-                      <tr key={index}>
-                        <td
+                          {item.created_at}
+                        </div>
+                      </td>
+                      <td />
+                    </tr>
+                  ))}
+                  {questions.map((item, index) => (
+                    <tr key={index}>
+                      <td
+                        style={{
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          color: "var(--GRAY_600)",
+                        }}
+                      >
+                        {item.category}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: "bold" }}>{item.title}</div>
+                        <div
                           style={{
-                            textAlign: "center",
-                            fontWeight: "bold",
-                            color: "var(--GRAY_600)",
+                            color: "var(--GRAY_500)",
+                            ...fonts.MD_REGULAR,
                           }}
                         >
-                          {item.category}
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                          <div
-                            style={{
-                              color: "var(--GRAY_500)",
-                              ...fonts.MD_REGULAR,
-                            }}
-                          >
-                            {item.created_at}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ textAlign: "center" }}>
-                            {item.organizer}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          {item.created_at}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ textAlign: "center" }}>
+                          {item.organizer}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
+
+      {isPostModalOpen && (
+        <HostModal
+          onClose={handlePostModalClose}
+          buttonLabel="질문 게시하기"
+          handleButton={handlePostQuestion}
+        >
+          <div className={styles.postModal}>
+            <div>
+              <div className={styles.dropdown} onClick={handleDropdownToggle}>
+                <div className={styles.dropdownLabel}>{postCategory}</div>
+                {isDropdownOpen && (
+                  <div className={styles.dropdownContent}>
+                    {options.map((option, index) => (
+                      <div
+                        key={index}
+                        className={styles.dropdownItem}
+                        onClick={() => handleOptionClick(option)}
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Textfield
+                label="제목"
+                maxLength={100}
+                value={postTitle}
+                onChange={(value) => setPostTitle(value)}
+              />
+            </div>
+            <Textfield
+              label="질문 내용"
+              value={postContent}
+              onChange={(value) => setPostContent(value)}
+            />
+          </div>
+        </HostModal>
+      )}
     </>
   );
 };
