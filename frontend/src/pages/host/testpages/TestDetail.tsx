@@ -76,7 +76,7 @@ const TestDetail = () => {
                 응시 인원
               </div>
               <div className={styles.detailInfoContext}>
-                {examData?.taker_list.length}명 응시 / 최대{" "}
+                {examData?.taker_list.length}명 응시 / 최대
                 {examData?.expected_taker}명
               </div>
             </div>
