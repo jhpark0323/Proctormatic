@@ -5,8 +5,9 @@ import TermsModal from '@/components/TermsModal';
 import { useNavigate } from 'react-router-dom';
 import { useTakerStore } from '@/store/TakerAuthStore';
 import axiosInstance from '@/utils/axios';
-import { IoIosCheckmark } from "react-icons/io";
+import { IoIosCheckmark } from 'react-icons/io';
 import { AxiosError } from 'axios';
+import { CustomToast } from '@/components/CustomToast';
 
 interface ErrorResponse {
   message: string;
@@ -18,7 +19,7 @@ const Step5: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    verificationCode: ''
+    verificationCode: '',
   });
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -27,7 +28,6 @@ const Step5: React.FC = () => {
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>('');
-  const navigate = useNavigate();
 
   // 한글 이름 정규식 검사
   const validateName = (name: string) => {
@@ -40,7 +40,7 @@ const Step5: React.FC = () => {
     let interval: NodeJS.Timeout;
     if (timer > 0) {
       interval = setInterval(() => {
-        setTimer(prevTimer => prevTimer - 1);
+        setTimer((prevTimer) => prevTimer - 1);
       }, 1000);
     } else if (timer === 0) {
       setEmailStatus('');
@@ -51,11 +51,15 @@ const Step5: React.FC = () => {
   // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [id === 'applicantName' ? 'name' : 
-      id === 'emailAddress' ? 'email' : 
-      id === 'emailVerification' ? 'verificationCode' : id]: value
+      [id === 'applicantName'
+        ? 'name'
+        : id === 'emailAddress'
+        ? 'email'
+        : id === 'emailVerification'
+        ? 'verificationCode'
+        : id]: value,
     }));
 
     if (id === 'applicantName') {
@@ -69,45 +73,45 @@ const Step5: React.FC = () => {
       console.log('이메일을 입력해주세요');
       return;
     }
-  
+
     setIsLoading(true); // 로딩 상태 시작
     try {
       await axiosInstance.post('/taker/email/', {
         id: testId,
-        email: formData.email
+        email: formData.email,
       });
-  
+
       setIsEmailSent(true);
       setVerificationError(''); // 에러 메시지 초기화
       setTimer(300);
       setEmailStatus('인증번호가 발송되었습니다.');
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
-      if (axiosError.response && axiosError.response.status === 400) {
-        setVerificationError(axiosError.response.data?.message || '잘못된 요청입니다.');
+      if (axiosError.response && (axiosError.response.status === 400 || axiosError.response.status === 409)) {
+        setEmailStatus(axiosError.response.data?.message || '잘못된 요청입니다.');
       } else {
-        setVerificationError('네트워크 상태를 확인해주세요.');
+        setEmailStatus('네트워크 상태를 확인해주세요.');
       }
-      console.error('인증번호 발송 실패:', error);
+      console.error('인증번호 발송 실패:', axiosError);
     } finally {
       setIsLoading(false); // 로딩 상태 종료
     }
   };
-  
+
   // 인증 코드 확인 처리
   const handleVerificationCodeSubmit = async () => {
     if (!formData.verificationCode) {
       console.log('인증 코드를 입력해주세요');
       return;
     }
-  
+
     setIsLoading(true); // 로딩 상태 시작
     try {
       const response = await axiosInstance.put('/taker/email/', {
         email: formData.email,
-        code: formData.verificationCode
+        code: formData.verificationCode,
       });
-  
+
       if (response.status === 200) {
         console.log('이메일 인증 성공');
         setIsVerified(true);
@@ -119,7 +123,8 @@ const Step5: React.FC = () => {
       const axiosError = error as AxiosError<ErrorResponse>;
       if (axiosError.response && axiosError.response.status === 400) {
         setVerificationError(axiosError.response.data?.message || '잘못된 요청입니다.');
-      } else {
+      }
+      else {
         console.error('이메일 인증 실패:', error);
         setVerificationError('네트워크 상태를 확인해주세요.');
       }
@@ -129,13 +134,46 @@ const Step5: React.FC = () => {
     }
   };
 
-  const handleConfirm = () => {
+  // entry_time 포맷 변환 함수
+  const getFormattedTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
+  const handleConfirm = async () => {
     if (!isVerified || !isNameValid) {
       console.log('모든 인증을 완료해주세요');
       return;
     }
-    setIsModalOpen(false);
+  
+    try {
+      // 회원가입 요청
+      const response = await axiosInstance.post('/taker/', {
+        exam: testId,
+        name: formData.name,
+        email: formData.email,
+        entry_time: getFormattedTime(), // 포맷된 시간 전송
+      });
+  
+      if (response.status === 201) {
+        console.log('회원가입 성공');
+        
+        // access 토큰을 localStorage에 저장
+        const accessToken = response.data.access;
+        localStorage.setItem('accessToken', accessToken);
+  
+        setIsModalOpen(false);
+      } else if (response.status === 400) {
+        CustomToast(response.data.message);
+      }
+    } catch (error) {
+      console.error('회원가입 실패:', error);
+    }
   };
+  
 
   // 타이머 포맷팅 함수
   const formatTime = (seconds: number): string => {
@@ -177,37 +215,46 @@ const Step5: React.FC = () => {
               id="emailAddress"
               value={formData.email}
               onChange={handleInputChange}
-              disabled={isVerified}
+              disabled={isVerified || isEmailSent} // 이메일 인증번호 요청 후 수정 불가
             />
             {isVerified ? (
-              <span style={{ 
-                padding: '8px 16px',
-                color: '#2196F3',
-                fontWeight: 500,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}><IoIosCheckmark size={'22px'} />인증완료</span>
+              <span
+                style={{
+                  padding: '8px 16px',
+                  color: '#2196F3',
+                  fontWeight: 500,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <IoIosCheckmark size={'22px'} />
+                인증완료
+              </span>
             ) : (
-              <button 
-                onClick={handleEmailVerificationRequest} 
+              <button
+                onClick={handleEmailVerificationRequest}
                 disabled={!formData.email || isLoading}
                 className={styles.buttonTest}
               >
                 {isLoading ? (
                   <div className={styles.loadingSpinner}></div>
+                ) : isEmailSent ? (
+                  '인증번호 재발송'
                 ) : (
-                  isEmailSent ? '인증번호 재발송' : '이메일 인증'
+                  '이메일 인증'
                 )}
               </button>
             )}
           </div>
           {!isVerified && emailStatus && (
-            <div style={{ 
-              fontSize: '14px', 
-              marginTop: '5px',
-              color: 'green'
-            }}>
+            <div
+              style={{
+                fontSize: '14px',
+                marginTop: '5px',
+                color: emailStatus === '인증번호가 발송되었습니다.' ? 'green' : 'red',
+              }}
+            >
               {emailStatus}
               {timer > 0 && ` (${formatTime(timer)})`}
             </div>
@@ -225,19 +272,21 @@ const Step5: React.FC = () => {
                 onChange={handleInputChange}
                 disabled={!isEmailSent}
               />
-              <button 
-                onClick={handleVerificationCodeSubmit} 
+              <button
+                onClick={handleVerificationCodeSubmit}
                 disabled={!isEmailSent || !formData.verificationCode || isLoading}
               >
                 인증하기
               </button>
             </div>
             {verificationError && (
-              <div style={{ 
-                fontSize: '14px', 
-                marginTop: '5px',
-                color: 'red'
-              }}>
+              <div
+                style={{
+                  fontSize: '14px',
+                  marginTop: '5px',
+                  color: 'red',
+                }}
+              >
                 {verificationError}
               </div>
             )}
@@ -245,7 +294,7 @@ const Step5: React.FC = () => {
         )}
       </div>
       <div className={styles.StepFooter}>
-        <CustomButton 
+        <CustomButton
           onClick={() => setIsModalOpen(true)}
           state={isVerified && isNameValid ? 'default' : 'disabled'}
         >

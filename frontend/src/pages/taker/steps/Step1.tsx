@@ -4,7 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import { useTakerStore } from "@/store/TakerAuthStore";
 
 const Step1: React.FC<{ onNext: () => void }> = ({ onNext }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState("https://proctormatic.kr/exams/1/"); // 개발용 추후 수정 요망
   const { setTestId } = useTakerStore();
   const [isValid, setIsValid] = useState(false);
 
@@ -44,7 +44,7 @@ const Step1: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         </div>
       </div>
       <div className={styles.StepFooter}>
-        <CustomButton onClick={handleNextClick} state={isValid ? 'default' : 'disabled'}>
+        <CustomButton onClick={handleNextClick} state={isValid ? "default" : "disabled"}>
           다음
         </CustomButton>
       </div>

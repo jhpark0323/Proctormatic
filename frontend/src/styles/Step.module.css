@@ -173,16 +173,15 @@
   height: 40px;
   border: none;
   border-bottom: 1.5px solid var(--GRAY_400); /* 기본 색상 */
-  font-size: 18px; /* 기본 글자 크기 */
+  font-size: 20px; /* 기본 글자 크기 */
   outline: none;
-  transition: border-color 0.3s ease, font-size 0.3s ease;
+  transition: border-color 0.3s ease;
   padding-bottom: 10px;
   padding-left: 10px;
 }
 
 .UrlContainer > input:focus {
   border-bottom: 1.5px solid var(--PRIMARY); /* Focus 시 PRIMARY로 변경 */
-  font-size: 20px;
 }
 
 .loadingSpinner {
