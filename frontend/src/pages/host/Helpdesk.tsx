@@ -21,7 +21,7 @@ interface notification {
 }
 
 interface question {
-  Id: number;
+  id: number;
   organizer: string;
   category: string;
   title: string;
@@ -77,8 +77,12 @@ const Helpdesk = () => {
 
   const handleCategoryClick = (category: string) => {
     setCurrentCategory(category);
+
+    const params =
+      category !== "전체" ? { params: { category: category } } : {};
+
     axiosInstance
-      .get("/helpdesk/question?category={category}")
+      .get("/helpdesk/question", params)
       .then((response) => {
         setQuestions(response.data.questionList);
       })
@@ -111,7 +115,7 @@ const Helpdesk = () => {
         title: postTitle,
         content: postContent,
       })
-      .then((response) => {
+      .then(() => {
         CustomToast("질문이 등록되었습니다.");
         fetchQuestions();
         fetchNotifications();
@@ -127,6 +131,41 @@ const Helpdesk = () => {
       });
   };
 
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const handleDetailModalOpen = () => setIsDetailModalOpen(true);
+  const handleDetailModalClose = () => setIsDetailModalOpen(false);
+  const [detailModalTitle, setDetailModalTitle] = useState("");
+  const [detailModalContext, setDetailModalContext] = useState("");
+  const [detailModalCreatedAt, setDetailModalCreatedAt] = useState("");
+
+  const getDetailModalContent = (
+    type: "faq" | "notification" | "question",
+    id: number
+  ) => {
+    let endpoint = "";
+
+    // 구분에 따라 API 엔드포인트를 설정
+    if (type === "faq") {
+      endpoint = `/helpdesk/faq/${id}/`;
+    } else if (type === "notification") {
+      endpoint = `/helpdesk/notification/${id}/`;
+    } else if (type === "question") {
+      endpoint = `/helpdesk/question/${id}/`;
+    }
+
+    axiosInstance
+      .get(endpoint)
+      .then((response) => {
+        setDetailModalTitle(response.data.title);
+        setDetailModalContext(response.data.content);
+        setDetailModalCreatedAt(response.data.created_at);
+        handleDetailModalOpen();
+      })
+      .catch((error) => {
+        console.log("조회 실패: ", error);
+      });
+  };
+
   return (
     <>
       <HostHeader />
@@ -137,7 +176,11 @@ const Helpdesk = () => {
         <div className={styles.faqContent}>
           <div className={styles.faqWrap}>
             {faqs.map((faq) => (
-              <div key={faq.id} className={styles.faqItem}>
+              <div
+                key={faq.id}
+                className={styles.faqItem}
+                onClick={() => getDetailModalContent("faq", faq.id)}
+              >
                 <span>{faq.title}</span>
               </div>
             ))}
@@ -218,6 +261,9 @@ const Helpdesk = () => {
                     <tr
                       key={index}
                       style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
+                      onClick={() =>
+                        getDetailModalContent("notification", item.id)
+                      }
                     >
                       <td
                         style={{
@@ -243,7 +289,10 @@ const Helpdesk = () => {
                     </tr>
                   ))}
                   {questions.map((item, index) => (
-                    <tr key={index}>
+                    <tr
+                      key={index}
+                      onClick={() => getDetailModalContent("question", item.id)}
+                    >
                       <td
                         style={{
                           textAlign: "center",
@@ -315,6 +364,11 @@ const Helpdesk = () => {
               onChange={(value) => setPostContent(value)}
             />
           </div>
+        </HostModal>
+      )}
+      {isDetailModalOpen && (
+        <HostModal onClose={handleDetailModalClose} title={detailModalTitle}>
+          <div className={styles.postModal}>{detailModalContext}</div>
         </HostModal>
       )}
     </>
