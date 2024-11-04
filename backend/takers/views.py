@@ -43,7 +43,7 @@ def add_taker(request):
     elif request.method == 'PATCH':
         taker_id = request.auth['user_id']
         exit_time = request.data.get('exit_time')
-        exit_time = datetime.strptime(exit_time, '%Y-%m-%dT%H:%M:%SZ').time()
+        exit_time = datetime.strptime(exit_time, '%H:%M:%S').time()
 
         taker = Taker.objects.filter(id=taker_id).first()
         if taker is not None:
