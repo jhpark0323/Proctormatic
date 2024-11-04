@@ -99,6 +99,15 @@
   border-bottom: 1px solid var(--GRAY_300);
 }
 
+.reportButton {
+  background-color: var(--PRIMARY);
+  color: var(--WHITE);
+  padding: 0.5rem 1rem;
+  width: fit-content;
+  border-radius: 1rem;
+  display: inline-flex;
+}
+
 /* MakeTest */
 .makeTestContainer {
   background-color: var(--BACKGROUND);
