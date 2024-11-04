@@ -61,7 +61,7 @@ add_taker_schema = extend_schema_view(
             'properties': {
                 'exit_time': {
                     'type': 'string',
-                    'format': 'date-time'
+                    'format': 'time'
                 }
             }
         }),
