@@ -118,14 +118,16 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
         name,
         email,
         password,
-        birth: `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`,
+        birth: `${birthYear}${birthMonth.padStart(2, '0')}${birthDay.padStart(2, '0')}`, // YYYYMMDD 형식
         policy,
         marketing
       });
   
       if (response.status === 201) {
-        CustomToast("회원가입이 완료되었습니다.");
         onClose(); // 회원가입 성공 시에만 모달 닫기
+        CustomToast("회원가입이 완료되었습니다.");
+      } else {
+        CustomToast("회원가입 중 문제가 발생했습니다."); // 정상적으로 처리되지 않았을 때 사용자에게 알림
       }
     } catch (error: any) {
       if (error.response) {
@@ -144,6 +146,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
       }
     }
   };
+  
 
   // EmailModal에서 이메일 인증이 완료되었을 때 호출할 함수
   const handleEmailVerified = () => {
