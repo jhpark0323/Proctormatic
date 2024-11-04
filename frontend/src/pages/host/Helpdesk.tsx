@@ -30,7 +30,7 @@ interface question {
 }
 
 const Helpdesk = () => {
-  const categories = ["전체", "공지사항", "이용 방법", "적립금", "기타"];
+  const categories = ["전체", "이용 방법", "적립금", "기타"];
   const [currentCategory, setCurrentCategory] = useState("전체");
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [notifications, setNotifications] = useState<notification[]>([]);
@@ -77,6 +77,14 @@ const Helpdesk = () => {
 
   const handleCategoryClick = (category: string) => {
     setCurrentCategory(category);
+    axiosInstance
+      .get("/helpdesk/question?category={category}")
+      .then((response) => {
+        setQuestions(response.data.questionList);
+      })
+      .catch((error) => {
+        console.log("카테고리 검색 실패: ", error);
+      });
   };
 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -169,7 +177,9 @@ const Helpdesk = () => {
                     }}
                     onClick={() => handleCategoryClick(category)}
                   >
+                    <span> </span>
                     {category}
+                    <span> /</span>
                   </span>
                 ))}
               </div>
