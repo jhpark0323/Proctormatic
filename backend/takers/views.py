@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
 from .models import Taker, Record
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
-from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame
+from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema
 from django_redis import get_redis_connection
 from django.utils.datetime_safe import datetime
 from django.conf import settings
@@ -120,7 +120,7 @@ def check_email(request):
             return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@add_taker_schema
+@update_taker_schema
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
 @parser_classes([MultiPartParser])
@@ -145,8 +145,8 @@ def update_taker(request):
 
     s3_client = boto3.client('s3')
 
-    if 'idPhoto' in request.FILES:
-        id_photo_file = request.FILES['idPhoto']
+    if 'id_photo' in request.FILES:
+        id_photo_file = request.FILES['id_photo']
         _, file_extension = os.path.splitext(id_photo_file.name)
         file_name = f"idPhoto{file_extension}"
         s3_path = f"{taker.exam_id}/{taker_id}/{file_name}"
@@ -162,6 +162,9 @@ def update_taker(request):
 
         except Exception as e:
             return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    else:
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     update_data = {**request.data.dict(), 'id_photo': s3_file_url}
 
