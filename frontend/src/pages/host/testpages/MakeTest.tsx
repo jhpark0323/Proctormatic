@@ -67,8 +67,13 @@ const MakeTest = () => {
   // 시험 만들기
   const [testForm, setTestForm] = useState<TestForm>({
     title: "",
-    date: "",
-    start_time: "",
+    date: new Date(new Date().getTime() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    start_time: new Date(new Date().getTime() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
     end_time: "",
     exit_time: "",
     expected_taker: 0,
@@ -92,31 +97,35 @@ const MakeTest = () => {
     }
   };
 
-  const submitTestForm = (form: TestForm) => {
-    if (
-      !testForm.title ||
-      !testForm.date ||
-      !testForm.start_time ||
-      !testForm.end_time ||
-      !testForm.expected_taker
-    ) {
-      CustomToast("비어있는 칸이 있습니다!");
-      return;
-    }
-
+  const submitTestForm = () => {
     const completeForm = {
       ...testForm,
       cost: testForm.expected_taker * 60,
       exit_time: testForm.exit_time || testForm.end_time, // exit_time이 비어있다면 end_time으로 설정
     };
 
+    // 나중에 비어있는 칸에 커서가 가도록
+    if (
+      !completeForm.title ||
+      !completeForm.date ||
+      !completeForm.start_time ||
+      !completeForm.end_time ||
+      !completeForm.expected_taker
+    ) {
+      console.log(completeForm);
+      CustomToast("비어있는 칸이 있습니다!");
+      return;
+    }
+
     axiosInstance
       .post("/exam/", completeForm)
       .then((response) => {
         console.log(response.data);
-        // navigate("/host/myTest");
+        CustomToast(response.data.message);
+        navigate("/host/myTest");
       })
       .catch((error) => {
+        CustomToast(error.data.message);
         console.log(completeForm);
         console.log("시험 생성 실패: ", error);
       });
@@ -144,7 +153,7 @@ const MakeTest = () => {
                 label="시험 제목"
                 placeholder="시험 제목 입력"
                 value={testForm.title}
-                onChange={(value) => setTestForm({ ...testForm, title: value })} // 제목 설정 추가
+                onChange={(value) => setTestForm({ ...testForm, title: value })}
               />
             </div>
             <div className={styles.makeTestContentItem}>
@@ -177,12 +186,10 @@ const MakeTest = () => {
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <DatePicker
                         value={
-                          testForm.start_time
-                            ? new Date(`1970-01-01T${testForm.start_time}`)
-                            : null
+                          testForm.date ? new Date(testForm.date) : new Date()
                         }
                         onChange={(newValue) =>
-                          handleDateTimeChange("start_time", newValue)
+                          handleDateTimeChange("date", newValue)
                         }
                         slotProps={{
                           textField: {
@@ -196,7 +203,9 @@ const MakeTest = () => {
                       <TimePicker
                         value={
                           testForm.start_time
-                            ? new Date(`1970-01-01T${testForm.start_time}`)
+                            ? new Date(
+                                `${testForm.date}T${testForm.start_time}`
+                              )
                             : null
                         }
                         onChange={(newValue) =>
@@ -224,7 +233,9 @@ const MakeTest = () => {
                     >
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <DatePicker
-                          value={testForm.date ? new Date(testForm.date) : null}
+                          value={
+                            testForm.date ? new Date(testForm.date) : new Date()
+                          }
                           onChange={(newValue) =>
                             handleDateTimeChange("date", newValue)
                           }
@@ -243,7 +254,9 @@ const MakeTest = () => {
                         <TimePicker
                           value={
                             testForm.end_time
-                              ? new Date(`1970-01-01T${testForm.end_time}`)
+                              ? new Date(
+                                  `${testForm.date}T${testForm.end_time}`
+                                )
                               : null
                           }
                           onChange={(newValue) =>
@@ -280,7 +293,9 @@ const MakeTest = () => {
                         <div style={{ display: "flex", gap: "0.5rem" }}>
                           <DatePicker
                             value={
-                              testForm.date ? new Date(testForm.date) : null
+                              testForm.date
+                                ? new Date(testForm.date)
+                                : new Date()
                             }
                             onChange={(newValue) =>
                               handleDateTimeChange("date", newValue)
@@ -299,8 +314,10 @@ const MakeTest = () => {
                           />
                           <TimePicker
                             value={
-                              testForm.end_time
-                                ? new Date(`1970-01-01T${testForm.end_time}`)
+                              testForm.exit_time
+                                ? new Date(
+                                    `${testForm.date}T${testForm.exit_time}`
+                                  )
                                 : null
                             }
                             onChange={(newValue) =>
@@ -411,7 +428,7 @@ const MakeTest = () => {
                   className={styles.coinAmount}
                   style={fonts.HEADING_MD_BOLD}
                 >
-                  {currentCoinAmount}
+                  {currentCoinAmount - testForm.expected_taker * 60}
                 </div>
                 <div className={styles.makeTestContentTitle}>C</div>
               </div>
@@ -420,7 +437,7 @@ const MakeTest = () => {
         </div>
 
         <div className={styles.submitButton}>
-          <CustomButton onClick={() => submitTestForm(testForm)}>
+          <CustomButton onClick={() => submitTestForm()}>
             <span style={fonts.MD_SEMIBOLD}>결제 및 예약하기</span>
           </CustomButton>
         </div>
