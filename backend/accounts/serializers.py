@@ -23,10 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
             'invalid': "잘못된 이메일 형식입니다."
         }
     )
-    birth = serializers.DateField(
+    birth = serializers.CharField(
         error_messages={
-            'invalid': "생년월일을 확인해주세요.",
-            'invalid_date': "생년월일을 확인해주세요."
+            'invalid': "날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다."
         }
     )
 
@@ -36,9 +35,17 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True, 'min_length': 8}}
 
     def validate_birth(self, value):
-        if value > date.today():
-            raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
-        return value
+        if not value.isdigit() or len(value) != 8:
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
+
+        try:
+            birth = datetime.strptime(value, '%Y%m%d')
+            if birth.date() > date.today():
+                raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
+        except ValueError:
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
+
+        return birth
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -60,7 +67,7 @@ class EditMarketingSerializer(serializers.ModelSerializer):
 class FindEmailRequestSerializer(serializers.ModelSerializer):
     birth = serializers.CharField(
         error_messages={
-            'invalid': "날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다."
+            'invalid': "날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다."
         }
     )
 
@@ -69,18 +76,17 @@ class FindEmailRequestSerializer(serializers.ModelSerializer):
         fields = ('name', 'birth',)
 
     def validate_birth(self, value):
-        if not value.isdigit() or len(value) != 6:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다.")
+        if not value.isdigit() or len(value) != 8:
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
 
         try:
-            birth_date = datetime.strptime(value, '%y%m%d')
+            birth = datetime.strptime(value, '%Y%m%d')
+            if birth.date() > date.today():
+                raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
         except ValueError:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYMMDD 형식이어야 합니다.")
+            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
 
-        if birth_date > datetime.now():
-            raise serializers.ValidationError("생년월일을 확인해주세요.")
-
-        return birth_date
+        return birth
 
 class FindEmailResponseSerializer(serializers.ModelSerializer):
     joined_on = serializers.SerializerMethodField()

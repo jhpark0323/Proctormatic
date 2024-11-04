@@ -69,7 +69,7 @@ def question(request):
     if request.method == 'POST':
         serializer = QuestionCreateSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=user.id)
+            serializer.save(user=user)
             return Response({'message': '등록이 완료되었습니다.'}, status=status.HTTP_201_CREATED)
         else:
             return Response({'message': '제목은 100자를 넘길 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
