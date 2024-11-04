@@ -136,13 +136,6 @@ def update_taker(request):
     if not taker:
         return Response({'message': '응시자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if 'birth' in request.data:
-        birth = request.data['birth']
-        parsed_birth, error_message = parse_birth_date(birth)
-        if error_message:
-            return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-        request.data['birth'] = parsed_birth
-
     s3_client = boto3.client('s3')
 
     if 'id_photo' in request.FILES:
