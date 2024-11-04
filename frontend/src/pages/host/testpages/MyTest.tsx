@@ -4,13 +4,28 @@ import styles from "@/styles/Testpage.module.css";
 import { useEffect, useState } from "react";
 import { FaAngleDown } from "react-icons/fa";
 import axiosInstance from "@/utils/axios";
+import { useNavigate } from "react-router-dom";
+import { Tab } from "@mui/material";
+
+interface Exam {
+  id: number;
+  title: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  url: string;
+  expected_taker: number;
+  total_taker?: number;
+}
 
 const MyTest = () => {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [scheduledExams, setScheduledExams] = useState([]);
-  const [onGoingExams, setOnGoingExams] = useState([]);
-  const [completedExams, setCompletedExams] = useState([]);
+  const [scheduledExams, setScheduledExams] = useState<Exam[]>([]);
+  const [onGoingExams, setOnGoingExams] = useState<Exam[]>([]);
+  const [completedExams, setCompletedExams] = useState<Exam[]>([]);
+  const [progressPercentage, setProgressPercentage] = useState(0);
 
   useEffect(() => {
     axiosInstance
@@ -36,6 +51,86 @@ const MyTest = () => {
       });
   }, []);
 
+  useEffect(() => {
+    const totalExams =
+      scheduledExams.length + onGoingExams.length + completedExams.length;
+    const progress =
+      totalExams > 0
+        ? Math.round(
+            ((onGoingExams.length + scheduledExams.length) / totalExams) * 100
+          )
+        : 0;
+    setProgressPercentage(progress);
+  }, [scheduledExams, onGoingExams, completedExams]);
+
+  const renderExamTable = (exams: Exam[]) => (
+    <table className={styles.historyTable}>
+      <thead className={styles.tableHeader}>
+        <tr>
+          <th className={styles.tableCell}>시험명</th>
+          <th className={styles.tableCell}>날짜와 시간</th>
+          <th className={styles.tableCell}>시험 입장</th>
+          <th className={styles.tableCell}>예상 응시 인원</th>
+        </tr>
+      </thead>
+      <tbody>
+        {exams.map((exam) => (
+          <tr key={exam.id} className="border-t border-gray-200">
+            <td className={styles.tableCell}>{exam.title}</td>
+            <td className={styles.tableCell}>
+              <div>{exam.date}</div>
+              <div>{`${exam.start_time} ~ ${exam.end_time}`}</div>
+            </td>
+            <td className={styles.tableCell}>
+              <a
+                href={exam.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                입장
+              </a>
+            </td>
+            <td className={styles.tableCell}>{exam.expected_taker}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderCompletedExamTable = (exams: Exam[]) => (
+    <table className={styles.historyTable}>
+      <thead className={styles.tableHeader}>
+        <tr>
+          <th className={styles.tableCell}>시험명</th>
+          <th className={styles.tableCell}>날짜와 시간</th>
+          <th className={styles.tableCell}>업로드 된 영상</th>
+          <th className={styles.tableCell}>결과 보고서</th>
+        </tr>
+      </thead>
+      <tbody>
+        {exams.map((exam) => (
+          <tr key={exam.id}>
+            <td className={styles.tableCell}>{exam.title}</td>
+            <td className={styles.tableCell}>
+              <div>{exam.date}</div>
+              <div>{`${exam.start_time} ~ ${exam.end_time}`}</div>
+            </td>
+            <td className={styles.tableCell}>{exam.expected_taker}</td>
+            <td className={styles.tableCell}>
+              <div
+                className={styles.reportButton}
+                onClick={() => navigate(`/host/test/${exam.id}`)}
+              >
+                보기
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <>
       <HostHeader />
@@ -59,7 +154,7 @@ const MyTest = () => {
                   className={styles.testInfoContent}
                   style={fonts.HEADING_LG_BOLD}
                 >
-                  100%
+                  {progressPercentage}%
                 </div>
               </div>
               <div className={styles.seperate} />
@@ -92,7 +187,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {scheduledExams.length > 0 ? (
-              <div>표</div>
+              renderExamTable(scheduledExams)
             ) : (
               <div className={styles.testContent}>예정된 시험이 없습니다.</div>
             )}
@@ -103,7 +198,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {onGoingExams.length > 0 ? (
-              <div>표</div>
+              renderExamTable(onGoingExams)
             ) : (
               <div className={styles.testContent}>
                 진행중인 시험이 없습니다.
@@ -116,7 +211,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {completedExams.length > 0 ? (
-              <div>표</div>
+              renderCompletedExamTable(completedExams)
             ) : (
               <div className={styles.testContent}>이전 시험이 없습니다.</div>
             )}

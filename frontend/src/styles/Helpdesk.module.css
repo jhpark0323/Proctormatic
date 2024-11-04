@@ -110,6 +110,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-end;
+  margin-top: 1rem;
 }
 
 .category {
@@ -128,6 +129,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 
 .tableTitle {
@@ -159,4 +161,44 @@
   height: 3px;
   width: 100%;
   background-color: var(--BLACK);
+}
+
+.postModal {
+}
+
+/* 드롭다운 */
+.dropdown {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.dropdownLabel {
+  padding: 0.5rem;
+  border: 1px solid var(--GRAY_300);
+  cursor: pointer;
+}
+
+.dropdownContent {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--WHITE);
+  border: 1px solid var(--GRAY_300);
+  display: none;
+  z-index: 1;
+}
+
+.dropdown:hover .dropdownContent {
+  display: block;
+}
+
+.dropdownItem {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background: var(--GRAY_100);
 }
