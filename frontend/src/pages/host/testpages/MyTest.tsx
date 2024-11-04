@@ -56,9 +56,7 @@ const MyTest = () => {
       scheduledExams.length + onGoingExams.length + completedExams.length;
     const progress =
       totalExams > 0
-        ? Math.round(
-            ((onGoingExams.length + scheduledExams.length) / totalExams) * 100
-          )
+        ? Math.round((completedExams.length / totalExams) * 100)
         : 0;
     setProgressPercentage(progress);
   }, [scheduledExams, onGoingExams, completedExams]);

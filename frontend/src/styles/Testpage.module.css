@@ -147,7 +147,7 @@
 .timeWrap {
   display: flex;
   margin-top: 0.5rem;
-  justify-content: space-between;
+  gap: 1rem;
 }
 
 .endTimeWrap {
