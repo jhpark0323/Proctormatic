@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import styles from '../styles/HedaerBlue.module.css';
 import CustomButton from './CustomButton';
-import mainLogo from '../assets/mainLogo.svg'
+import mainLogo from '../assets/whiteLogo.png';
 
 interface HeaderBlueProps {
   userRole?: string;
