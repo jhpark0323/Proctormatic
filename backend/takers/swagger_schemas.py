@@ -19,6 +19,17 @@ add_taker_schema = extend_schema_view(
                     }
                 }
             ),
+            status.HTTP_200_OK: OpenApiResponse(
+                description='이미 등록된 응시자의 토큰 재발급',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'access': {
+                            'type': 'string',
+                        }
+                    }
+                }
+            ),
             status.HTTP_400_BAD_REQUEST: OpenApiResponse(
                 description='잘못된 요청',
                 response={
