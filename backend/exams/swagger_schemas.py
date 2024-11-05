@@ -2,7 +2,7 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, OpenApiRequ
 from rest_framework import status
 
 from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, \
-    CompletedExamListSerializer, TakerDetailSerializer, ExamDetailSerializer
+    CompletedExamListSerializer, TakerDetailSerializer, ExamDetailSerializer, ExamDetailTakerSerializer
 
 create_exam_schema = extend_schema_view(
     post=extend_schema(
@@ -176,6 +176,29 @@ completed_exam_list_schema = extend_schema_view(
                             'type': 'string'
                         },
                     },
+                }
+            )
+        }
+    )
+)
+
+exam_taker_detail_schema = extend_schema_view(
+    get=extend_schema(
+        summary='시험 세부 정보 조회 (인증 불필요)',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='시험 조회 성공',
+                response=ExamDetailTakerSerializer
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='시험 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
                 }
             )
         }
