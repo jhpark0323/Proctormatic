@@ -53,9 +53,6 @@ def create_exam(request):
         return Response({
             "message": "적립금이 부족합니다. 충전해주세요."
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    user.coin_amount = user_coin_amount - exam_cost
-    user.save()  # 변경사항 저장
 
     # 시험 시작 시간 검증 및 entry_time 계산
     date = serializer.validated_data.get('date')
@@ -89,6 +86,9 @@ def create_exam(request):
     # URL 자동 생성
     exam_instance.url = f"https://proctormatic.kr/exams/{exam_instance.id}/{slugify(exam_instance.title)}"
     exam_instance.save()
+        
+    user.coin_amount = user_coin_amount - exam_cost
+    user.save()  # 변경사항 저장
 
     # Coin 내역 기록
     Coin.objects.create(
