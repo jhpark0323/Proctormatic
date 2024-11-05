@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styles from '@/styles/Step.module.css';
 import CustomButton from '@/components/CustomButton';
 import TermsModal from '@/components/TermsModal';
-import { useNavigate } from 'react-router-dom';
 import { useTakerStore } from '@/store/TakerAuthStore';
 import axiosInstance from '@/utils/axios';
 import { IoIosCheckmark } from 'react-icons/io';
@@ -28,6 +27,7 @@ const Step5: React.FC = () => {
   const [isNameValid, setIsNameValid] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string>('');
+  const [showReenterButton, setShowReenterButton] = useState<boolean>(false);
 
   // 한글 이름 정규식 검사
   const validateName = (name: string) => {
@@ -87,8 +87,11 @@ const Step5: React.FC = () => {
       setEmailStatus('인증번호가 발송되었습니다.');
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
-      if (axiosError.response && (axiosError.response.status === 400 || axiosError.response.status === 409)) {
+      if (axiosError.response && axiosError.response.status === 400) {
         setEmailStatus(axiosError.response.data?.message || '잘못된 요청입니다.');
+      } else if (axiosError.response && axiosError.response.status === 409) {
+        setEmailStatus('이미 입실한 응시자입니다. 재입실 해주세요.');
+        setShowReenterButton(true);
       } else {
         setEmailStatus('네트워크 상태를 확인해주세요.');
       }
@@ -123,8 +126,7 @@ const Step5: React.FC = () => {
       const axiosError = error as AxiosError<ErrorResponse>;
       if (axiosError.response && axiosError.response.status === 400) {
         setVerificationError(axiosError.response.data?.message || '잘못된 요청입니다.');
-      }
-      else {
+      } else {
         console.error('이메일 인증 실패:', error);
         setVerificationError('네트워크 상태를 확인해주세요.');
       }
@@ -132,6 +134,13 @@ const Step5: React.FC = () => {
     } finally {
       setIsLoading(false); // 로딩 상태 종료
     }
+  };
+
+  // 재입실하기 버튼 클릭 핸들러
+  const handleReenterClick = () => {
+    setIsVerified(true); // 이메일 인증 완료 상태로 설정
+    setEmailStatus(''); // 이메일 상태 메시지 초기화
+    setTimer(0); // 타이머 초기화
   };
 
   // entry_time 포맷 변환 함수
@@ -148,7 +157,7 @@ const Step5: React.FC = () => {
       console.log('모든 인증을 완료해주세요');
       return;
     }
-  
+
     try {
       // 회원가입 요청
       const response = await axiosInstance.post('/taker/', {
@@ -157,14 +166,14 @@ const Step5: React.FC = () => {
         email: formData.email,
         entry_time: getFormattedTime(), // 포맷된 시간 전송
       });
-  
+
       if (response.status === 201) {
         console.log('회원가입 성공');
-        
+
         // access 토큰을 localStorage에 저장
         const accessToken = response.data.access;
         localStorage.setItem('accessToken', accessToken);
-  
+
         setIsModalOpen(false);
       } else if (response.status === 400) {
         CustomToast(response.data.message);
@@ -173,7 +182,6 @@ const Step5: React.FC = () => {
       console.error('회원가입 실패:', error);
     }
   };
-  
 
   // 타이머 포맷팅 함수
   const formatTime = (seconds: number): string => {
@@ -232,19 +240,30 @@ const Step5: React.FC = () => {
                 인증완료
               </span>
             ) : (
-              <button
-                onClick={handleEmailVerificationRequest}
-                disabled={!formData.email || isLoading}
-                className={styles.buttonTest}
-              >
-                {isLoading ? (
-                  <div className={styles.loadingSpinner}></div>
-                ) : isEmailSent ? (
-                  '인증번호 재발송'
-                ) : (
-                  '이메일 인증'
+              <div className={styles.ButtonsContainer}>
+                <button
+                  onClick={handleEmailVerificationRequest}
+                  disabled={!formData.email || isLoading}
+                  className={styles.buttonTest}
+                  style={{ display: showReenterButton ? 'none' : 'block' }}
+                >
+                  {isLoading ? (
+                    <div className={styles.loadingSpinner}></div>
+                  ) : isEmailSent ? (
+                    '인증번호 재발송'
+                  ) : (
+                    '이메일 인증'
+                  )}
+                </button>
+                {showReenterButton && (
+                  <button
+                    onClick={handleReenterClick}
+                    className={styles.buttonTest}
+                  >
+                    재입실하기
+                  </button>
                 )}
-              </button>
+              </div>
             )}
           </div>
           {!isVerified && emailStatus && (
