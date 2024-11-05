@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/HeaderWhite.module.css";
 import CustomButton from "./CustomButton";
 import { useAuthStore } from '@/store/useAuthStore';
+import mainLogo from '@/assets/mainLogo.svg'
 
 interface HeaderWhiteProps {
   onLoginClick: () => void;
@@ -30,7 +31,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
 
   return (
     <div className={styles.Header}>
-      <img className={styles.Logo} src="/src/assets/mainLogo.svg" alt="Logo" />
+      <img className={styles.Logo} src={mainLogo} alt="Logo" />
       <div className={styles.LoginBox}>
         {user ? (
           <div className={styles.UserInfo}>
