@@ -92,4 +92,9 @@
 .menuIcon {
   text-decoration: none;
   color: var(--BLACK);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--PRIMARY);
+  }
 }

@@ -1,12 +1,11 @@
-// HeaderWhite.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/HeaderWhite.module.css";
 import CustomButton from "./CustomButton";
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface HeaderWhiteProps {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
 }
 
 const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
@@ -30,13 +29,46 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
 
   return (
     <div className={styles.Header}>
-      <img className={styles.Logo} src="/src/assets/mainLogo.svg" alt="Logo" />
+      <img
+        className={styles.Logo}
+        src="/src/assets/mainLogo.svg"
+        alt="Logo"
+        onClick={() => navigate("/")}
+      />
+
+      {user?.role === "host" && (
+        <div className={styles.menu}>
+          <a
+            onClick={() => navigate("/host/myTest")}
+            className={styles.menuIcon}
+          >
+            내 시험 관리
+          </a>
+          <a
+            onClick={() => navigate("/host/helpdesk")}
+            className={styles.menuIcon}
+          >
+            고객 센터
+          </a>
+          <a
+            onClick={() => navigate("/host/mypage")}
+            className={styles.menuIcon}
+          >
+            마이 페이지
+          </a>
+        </div>
+      )}
+
       <div className={styles.LoginBox}>
         {user ? (
           <div className={styles.UserInfo}>
             <div className={styles.UserRoleContainer}>
-              <span className={styles.UserRole} onClick={toggleModal} role="name">
-                {user.role === 'host' ? (
+              <span
+                className={styles.UserRole}
+                onClick={toggleModal}
+                role="name"
+              >
+                {user.role === "host" ? (
                   <>
                     <span>{user.name}</span> 님
                   </>
@@ -48,7 +80,10 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
               </span>
               {isModalOpen && (
                 <div className={styles.Modal}>
-                  <button className={styles.LogoutButton} onClick={handleLogout}>
+                  <button
+                    className={styles.LogoutButton}
+                    onClick={handleLogout}
+                  >
                     로그아웃
                   </button>
                 </div>
@@ -59,8 +94,8 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
                 시험 입실하기
               </CustomButton>
             ) : user.role === "host" ? (
-              <CustomButton onClick={() => navigate("/host")}>
-                시험 관리하기
+              <CustomButton onClick={() => navigate("/host/newTest/")}>
+                시험 예약하기
               </CustomButton>
             ) : null}
           </div>
