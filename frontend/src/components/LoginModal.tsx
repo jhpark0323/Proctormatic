@@ -117,7 +117,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title
   );
 
   return (
-    <div className={styles.Modal} role="dialog">
+    <div className={styles.Modal} data-testid="login-modal">
       <div className={styles.wrapper}>
         <div className={styles.headerBox}>
           <img

@@ -156,7 +156,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
 
 
   return (
-    <div className={styles.Modal} role="dialog">
+    <div className={styles.Modal} data-testid="register-modal">
       <div className={styles.wrapper}>
         <div className={styles.headerBox}>
           <span className={styles.ModalTitle}>회원가입</span>
