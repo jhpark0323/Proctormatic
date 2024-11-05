@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/HeaderWhite.module.css";
 import CustomButton from "./CustomButton";
-import { useAuthStore } from '@/store/useAuthStore';
-import mainLogo from '@/assets/mainLogo.svg'
+import { useAuthStore } from "@/store/useAuthStore";
+import mainLogo from "../assets/mainLogo.svg";
 
 interface HeaderWhiteProps {
   onLoginClick?: () => void;
