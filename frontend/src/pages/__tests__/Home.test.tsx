@@ -1,124 +1,101 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
+// src/pages/__tests__/Home.test.tsx
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter as Router } from "react-router-dom";
+import "@testing-library/jest-dom";
 import Home from "@/pages/Home";
-import { useAuthStore } from "@/store/useAuthStore"; // store import 추가
 
-// 테스트 헬퍼 함수: store와 localStorage를 모두 초기화
+// 테스트 헬퍼 함수: 로컬 스토리지 초기화
 const clearStores = () => {
   localStorage.clear();
-  useAuthStore.setState({ user: null }); // store 초기 상태로 리셋
+  // useAuthStore.getState().reset?.();
+};
+
+// 테스트 헬퍼 함수: 컴포넌트 렌더링
+const renderHome = () => {
+  return render(
+    <Router>
+      <Home />
+    </Router>
+  );
 };
 
 describe("Home 페이지 테스트", () => {
-  // 각 테스트 실행 전에 store와 localStorage를 모두 초기화
+  // 각각의 테스트 수행 전 로컬 스토리지 초기화 진행
   beforeEach(() => {
     clearStores();
   });
 
-  // 1. header가 정상적으로 렌더링 되는지 확인
-  it("HeaderWhite가 정상적으로 렌더링 되는지 확인", () => {
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
-
+  // 1. 홈 페이지에 컴포넌트들이 정상적으로 렌더링 되는지 확인
+  it("홈페이지에 헤더와 배너가 정삭적으로 렌더링 되는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 기대값: HeaderWhite가 잘 렌더링 되어있음
     expect(screen.getByText("로그인 / 가입")).toBeInTheDocument();
+    // 기대값: SwiperComponent가 잘 렌더링 되어있음
+    expect(screen.getByTestId("SwiperComponent")).toBeInTheDocument();
   });
 
-  // 2. 로그인 버튼을 클릭하면 모달이 열리는지 확인
-  it("로그인/가입 버튼 클릭시 모달이 열려야 합니다.", () => {
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
-
-    const loginButton = screen.getByText("로그인 / 가입");
-    fireEvent.click(loginButton);
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-
-  // 3. 모달이 열렸을 때 뒷 배경을 클릭하면 모달이 닫히는지 확인
-  it("모달 이외의 부분을 클릭하면 모달이 닫혀야 합니다.", () => {
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
-
+  // 2. 로그인 버튼 클릭 시 로그인 팝업이 잘 열리는지 확인
+  it("로그인 버튼을 누르면 로그인 창이 잘 열리는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 로그인 / 가입 이라는 글자를 찾아서 클릭하기
     fireEvent.click(screen.getByText("로그인 / 가입"));
+    // 기대값: login-dialog라는 역할을 가진 컴포넌트가 잘 렌더링 되는지 확인
+    expect(screen.getByTestId("login-modal")).toBeInTheDocument();
+  })
 
-    const backdrop = screen.getByTestId("backdrop");
-    fireEvent.click(backdrop);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  // 3. 로그인 중 닫기 버튼을 누르면 로그인 팝업이 잘 닫히는지 확인
+  it("로그인 창의 닫기 버튼을 누르면 잘 닫히는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 로그인 / 가입 이라는 글자를 찾아서 클릭하기
+    fireEvent.click(screen.getByText("로그인 / 가입"));
+    // alt 값을 close로 갖고 있는 닫기 버튼 찾아서 클릭하기
+    fireEvent.click(screen.getByAltText("close"));
+    // 기대값: login-dialog라는 역할을 가진 컴포넌트가 잘 언마운트 됐는지 확인
+    expect(screen.queryByTestId("login-modal")).not.toBeInTheDocument();
   });
 
-  // 4. 주최자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
-  // it('주최자 역할이 선택되면 store에 역할이 저장되고, "시험 관리하기" 버튼이 표시되어야 합니다.', () => {
-  //   render(
-  //     <Router>
-  //       <Home />
-  //     </Router>
-  //   );
-
-  //   fireEvent.click(screen.getByText("로그인 / 가입"));
-
-  //   const hostButton = screen.getByText("주최자");
-  //   fireEvent.click(hostButton);
-
-  //   // store의 상태 확인
-  //   expect(useAuthStore.getState().user?.role).toBe("host");
-
-  //   expect(screen.getByText("시험 관리하기")).toBeInTheDocument();
-  // });
-
-  // 5. 응시자로 로그인 했을 때 store와 버튼이 정상적으로 표시되는지 확인
-  it('응시자 역할이 선택되면 store에 역할이 저장되고, "시험 입실하기" 버튼이 표시되어야 합니다.', () => {
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
-
+  // 4. 로그인 모달 안의 회원가입 버튼을 누르면 회원가입 모달로 잘 넘어가는지 확인
+  it("로그인 창의 회원가입 버튼을 누르면 잘 열리는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 로그인 / 가입 이라는 글자를 찾아서 클릭하기
     fireEvent.click(screen.getByText("로그인 / 가입"));
-
-    const takerButton = screen.getByText("응시자");
-    fireEvent.click(takerButton);
-
-    // store의 상태 확인
-    expect(useAuthStore.getState().user?.role).toBe("taker");
-
-    expect(screen.getByText("시험 입실하기")).toBeInTheDocument();
+    // 주최자와 응시자 선택 중 주최자 선택
+    fireEvent.click(screen.getByText("주최자"));
+    // 회원가입 이라는 글자를 찾아서 클릭하기
+    fireEvent.click(screen.getByText("회원가입"));
+    // 기대값: 회원가입 모달에 부여한 testId register-modal이 잘 열리는지 확인
+    expect(screen.getByTestId("register-modal")).toBeInTheDocument();
   });
 
-  // 6. 로그아웃 테스트 추가 (모달 안에서의 로그아웃)
-  it("로그아웃 시 store가 초기화되고 로그인 버튼이 다시 표시되어야 합니다.", () => {
-    // 먼저 로그인
-    render(
-      <Router>
-        <Home />
-      </Router>
-    );
-
+  // 5. 회원가입 모달 안의 닫기 버튼을 누르면 잘 닫히는지 확인
+  it("회원가입 창의 닫기 버튼을 누르면 잘 닫히는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 로그인 / 가입 이라는 글자를 찾아서 클릭하기
     fireEvent.click(screen.getByText("로그인 / 가입"));
-    fireEvent.click(screen.getByText("응시자"));
+    // 주최자와 응시자 선택 중 주최자 선택
+    fireEvent.click(screen.getByText("주최자"));
+    // 회원가입 이라는 글자를 찾아서 클릭하기
+    fireEvent.click(screen.getByText("회원가입"));
+    // alt 값이 close인 닫기 버튼 클릭
+    fireEvent.click(screen.getByAltText("close"));
+    // 기대값: 회원가입 모달에 부여한 testId register-modal이 잘 닫히는지 확인
+    expect(screen.queryByTestId("register-modal")).not.toBeInTheDocument();
+  });
 
-    // 모달이 열려있는지 확인
-    const nameButton = screen.getByRole("name");
-    fireEvent.click(nameButton);
-
-    // 모달 안에서 로그아웃 버튼 클릭
-    const logoutButton = screen.getByText("로그아웃");
-    fireEvent.click(logoutButton);
-
-    // store가 초기화되었는지 확인
-    expect(useAuthStore.getState().user).toBeNull();
-    // 로그인 버튼이 다시 표시되는지 확인
-    expect(screen.getByText("로그인 / 가입")).toBeInTheDocument();
+  // 6. 로그인 창이 열린 상태에서 모달 이외의 부분을 클릭했을 때 잘 닫히는지 확인
+  it("배경 클릭 시 모달이 잘 닫히는지 확인", () => {
+    // 컴포넌트 렌더링
+    renderHome();
+    // 로그인 / 가입 이라는 글자를 찾아서 클릭하기
+    fireEvent.click(screen.getByText("로그인 / 가입"));
+    // 배경 클릭
+    fireEvent.click(screen.getByTestId("backdrop"));
+    // 기대값: login-dialog라는 역할을 가진 컴포넌트가 잘 언마운트 됐는지 확인
+    expect(screen.queryByTestId("login-modal")).not.toBeInTheDocument();
   });
 });

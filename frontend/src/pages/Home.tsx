@@ -23,7 +23,7 @@ const Home = () => {
     <>
       <HeaderWhite onLoginClick={openLoginModal} />
 
-      <div className={styles.Content}>
+      <div className={styles.Content} data-testid="SwiperComponent">
         <SwiperComponent />
       </div>
 
@@ -37,6 +37,7 @@ const Home = () => {
             "어렵고 피곤한 시험 감시와 검증은 그만!",
             "이젠 프록토매틱에게 맡기세요.",
           ]}
+          data-testid="login-modal"
         />
       )}
       
