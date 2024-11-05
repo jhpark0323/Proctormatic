@@ -120,13 +120,14 @@
   gap: 15px;
 }
 
-.InnerInputAuth > button {
+.InnerInputAuth button {
   width: 120px;
   background-color: var(--NAVY);
   border-radius: 10px;
   color: white;
   font-size: 14px;
   cursor: pointer;
+  border: none;
 }
 
 .InnerContainer {
@@ -207,4 +208,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.ButtonsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
 }
