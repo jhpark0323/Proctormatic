@@ -149,14 +149,12 @@
 .birthInfo {
   font-size: 12px;
   color: rgb(68, 68, 68);
-  font-size: 12px;
   line-height: 16px;
   margin: 14px 0px 14px;
   box-sizing: border-box;
 }
 
 .emailBox {
-  padding: 0px;
   margin-bottom: 30px;
   display: flex;
   flex-direction: column;

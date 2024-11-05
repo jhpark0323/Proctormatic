@@ -70,13 +70,13 @@
 .InputError {
   color: rgb(200, 59, 56);
   font-size: 12px;
-  font-family: regular;
+  font-family: var(--font-lg_medium-fontfamily);
   line-height: 18px;
   margin-bottom: 12px;
 }
 
 .Timer {
-  font-family: Regular;
+  font-family: var(--font-lg_medium-fontfamily);
   color: rgb(34, 118, 220);
   font-size: 12px;
   line-height: 18px;
@@ -113,7 +113,7 @@
 .ResendBox {
   font-size: 12px;
   text-align: center;
-  font-family: regular;
+  font-family: var(--font-lg_medium-fontfamily);
   line-height: 16px;
   padding: 14px 24px 25px;
 }
