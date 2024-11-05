@@ -27,6 +27,13 @@ def add_taker(request):
 
         if serializer.is_valid():
             exam = Exam.objects.get(id=serializer.validated_data['exam'].id)
+            email = serializer.validated_data['email']
+
+            existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
+
+            if existing_taker: #TODO : DB 확장 후 재접속 기록 저장하기
+                access_token = TakerTokenSerializer.get_access_token(existing_taker)
+                return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
 
             if exam.total_taker >= exam.expected_taker:
                 return Response({'message': "참가자 수를 초과했습니다."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
