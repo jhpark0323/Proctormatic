@@ -17,6 +17,30 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'refresh': str(token),
         }
 
+class SendEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        error_messages={
+            'required': '이메일을 입력해주세요.',
+            'blank': '이메일을 입력해주세요.',
+            'invalid': '이메일 형식을 확인해주세요.'
+        }
+    )
+
+class EmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        error_messages={
+            'required': '이메일을 입력해주세요.',
+            'blank': '이메일을 입력해주세요.',
+            'invalid': '이메일 형식을 확인해주세요.'
+        }
+    )
+    code = serializers.CharField(
+        error_messages={
+            'required': '인증번호를 입력해주세요.',
+            'blank': '인증번호를 입력해주세요.'
+        }
+    )
+
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         error_messages={

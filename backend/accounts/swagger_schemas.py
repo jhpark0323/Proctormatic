@@ -1,8 +1,9 @@
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, OpenApiRequest, extend_schema_view, extend_schema
 from rest_framework import status
 
-from .serializers import UserSerializer, FindEmailRequestSerializer, FindEmailResponseSerializer, \
-    ResetPasswordEmailCheckSerializer, ResetPasswordRequestSerializer
+from .serializers import SendEmailVerificationSerializer, EmailVerificationSerializer, UserSerializer, \
+    FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordEmailCheckSerializer, \
+    ResetPasswordRequestSerializer
 
 email_verification_schema = extend_schema_view(
     get=extend_schema(
@@ -37,14 +38,7 @@ email_verification_schema = extend_schema_view(
     ),
     post=extend_schema(
         summary='이메일 인증번호 발송',
-        request=OpenApiRequest({
-            'type': 'object',
-            'properties': {
-                'email': {
-                    'type': 'string',
-                }
-            }
-        }),
+        request=SendEmailVerificationSerializer,
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='인증번호 발송 성공',
@@ -83,17 +77,7 @@ email_verification_schema = extend_schema_view(
     ),
     put=extend_schema(
         summary='이메일 인증',
-        request=OpenApiRequest({
-            'type': 'object',
-            'properties': {
-                'email': {
-                    'type': 'string',
-                },
-                'code': {
-                    'type': 'string',
-                }
-            }
-        }),
+        request=EmailVerificationSerializer,
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='인증번호 인증 완료',

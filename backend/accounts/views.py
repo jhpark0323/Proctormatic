@@ -10,9 +10,9 @@ from django.contrib.auth.hashers import check_password
 from django_redis import get_redis_connection
 
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
-from .serializers import CustomTokenObtainPairSerializer, UserSerializer, UserInfoSerializer, EditMarketingSerializer, \
-    FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordRequestSerializer, \
-    ResetPasswordEmailCheckSerializer
+from .serializers import CustomTokenObtainPairSerializer, SendEmailVerificationSerializer, EmailVerificationSerializer, \
+    UserSerializer, UserInfoSerializer, EditMarketingSerializer, FindEmailRequestSerializer, \
+    FindEmailResponseSerializer, ResetPasswordRequestSerializer, ResetPasswordEmailCheckSerializer
 from .swagger_schemas import email_verification_schema, user_schema, token_schema, find_email_schema, \
     reset_password_schema
 
@@ -36,10 +36,9 @@ def handle_email_verification(request):
             return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'POST':
-        email = request.data.get('email')
-        if email:
-            if not is_valid_email(email):
-                return Response({'message': '이메일 형식을 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SendEmailVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
 
             if User.objects.filter(email=email).exists():
                 return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.'}, status=status.HTTP_409_CONFLICT)
@@ -49,28 +48,26 @@ def handle_email_verification(request):
             save_verification_code_to_redis(email, code)
 
             return Response({'message': '인증번호를 발송했습니다.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        email = request.data.get('email')
-        code = request.data.get('code')
+        serializer = EmailVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            redis_conn = get_redis_connection('default')
+            stored_code = redis_conn.get(f'verification_code:{email}')
 
-        if not email:
-            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-        if not code:
-            return Response({'message': '인증번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            if stored_code is None:
+                return Response({'message': '인증번호가 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        redis_conn = get_redis_connection('default')
-        stored_code = redis_conn.get(f'verification_code:{email}')
+            if stored_code.decode('utf-8') == code:
+                return Response({'message': '이메일 인증이 완료되었습니다.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if stored_code is None:
-            return Response({'message': '인증번호가 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if stored_code.decode('utf-8') == code:
-            return Response({'message': '이메일 인증이 완료되었습니다.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @user_schema
@@ -158,6 +155,7 @@ def handle_token(request):
             if isinstance(e, InvalidToken):
                 return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 @find_email_schema
 @api_view(['POST'])
