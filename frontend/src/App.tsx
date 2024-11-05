@@ -69,14 +69,6 @@ function App() {
 
         {/* host */}
         <Route
-          path="/host"
-          element={
-            <PrivateRoute allowedRoles={["host"]}>
-              <HostHome />
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/host/mypage/"
           element={
             <PrivateRoute allowedRoles={["host"]}>

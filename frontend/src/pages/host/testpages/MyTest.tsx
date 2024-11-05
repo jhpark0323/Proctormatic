@@ -1,11 +1,10 @@
-import HostHeader from "@/components/HostHeader";
 import { fonts } from "@/constants";
 import styles from "@/styles/Testpage.module.css";
 import { useEffect, useState } from "react";
 import { FaAngleDown } from "react-icons/fa";
 import axiosInstance from "@/utils/axios";
 import { useNavigate } from "react-router-dom";
-import { Tab } from "@mui/material";
+import HeaderWhite from "@/components/HeaderWhite";
 
 interface Exam {
   id: number;
@@ -56,9 +55,7 @@ const MyTest = () => {
       scheduledExams.length + onGoingExams.length + completedExams.length;
     const progress =
       totalExams > 0
-        ? Math.round(
-            ((onGoingExams.length + scheduledExams.length) / totalExams) * 100
-          )
+        ? Math.round((completedExams.length / totalExams) * 100)
         : 0;
     setProgressPercentage(progress);
   }, [scheduledExams, onGoingExams, completedExams]);
@@ -133,7 +130,7 @@ const MyTest = () => {
 
   return (
     <>
-      <HostHeader />
+      <HeaderWhite />
       <div className={styles.container} style={{ marginTop: "75px" }}>
         <div className={styles.mytestHeader}>
           <div className={styles.mytestHeaderWrap}>

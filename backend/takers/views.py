@@ -166,7 +166,11 @@ def update_taker(request):
         serializer.save()
         return Response({'message': '신분증이 등록되었습니다.'}, status=status.HTTP_200_OK)
 
-    return Response({'message': '잘못된 요청입니다.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    error_messages = serializer.errors.get('birth', [])
+    if error_messages:
+        return Response({'message': error_messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @add_web_cam_schame

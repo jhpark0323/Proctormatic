@@ -20,6 +20,11 @@
   gap: 0.3rem;
 }
 
+.tableWrap {
+  height: 50%;
+  overflow-y: scroll;
+}
+
 .historyTable {
   width: 100%;
   border-collapse: collapse; /* 테두리를 하나로 합침 */
