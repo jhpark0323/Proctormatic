@@ -4,7 +4,6 @@ import { CustomToast } from "@/components/CustomToast";
 import Home from "@/pages/Home";
 import TakerHome from "./pages/taker/TakerHome";
 import TakerHome2 from "./pages/taker/TakerHome2";
-import HostHome from "./pages/host/HostHome";
 import PrivateRoute from "./components/PrivateRoute";
 import { injectColors, injectFonts, injectShadows } from "./constants";
 import "./App.css";
