@@ -33,7 +33,7 @@ const HeaderBlue: React.FC<HeaderBlueProps> = ({ userRole }) => {
       <div className={styles.LoginBox}>
         <div>
           <span className={styles.UserInfo}>
-            반갑습니다! <span className={styles.userName}>{userRole}</span> 님
+            <span className={styles.userName}>응시자</span>님 환영합니다! 
           </span>
           <CustomButton 
             onClick={handleLogout}
