@@ -1,17 +1,18 @@
 from datetime import date, datetime, timedelta
+from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.text import slugify
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Exam
 from takers.models import Taker
 from coins.models import Coin
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer, ExamDetailTakerSerializer
 from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ongoing_exam_list_schema, \
-    completed_exam_list_schema, exam_detail_schema, taker_result_view_schema
+    completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
 
 User = get_user_model()  # User 모델 가져오기
@@ -274,6 +275,19 @@ def completed_exam_list(request):
         "totalPage": Paginator(exams, page_size).num_pages
     }, status=status.HTTP_200_OK)
 
+@exam_taker_detail_schema
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def exam_taker_detail(request, pk):
+    # 특정 ID의 시험이 존재하는지 확인
+    exam = Exam.objects.filter(pk=pk, is_deleted=False).first()
+    if not exam:
+        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    # GET 요청 처리: 시험 세부 정보 조회
+    serializer = ExamDetailTakerSerializer(exam)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+ 
 
 @exam_detail_schema
 @api_view(['GET', 'PUT', 'DELETE'])

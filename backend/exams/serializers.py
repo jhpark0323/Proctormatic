@@ -31,6 +31,13 @@ class CompletedExamListSerializer(serializers.ModelSerializer):
         model = Exam
         fields = ['id', 'title', 'date', 'start_time', 'end_time', 'url', 'expected_taker', 'total_taker']
 
+class ExamDetailTakerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Exam
+        fields = [
+            'id', 'title', 'date', 'start_time', 'end_time', 'expected_taker', 'cheer_msg'
+        ]
+
 class ExamDetailSerializer(serializers.ModelSerializer):
     # 응시자 리스트 시리얼라이저 필드
     taker_list = serializers.SerializerMethodField()
