@@ -8,5 +8,5 @@ urlpatterns = [
     path('completed/', completed_exam_list),
     path('<int:pk>/taker/', exam_taker_detail),
     path('<int:pk>/', exam_detail),
-    path('exam/<int:eid>/taker/<int:tid>/', taker_result_view)
+    path('<int:eid>/taker/<int:tid>/', taker_result_view)
 ]
