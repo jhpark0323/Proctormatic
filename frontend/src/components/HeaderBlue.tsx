@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import styles from '../styles/HedaerBlue.module.css';
 import CustomButton from './CustomButton';
+import mainLogo from '../assets/mainLogo.svg'
 
 interface HeaderBlueProps {
   userRole?: string;
@@ -24,7 +25,7 @@ const HeaderBlue: React.FC<HeaderBlueProps> = ({ userRole }) => {
     <div className={styles.Header}>
       <img 
         className={styles.Logo} 
-        src='/src/assets/whiteLogo.png' 
+        src={mainLogo} 
         alt="Logo" 
         onClick={handleLogoClick}
         style={{ cursor: 'pointer' }}  
