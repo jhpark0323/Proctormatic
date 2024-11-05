@@ -7,5 +7,5 @@ urlpatterns = [
     path('ongoing/', ongoing_exam_list),
     path('completed/', completed_exam_list),
     path('<int:pk>/', exam_detail),
-    path('exam/<int:eid>/taker/<int:tid>/', taker_result_view)
+    path('<int:eid>/taker/<int:tid>/', taker_result_view)
 ]
