@@ -32,7 +32,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
     <div className={styles.Header}>
       <img
         className={styles.Logo}
-        src="/src/assets/mainLogo.svg"
+        src={mainLogo}
         alt="Logo"
         onClick={() => navigate("/")}
       />
