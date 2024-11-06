@@ -219,12 +219,15 @@ def add_web_cam(request):
     start_time = request.data.get('start_time')
     end_time = request.data.get('end_time')
 
+    start_time = start_time.replace(":", "")
+    end_time = end_time.replace(":", "")
+
     if not start_time:
         return Response('잘못된 요청입니다.', status=status.HTTP_400_BAD_REQUEST)
 
     s3_client = boto3.client('s3')
     _, file_extension = os.path.splitext(web_cam_file.name)
-    file_name = f'webcam_{start_time}{file_extension}'
+    file_name = f'webcam_{start_time}_{end_time}{file_extension}'
     s3_path = f"{exam_id}/{taker_id}/{file_name}"
 
     try:
