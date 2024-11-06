@@ -8,7 +8,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
-from .models import Taker, Record
+from .models import Taker
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema
 from django_redis import get_redis_connection
@@ -215,9 +215,6 @@ def add_web_cam(request):
             s3_path,
             ExtraArgs={'ContentType': web_cam_file.content_type}
         )
-        s3_file_url = f"{settings.MEDIA_URL}{s3_path}"
-        record = Record(taker=taker, url=s3_file_url, start_time=start_time, end_time=end_time)
-        record.save()
 
     except Exception as e:
         return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
