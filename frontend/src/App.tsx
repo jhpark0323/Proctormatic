@@ -7,9 +7,11 @@ import TakerHome2 from "./pages/taker/TakerHome2";
 import PrivateRoute from "./components/PrivateRoute";
 import { injectColors, injectFonts, injectShadows } from "./constants";
 import "./App.css";
+
 // Toast
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ExamPage from "./pages/taker/ExamPage";
 
 // host
 import AccountInfo from "./pages/host/mypages/AccountInfo";
@@ -62,6 +64,14 @@ function App() {
           element={
             <PrivateRoute allowedRoles={["taker"]}>
               <TakerHome2 />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/taker/:examId"
+          element={
+            <PrivateRoute allowedRoles={["taker"]}>
+              <ExamPage />
             </PrivateRoute>
           }
         />
