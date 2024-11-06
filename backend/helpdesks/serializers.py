@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Notification, Question, Faq
+from .models import Notification, Question, Faq, Answer
 
 
 class NotificationCreateSerializer(serializers.ModelSerializer):
@@ -28,11 +28,18 @@ class QuestionListSerializer(serializers.ModelSerializer):
         model = Question
         exclude = ['user', 'content']
 
+class AnswerListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        exclude = ('id', 'question',)
+
 class QuestionSerializer(serializers.ModelSerializer):
     organizer = serializers.CharField(source='user.name', read_only=True)
+    answerList = AnswerListSerializer(many=True, read_only=True)
+
     class Meta:
         model = Question
-        fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at')
+        fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at', 'answerList')
 
 class QuestionEditSerializer(serializers.ModelSerializer):
     class Meta:
