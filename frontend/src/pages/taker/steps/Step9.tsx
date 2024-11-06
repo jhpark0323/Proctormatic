@@ -51,9 +51,26 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
       const context = canvas.getContext("2d");
 
       if (context) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const cropWidth = video.videoWidth * 0.7;
+        const cropHeight = video.videoHeight * 0.6;
+        const startX = (video.videoWidth - cropWidth) / 2;
+        const startY = (video.videoHeight - cropHeight) / 2;
+
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+
+        context.drawImage(
+          video,
+          startX,
+          startY,
+          cropWidth,
+          cropHeight,
+          0,
+          0,
+          cropWidth,
+          cropHeight
+        );
+
         const capturedData = canvas.toDataURL("image/png");
         setPhotoData(capturedData);
         setIsPhotoTaken(true);
@@ -63,7 +80,6 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
     return null;
   };
 
-  // 캡처 및 얼굴 인식 함수
   const handleCapture = useCallback(async () => {
     if (!modelsLoaded) {
       alert("모델이 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.");
@@ -81,22 +97,19 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
         );
 
         if (detections.length > 0) {
-          console.log("Face detected, saving photo.");
           setPhotoStep9(capturedPhoto);
         } else {
           alert("얼굴 인식에 실패했습니다. 다시 촬영해 주세요.");
           setIsPhotoTaken(false);
           setPhotoData(null);
-          startWebcam(); // 다시 웹캠을 시작하여 촬영 모드로 돌아감
+          startWebcam();
         }
       };
     } else {
-      console.error("Failed to capture photo data.");
       alert("사진 캡처에 실패했습니다. 다시 시도해 주세요.");
     }
   }, [modelsLoaded, setPhotoStep9]);
 
-  // 다시 찍기 함수
   const retakePhoto = useCallback(() => {
     setIsPhotoTaken(false);
     setPhotoData(null);
@@ -115,12 +128,15 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
         <div className={styles.StepVideo}>
           {!isPhotoTaken ? (
             <>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className={styles.StepVideoInner}
-              />
+              <div className={styles.VideoContainer}>
+                <div className={styles.IDcardLine} />
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className={styles.StepVideoInner}
+                />
+              </div>
               <canvas ref={canvasRef} style={{ display: "none" }} />
               <div className={styles.buttonContainer}>
                 <CustomButton
@@ -151,11 +167,7 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
           )}
         </div>
       </div>
-      {maskedIDPhoto && (
-        <div>
-          <img src={maskedIDPhoto} alt="" />
-        </div>
-      )}
+
       <div className={styles.StepFooter}>
         <CustomButton
           onClick={onNext}
