@@ -12,7 +12,8 @@ from .models import Taker, Logs
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema
 from django_redis import get_redis_connection
-from django.utils.datetime_safe import datetime
+from django.utils import timezone
+from datetime import datetime
 from django.conf import settings
 import boto3
 
@@ -28,6 +29,15 @@ def add_taker(request):
         if serializer.is_valid():
             exam = Exam.objects.get(id=serializer.validated_data['exam'].id)
             email = serializer.validated_data['email']
+
+            current_time = timezone.now()
+            entry_time = datetime.combine(exam.date, exam.entry_time)
+            end_time = datetime.combine(exam.date, exam.end_time)
+
+            if current_time < entry_time:
+                return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if current_time > end_time:
+                return Response({'message': '종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
             existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
 

@@ -10,17 +10,6 @@ class TakerSerializer(serializers.ModelSerializer):
         model = Taker
         fields = ['name', 'email', 'exam']
 
-    def create(self, validated_data):
-        exam = validated_data.get('exam')
-        exam_info = Exam.objects.get(id=exam.id)
-
-        if exam_info.entry_time > timezone.now().time():
-            raise serializers.ValidationError({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'})
-        if exam_info.end_time < timezone.now().time():
-            raise serializers.ValidationError({'message': '종료된 시험입니다.'})
-
-        return super().create(validated_data)
-
 class UpdateTakerSerializer(serializers.ModelSerializer):
     birth = serializers.CharField(
         error_messages={
@@ -53,12 +42,8 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
         token['role'] = "taker"
 
         exam = Exam.objects.get(id=taker.exam.id)
-        current_time = timezone.now()
         exam_end_datetime = timezone.datetime.combine(exam.date, exam.end_time)
         exam_end_datetime_utc = exam_end_datetime.astimezone(timezone.utc)
-
-        if current_time >= exam_end_datetime:
-            raise serializers.ValidationError("시험이 종료되었습니다. 토큰을 발급할 수 없습니다.")
 
         token['exp'] = int(exam_end_datetime_utc.astimezone(timezone.utc).timestamp())
 
