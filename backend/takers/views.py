@@ -17,7 +17,6 @@ from datetime import datetime
 from django.conf import settings
 import boto3
 
-
 @add_taker_schema
 @api_view(['POST', 'PATCH'])
 @authentication_classes([CustomJWTAuthentication])
@@ -80,7 +79,14 @@ def add_taker(request):
                     return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
 
             taker.exit_time = exit_time
+            taker.check_out_state = 'normal'
+
+            taker.stored_state = 'in_progress'
             taker.save()
+
+            log_entry = Logs(taker=taker, type='exit')
+            log_entry.save()
+
             return Response({'message': '시험이 종료되었습니다.'}, status=status.HTTP_200_OK)
         else:
             return Response({'message': "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
