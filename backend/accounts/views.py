@@ -12,7 +12,7 @@ from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from .serializers import CustomTokenObtainPairSerializer, SendEmailVerificationSerializer, EmailVerificationSerializer, \
     UserSerializer, UserInfoSerializer, EditMarketingSerializer, FindEmailRequestSerializer, \
-    FindEmailResponseSerializer, ResetPasswordRequestSerializer, ResetPasswordEmailCheckSerializer
+    FindEmailResponseSerializer, ResetPasswordRequestSerializer, ResetPasswordEmailCheckSerializer, LoginSerializer
 from .swagger_schemas import email_verification_schema, user_schema, token_schema, find_email_schema, \
     reset_password_schema
 
@@ -115,30 +115,17 @@ def handle_user(request):
 @permission_classes([AllowAny])
 def handle_token(request):
     if request.method == 'POST':
-        email = request.data.get('email')
-        password = request.data.get('password')
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data.get('user')
 
-        if not email:
-            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            token_serializer = CustomTokenObtainPairSerializer()
+            token_serializer.user = user
+            token_data = token_serializer.validate({})
+            return Response(token_data, status=status.HTTP_200_OK)
 
-        if not password:
-            return Response({'message': '비밀번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = User.objects.filter(email=email, is_active=True).first()
-        if user is None:
-            return Response({'message': '입력한 이메일은 등록되어 있지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(email=email, password=password)
-        if user is None:
-            return Response({'message': '비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not user.is_active:
-            return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        serializer = CustomTokenObtainPairSerializer()
-        serializer.user = user
-        token_data = serializer.validate({})
-        return Response(token_data, status=status.HTTP_200_OK)
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PATCH':
         refresh_token = request.data.get('refresh')
