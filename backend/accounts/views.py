@@ -55,6 +55,9 @@ def handle_email_verification(request):
     elif request.method == 'PUT':
         serializer = EmailVerificationSerializer(data=request.data)
         if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            code = serializer.validated_data.get('code')
+
             redis_conn = get_redis_connection('default')
             stored_code = redis_conn.get(f'verification_code:{email}')
 
