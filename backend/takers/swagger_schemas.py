@@ -67,15 +67,7 @@ add_taker_schema = extend_schema_view(
     ),
     patch=extend_schema(
         summary='시험 종료',
-        request=OpenApiRequest({
-            'type': 'object',
-            'properties': {
-                'exit_time': {
-                    'type': 'string',
-                    'format': 'time'
-                }
-            }
-        }),
+        request=None,
         responses={
             status.HTTP_200_OK: OpenApiResponse(description='시험 종료 성공'),
             status.HTTP_400_BAD_REQUEST: OpenApiResponse(

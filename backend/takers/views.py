@@ -67,18 +67,15 @@ def add_taker(request):
 
     elif request.method == 'PATCH':
         taker_id = request.auth['user_id']
-        exit_time = request.data.get('exit_time')
-        exit_time = datetime.strptime(exit_time, '%H:%M:%S').time()
 
         taker = Taker.objects.filter(id=taker_id).first()
         if taker is not None:
             exam = Exam.objects.filter(id=taker.exam_id).first()
-
+            exit_time = datetime.now().time()
             if exam:
                 if exit_time < exam.exit_time:
                     return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
 
-            taker.exit_time = exit_time
             taker.check_out_state = 'normal'
 
             taker.stored_state = 'in_progress'
