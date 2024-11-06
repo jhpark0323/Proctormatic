@@ -8,7 +8,8 @@ from .models import Taker
 class TakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Taker
-        fields = ['name', 'email', 'entry_time','exam']
+        # fields = ['name', 'email', 'entry_time','exam']
+        fields = ['name', 'email', 'exam']
 
     def create(self, validated_data):
         email = validated_data.get('email')

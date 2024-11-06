@@ -65,7 +65,5 @@ class ExamDetailSerializer(serializers.ModelSerializer):
 class TakerDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Taker
-        fields = [
-            'name', 'email', 'birth', 'id_photo', 
-            'verification_rate', 'entry_time', 'exit_time'
-        ]
+        # fields = ['name', 'email', 'birth', 'id_photo', 'verification_rate', 'entry_time', 'exit_time']
+        fields = ['name', 'email', 'birth', 'id_photo', 'verification_rate']
