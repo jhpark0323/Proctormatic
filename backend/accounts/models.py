@@ -37,3 +37,6 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'birth', 'policy', 'marketing']
+
+    class Meta:
+        db_table = 'user'

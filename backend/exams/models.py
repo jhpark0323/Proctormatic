@@ -16,3 +16,6 @@ class Exam(models.Model):
     cost = models.IntegerField()  # 서비스 요금
     created_at = models.DateTimeField(auto_now_add=True)  # 생성일
     is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'exam'
