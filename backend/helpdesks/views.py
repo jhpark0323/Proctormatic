@@ -8,9 +8,9 @@ from django.core.paginator import Paginator
 from .models import Notification, Question, Faq
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
     FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer, QuestionEditSerializer, \
-    QuestionCreateSerializer, QuestionListSerializer
+    QuestionCreateSerializer, QuestionListSerializer, AnswerSerializer
 from .swagger_schemas import notification_schama, check_notification_schema, question_schema, question_detail_schema, \
-    faq_schema, faq_detail_schema
+    faq_schema, faq_detail_schema, answer_schema, answer_admin_schema
 
 User = get_user_model()
 
@@ -117,6 +117,38 @@ def question_detail(request, question_id):
     elif request.method == 'DELETE':
         question.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@answer_schema
+@api_view(['POST'])
+def answer(request, question_id):
+    user_id = request.auth['user_id']
+    user = User.objects.get(pk=user_id)
+
+    question = Question.objects.filter(pk=question_id, user_id=user_id).first()
+    if question is None:
+        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        serializer = AnswerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(question=question, author=user.name)
+            return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+
+
+@answer_admin_schema
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def answer_admin(request, question_id):
+    question = Question.objects.filter(pk=question_id).first()
+    if question is None:
+        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        serializer = AnswerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(question=question, author='admin')
+            return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
 
 
 @faq_schema

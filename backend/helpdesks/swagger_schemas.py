@@ -3,7 +3,7 @@ from rest_framework import status
 
 from .serializers import NotificationListSerializer, NotificationCreateSerializer, NotificationObjectSerializer, \
     QuestionListSerializer, QuestionCreateSerializer, QuestionSerializer, QuestionEditSerializer, FaqListSerializer, \
-    FaqCreateSerializer, FaqSerializer
+    FaqCreateSerializer, FaqSerializer, AnswerSerializer
 
 notification_schama = extend_schema_view(
     get=extend_schema(
@@ -239,6 +239,68 @@ question_detail_schema = extend_schema_view(
                             'type': 'string'
                         },
                     },
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='질문 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    )
+)
+
+answer_schema = extend_schema_view(
+    post=extend_schema(
+        summary='답변 등록',
+        request=AnswerSerializer,
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='답변 등록 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='질문 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    )
+)
+
+answer_admin_schema = extend_schema_view(
+    post=extend_schema(
+        summary='(관리자)답변 등록',
+        request=AnswerSerializer,
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='답변 등록 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
                 }
             ),
             status.HTTP_404_NOT_FOUND: OpenApiResponse(
