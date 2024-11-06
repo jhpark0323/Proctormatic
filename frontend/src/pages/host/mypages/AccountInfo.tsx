@@ -21,6 +21,9 @@ interface UserProfile {
 
 const AccountInfo = () => {
   const [userInfo, setUserInfo] = useState<UserProfile | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isChangePWModalOpen, setIsChangePWModalOpen] = useState(false); // 비밀번호 변경 모달 상태 추가
+
   useEffect(() => {
     axiosInstance
       .get("/users/")
@@ -34,6 +37,7 @@ const AccountInfo = () => {
 
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -55,7 +59,7 @@ const AccountInfo = () => {
     }
   };
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // 회원 탈퇴 모달 관련 핸들러
   const handleOpenDeleteModal = () => setIsDeleteModalOpen(true);
   const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
 
@@ -72,6 +76,16 @@ const AccountInfo = () => {
         console.log("회원 탈퇴 실패: ", error);
         CustomToast("다시 시도해주세요.");
       });
+  };
+
+  // 비밀번호 변경 모달 관련 핸들러
+  const handleOpenChangePWModal = () => setIsChangePWModalOpen(true);
+  const handleCloseChangePWModal = () => setIsChangePWModalOpen(false);
+
+  const handleChangePWConfirmed = () => {
+    // 비밀번호 변경 로직 (여기서는 단순히 모달을 닫고 성공 메시지를 표시하도록 구현)
+    handleCloseChangePWModal();
+    CustomToast("비밀번호가 변경되었습니다.");
   };
 
   return (
@@ -111,7 +125,8 @@ const AccountInfo = () => {
             : ""}
         </div>
       </div>
-      <div className={styles.infoItem}>
+      <div className={styles.infoItem} onClick={handleOpenChangePWModal}>
+        {/* 비밀번호 재설정 클릭 시 모달 열기 */}
         <div className={styles.infoTitle} style={fonts.HEADING_SM_BOLD}>
           비밀번호 재설정
         </div>
@@ -138,6 +153,7 @@ const AccountInfo = () => {
           <IoIosArrowForward />
         </div>
       </div>
+      {/* 회원 탈퇴 모달 */}
       {isDeleteModalOpen && (
         <HostModal
           title="회원 탈퇴"
@@ -149,6 +165,24 @@ const AccountInfo = () => {
             <div style={{ marginBottom: "1rem" }}>정말 탈퇴하시겠습니까?</div>
             <div style={{ color: "var(--GRAY_500)", ...fonts.MD_REGULAR }}>
               * 탈퇴 시 데이터는 복구가 불가합니다.
+            </div>
+          </div>
+        </HostModal>
+      )}
+      {/* 비밀번호 변경 모달 */}
+      {isChangePWModalOpen && (
+        <HostModal
+          title="비밀번호 변경"
+          buttonLabel="변경하기"
+          handleButton={handleChangePWConfirmed}
+          onClose={handleCloseChangePWModal}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div style={{ marginBottom: "1rem" }}>
+              비밀번호를 8~30자로 입력하세요.
+            </div>
+            <div style={{ color: "var(--GRAY_500)", ...fonts.MD_REGULAR }}>
+              * 비밀번호는 8~30자, 영문, 숫자, 특수문자를 포함해야 합니다.
             </div>
           </div>
         </HostModal>
