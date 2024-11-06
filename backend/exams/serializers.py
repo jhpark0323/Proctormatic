@@ -27,9 +27,15 @@ class OngoingExamListSerializer(serializers.ModelSerializer):
         return Taker.objects.filter(exam_id=obj.id).count()
 
 class CompletedExamListSerializer(serializers.ModelSerializer):
+    completed_upload = serializers.SerializerMethodField()
+
     class Meta:
         model = Exam
-        fields = ['id', 'title', 'date', 'start_time', 'end_time', 'url', 'expected_taker', 'total_taker']
+        fields = ['id', 'title', 'date', 'start_time', 'end_time', 'url', 'expected_taker', 'total_taker', 'completed_upload']
+
+    def get_completed_upload(self, obj):
+        # 해당 시험에 대한 `check_out_state`가 `done`인 응시자 수를 반환
+        return Taker.objects.filter(exam=obj, check_out_state='done').count()
 
 class ExamDetailTakerSerializer(serializers.ModelSerializer):
     class Meta:
