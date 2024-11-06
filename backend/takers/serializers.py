@@ -8,15 +8,16 @@ from .models import Taker
 class TakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Taker
-        # fields = ['name', 'email', 'entry_time','exam']
         fields = ['name', 'email', 'exam']
 
     def create(self, validated_data):
-        email = validated_data.get('email')
         exam = validated_data.get('exam')
+        exam_info = Exam.objects.get(id=exam.id)
 
-        if Taker.objects.filter(email=email, exam_id=exam.id).exists():
-            raise serializers.ValidationError({"message": "이미 등록된 사용자입니다."})
+        if exam_info.entry_time > timezone.now().time():
+            raise serializers.ValidationError({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'})
+        if exam_info.end_time < timezone.now().time():
+            raise serializers.ValidationError({'message': '종료된 시험입니다.'})
 
         return super().create(validated_data)
 
