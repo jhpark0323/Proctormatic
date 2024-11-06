@@ -8,11 +8,12 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
-from .models import Taker
+from .models import Taker, Logs
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
 from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema
 from django_redis import get_redis_connection
-from django.utils.datetime_safe import datetime
+from django.utils import timezone
+from datetime import datetime
 from django.conf import settings
 import boto3
 
@@ -29,10 +30,23 @@ def add_taker(request):
             exam = Exam.objects.get(id=serializer.validated_data['exam'].id)
             email = serializer.validated_data['email']
 
+            current_time = timezone.now()
+            entry_time = datetime.combine(exam.date, exam.entry_time)
+            end_time = datetime.combine(exam.date, exam.end_time)
+
+            if current_time < entry_time:
+                return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if current_time > end_time:
+                return Response({'message': '종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
             existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
 
-            if existing_taker: #TODO : DB 확장 후 재접속 기록 저장하기
+            if existing_taker:
                 access_token = TakerTokenSerializer.get_access_token(existing_taker)
+                Logs.objects.create(
+                    taker_id = existing_taker.id,
+                    type = 'entry'
+                )
                 return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
 
             if exam.total_taker >= exam.expected_taker:
@@ -43,6 +57,11 @@ def add_taker(request):
 
             exam.total_taker += 1
             exam.save(update_fields=['total_taker'])
+
+            Logs.objects.create(
+                taker_id=taker.id,
+                type='entry'
+            )
 
             return Response({'access': str(access_token)}, status=status.HTTP_201_CREATED)
         return Response({'message': "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
