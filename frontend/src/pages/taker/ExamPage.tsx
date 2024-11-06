@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as faceapi from "face-api.js";
+import HeaderBlue from "@/components/HeaderBlue";
+import styles from "@/styles/ExamPage.module.css";
 
 interface ExamPageProps {}
 
@@ -68,46 +70,109 @@ const ExamPage = ({}: ExamPageProps) => {
                     canvas.height
                   ); // 비디오 배경 그리기
 
-                  // 얼굴의 눈, 코, 입을 검은색으로 칠하기
+                  // 얼굴을 사다리꼴 모양으로 마스킹하고 모서리를 둥글게 처리하기
                   resizedDetections.forEach((detection) => {
                     const landmarks = detection.landmarks;
-                    const nose = landmarks.getNose();
                     const leftEye = landmarks.getLeftEye();
                     const rightEye = landmarks.getRightEye();
                     const mouth = landmarks.getMouth();
 
-                    context.fillStyle = "black";
-                    context.globalAlpha = 0.8;
+                    // 마스킹 범위 계산 (사다리꼴 형태)
+                    const minX =
+                      Math.min(...leftEye.map((point) => point.x)) - 20; // 왼쪽 눈보다 조금 더 왼쪽으로 확장
+                    const maxX =
+                      Math.max(...rightEye.map((point) => point.x)) + 20; // 오른쪽 눈보다 조금 더 오른쪽으로 확장
+                    const minY = Math.min(leftEye[0].y, rightEye[0].y) - 10; // 눈 위쪽보다 약간 위로
+                    const maxY = Math.max(...mouth.map((point) => point.y)); // 입 끝 좌표
 
-                    // 코 그리기
-                    nose.forEach((point) => {
+                    const trapezoidWidth = maxX - minX;
+                    const trapezoidHeight = maxY - minY;
+                    const borderRadius = 20; // 둥근 모서리 반경 설정
+
+                    // 얼굴 영역 가져오기
+                    const faceRegion = context.getImageData(
+                      minX,
+                      minY,
+                      trapezoidWidth,
+                      trapezoidHeight
+                    );
+
+                    // 축소 및 확대를 통한 모자이크 처리 (더 강한 모자이크)
+                    const v = 15; // 모자이크 강도를 더 높임
+                    const smallWidth = Math.max(
+                      1,
+                      Math.floor(trapezoidWidth / v)
+                    );
+                    const smallHeight = Math.max(
+                      1,
+                      Math.floor(trapezoidHeight / v)
+                    );
+
+                    // 축소
+                    const smallCanvas = document.createElement("canvas");
+                    smallCanvas.width = smallWidth;
+                    smallCanvas.height = smallHeight;
+                    const smallContext = smallCanvas.getContext("2d");
+                    if (smallContext) {
+                      smallContext.putImageData(faceRegion, 0, 0);
+                      smallContext.drawImage(
+                        canvas,
+                        minX,
+                        minY,
+                        trapezoidWidth,
+                        trapezoidHeight,
+                        0,
+                        0,
+                        smallWidth,
+                        smallHeight
+                      );
+
+                      // 확대 후 원래 영역에 그리기 (사다리꼴 마스킹 처리)
+                      context.save();
                       context.beginPath();
-                      context.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                      context.fill();
-                    });
-
-                    // 왼쪽 눈 그리기
-                    leftEye.forEach((point) => {
-                      context.beginPath();
-                      context.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                      context.fill();
-                    });
-
-                    // 오른쪽 눈 그리기
-                    rightEye.forEach((point) => {
-                      context.beginPath();
-                      context.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                      context.fill();
-                    });
-
-                    // 입 그리기
-                    mouth.forEach((point) => {
-                      context.beginPath();
-                      context.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                      context.fill();
-                    });
-
-                    context.globalAlpha = 1.0;
+                      context.moveTo(minX + borderRadius, minY);
+                      context.lineTo(maxX - borderRadius, minY);
+                      context.quadraticCurveTo(
+                        maxX,
+                        minY,
+                        maxX,
+                        minY + borderRadius
+                      );
+                      context.lineTo(maxX, maxY - borderRadius);
+                      context.quadraticCurveTo(
+                        maxX,
+                        maxY,
+                        maxX - borderRadius,
+                        maxY
+                      );
+                      context.lineTo(minX + borderRadius, maxY);
+                      context.quadraticCurveTo(
+                        minX,
+                        maxY,
+                        minX,
+                        maxY - borderRadius
+                      );
+                      context.lineTo(minX, minY + borderRadius);
+                      context.quadraticCurveTo(
+                        minX,
+                        minY,
+                        minX + borderRadius,
+                        minY
+                      );
+                      context.clip();
+                      context.drawImage(
+                        smallCanvas,
+                        0,
+                        0,
+                        smallWidth,
+                        smallHeight,
+                        minX,
+                        minY,
+                        trapezoidWidth,
+                        trapezoidHeight
+                      );
+                      context.restore();
+                    }
                   });
                 }
               }
@@ -125,23 +190,13 @@ const ExamPage = ({}: ExamPageProps) => {
   }, []);
 
   return (
-    <div style={{ position: "relative" }}>
-      <video
-        ref={videoRef}
-        autoPlay
-        style={{ width: "100%", height: "auto", visibility: "hidden" }}
-      />
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-        }}
-      />
-    </div>
+    <>
+      <HeaderBlue />
+      <div className={styles.container}>
+        <video ref={videoRef} autoPlay className={styles.video} />
+        <canvas ref={canvasRef} className={styles.canvas} />
+      </div>
+    </>
   );
 };
 
