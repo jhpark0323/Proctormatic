@@ -3,7 +3,7 @@ from rest_framework import status
 
 from .serializers import SendEmailVerificationSerializer, EmailVerificationSerializer, UserSerializer, \
     FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordEmailCheckSerializer, \
-    ResetPasswordRequestSerializer
+    ResetPasswordRequestSerializer, LoginSerializer
 
 email_verification_schema = extend_schema_view(
     get=extend_schema(
@@ -222,17 +222,7 @@ user_schema = extend_schema_view(
 token_schema = extend_schema_view(
     post=extend_schema(
         summary='로그인',
-        request=OpenApiRequest({
-            'type': 'object',
-            'properties': {
-                'email': {
-                    'type': 'string',
-                },
-                'password': {
-                    'type': 'string',
-                }
-            }
-        }),
+        request=LoginSerializer,
         responses={
             status.HTTP_201_CREATED: OpenApiResponse(
                 description='로그인 성공',
