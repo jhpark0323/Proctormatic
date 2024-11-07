@@ -39,7 +39,9 @@ const Textfield = ({
     if (onChange) onChange("");
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     if (onChange) {
@@ -53,17 +55,31 @@ const Textfield = ({
       {label && <label className={styles["textfield-label"]}>{label}</label>}
 
       {/* 입력 필드 */}
+      {/* textarea일 때 */}
       <div style={{ position: "relative", width: "100%" }}>
-        <input
-          type={inputType}
-          placeholder={placeholder}
-          value={inputValue}
-          onChange={handleChange}
-          maxLength={maxLength}
-          className={`${styles["textfield-input"]} ${
-            type === "underline" ? styles["underline"] : ""
-          }`}
-        />
+        {inputType === "textarea" ? (
+          <textarea
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleChange}
+            maxLength={maxLength}
+            className={`${styles["textfield-input"]} ${
+              type === "underline" ? styles["underline"] : ""
+            }`}
+            style={{ height: "130px" }}
+          />
+        ) : (
+          <input
+            type={inputType}
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleChange}
+            maxLength={maxLength}
+            className={`${styles["textfield-input"]} ${
+              type === "underline" ? styles["underline"] : ""
+            }`}
+          />
+        )}
 
         {/* 트레일링 아이콘 */}
         {trailingIcon === "delete" && (
