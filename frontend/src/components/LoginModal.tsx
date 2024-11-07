@@ -4,15 +4,18 @@ import CustomButton from '@/components/CustomButton';
 import cancelButton from '@/assets/cancleButtonImg.svg';
 import cancelButtonImg from '@/assets/cancleButton.png';
 import { useAuthStore } from '@/store/useAuthStore';
+import ColorMetamong from '@/assets/ColorMetamong.png';
+import Metamong from '@/assets/Metamong.png';
 
 interface LoginModalProps {
   onClose: () => void;
   onRegisterClick: () => void; // 회원가입 클릭 핸들러 추가
+  onEmailFindClick: () => void; // 이메일 찾기 핸들러 추가
   title: string;
   subtitle: string | string[];
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title, subtitle }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, onEmailFindClick, title, subtitle }) => {
   const [currentView, setCurrentView] = useState<'select' | 'hostLogin' | 'takerLogin'>('select');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -102,7 +105,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title
       <div className={styles.subBtnBox}>
         <span onClick={onRegisterClick}>회원가입</span> {/* 회원가입 클릭 시 RegisterModal 오픈 */}
         <div className={styles.finding}>
-          <span>아이디 찾기</span>
+          <span onClick={onEmailFindClick}>아이디 찾기</span>
           &nbsp;ㆍ&nbsp;
           <span>비밀번호 재설정</span>
         </div>
@@ -138,10 +141,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onRegisterClick, title
         {currentView === 'select' ? (
           <div className={styles.userSelectBox}>
             <div className={styles.selectButton} onClick={() => handleLogin('host')}>
-              주최자
+              <img src={ColorMetamong} alt="사진없음" />
+              <div>
+                <strong>주최자</strong>  로그인
+              </div>
             </div>
             <div className={styles.selectButton} onClick={() => handleLogin('taker')}>
-              응시자
+              <img src={Metamong} alt="사진없음" />
+                <div>
+                  <strong>응시자</strong>  로그인
+                </div>
             </div>
           </div>
         ) : (

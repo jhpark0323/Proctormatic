@@ -1,0 +1,323 @@
+.Modal {
+  top: 50%;
+  left: 50%;
+  padding: 60px;
+  box-sizing: border-box;
+  width: 580px;
+  height: 90vh;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.headerBox {
+  display: flex;
+  width: 100%;
+  padding: 8.5px 0px;
+}
+
+.cancelButton {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+}
+
+.ModalTitle {
+  font-size: var(--font-heading_1xl-fontsize);
+  font-weight: var(--font-heading_4xl-fontweight);
+  line-height: 41px;
+}
+
+.inBox {
+  margin-top: 48px;
+  /* height: calc(100% - 90px); */
+  overflow-x: hidden;
+  padding-right: 5px;
+  width: 99%;
+}
+
+.inBoxInner {
+  height: 100%;
+}
+
+.titleBox {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.upLine {
+  font-size: 26px;
+  font-weight: bold;
+  line-height: 38px;
+}
+
+.downLine {
+  font-size: 16px;
+  line-height: 24px;
+  color: rgb(110, 110, 110);
+}
+
+.downLine > p {
+  margin: 0;
+}
+
+.formInner {
+  padding: 14px 0px;
+  display: grid;
+  box-sizing: border-box;
+}
+
+.formInnerNameBox {
+  display: flex;
+  align-items: center;
+  margin: 0 0 5px;
+  box-sizing: border-box;
+}
+
+.formInnerName {
+  font-size: 15px;
+  line-height: 22px;
+  font-family: var(--font-LG_MEDIUM-fontweight);
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.formInput {
+  line-height: 24px;
+  font-family: var(--font-LG_MEDIUM-fontweight);
+  font-size: 16px;
+  padding: 6px 0px;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid rgb(223, 223, 223);
+}
+
+.birthDateBox {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin: 10px 0px 0px;
+  box-sizing: border-box;
+}
+
+.birthInner {
+  position: relative;
+}
+
+.birthInner > select {
+  width: 100%;
+  height: 30px;
+}
+
+.birthInnerContainer {
+  padding: 11.5px 6px;
+  display: flex;
+  justify-content: center;
+  border: 0.6px solid rgb(129, 129, 129);
+  border-radius: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.selectBox {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  background-color: white;
+  z-index: 10;
+}
+
+.birthInfo {
+  font-size: 12px;
+  color: rgb(68, 68, 68);
+  line-height: 16px;
+  margin: 14px 0px 14px;
+  box-sizing: border-box;
+}
+
+.emailBox {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0px 44px;
+  box-sizing: border-box;
+}
+
+.titlePart {
+  font-size: 15px;
+  font-family: var(--font-MD_MEDIUM-fontweight);
+  line-height: 22px;
+  margin-bottom: 5px;
+}
+
+.inputPart {
+  margin-top: 5px;
+  display: grid;
+}
+
+.emailInput {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pwdInputOne, .pwdInputTwo {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.firstLeft {
+  flex-grow: 1;
+  margin-right: 7px;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputPart input {
+  font-size: 16px;
+  display: flex;
+  flex-grow: 1;
+  height: 37px;
+  border: none;
+}
+
+.inputPart input:focus {
+  outline: none;
+}
+
+.rowGrayBar {
+  width: 100%;
+  height: 1px;
+  background-color: rgb(223, 223, 223);
+}
+
+.verifyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 101px;
+  height: 37px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: var(--font-MD_REGULAR-fontweight);
+  line-height: 21px;
+  border-radius: 6px;
+  background-color: rgb(32, 49, 91);
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+}
+
+.errorCase {
+  color: rgb(200, 59, 56);
+  font-size: 12px;
+  line-height: 18px;
+  font-family: var(--font-MD_REGULAR-fontweight);
+  padding-top: 5px;
+}
+
+.infoPart {
+  display: grid;
+  gap: 1px;
+  margin-top: 16px;
+}
+
+.infoInner {
+  font-family: var(--font-MD_REGULAR-fontweight);
+  font-size: 12px;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.buttonBox {
+  margin-top: 48px;
+  padding: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registerButton {
+  align-items: center;
+  background-color: var(--NAVY);
+  border: none;
+  border-radius: 43px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-family: Medium;
+  font-size: 15px;
+  height: 42px;
+  justify-content: center;
+  line-height: 25px;
+  padding: 0;
+  width: 204px;
+}
+
+.registerButton:disabled {
+  background-color: #d9d9d9;
+  cursor: auto;
+}
+
+.formInput:focus {
+  outline: none;
+  border-bottom: 1px solid rgb(223, 223, 223); /* 기존 테두리 유지 */
+}
+
+/* 에러 상태일 때 빨간색 테두리 */
+.errorInput {
+  border-bottom: 1px solid red;
+}
+
+/* 에러 상태일 때 빨간색 row */
+.errorRow {
+  background-color: red;
+}
+
+.blurBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 55;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  opacity: 0.4;
+}
+
+.loadingSpinner {
+  border: 3px solid rgba(0, 0, 0, 0.1); /* 얇은 회색 테두리 */
+  border-top: 3px solid white; /* 위쪽은 파란색 테두리 */
+  border-radius: 50%; /* 원형으로 만듦 */
+  width: 19px; /* 너비 */
+  height: 19px; /* 높이 */
+  animation: spin 1s linear infinite; /* 회전 애니메이션 */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg); /* 시작점 */
+  }
+  100% {
+    transform: rotate(360deg); /* 한 바퀴 회전 */
+  }
+}

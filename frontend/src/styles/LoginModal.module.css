@@ -72,16 +72,29 @@
   width: 100%;
   justify-content: space-around;
   padding-bottom: 10px;
+  height: 300px;
 }
 
 .selectButton {
-  width: 30%;
+  width: 42%;
+  height: 220px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   border-radius: 20px;
   box-shadow: var(--shadow-LIGHT_3);
+  gap: 30px;
+}
+
+.selectButton strong {
+  font-size: 22px;
+}
+
+.selectButton > img {
+  width: 100px;
+  height: 100px;
 }
 
 .loginInputSection {
