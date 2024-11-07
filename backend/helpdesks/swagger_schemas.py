@@ -315,6 +315,34 @@ answer_admin_schema = extend_schema_view(
                 }
             )
         }
+    ),
+    put=extend_schema(
+        summary='(관리자)답변 수정',
+        request=AnswerSerializer,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='답변 수정 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='질문 또는 답변 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
     )
 )
 
