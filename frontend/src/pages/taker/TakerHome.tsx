@@ -21,7 +21,7 @@ const TakerHome = () => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
-    navigate(-1); // 이전 페이지로 이동
+    navigate(-1); // 이전 페이지
   };
 
   const renderStepContent = () => {
