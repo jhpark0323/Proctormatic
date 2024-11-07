@@ -41,6 +41,8 @@ def add_taker(request):
             existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
 
             if existing_taker:
+                if existing_taker.check_out_state == "normal":
+                    return Response({'message': '이미 퇴실한 사용자입니다.'}, status=status.HTTP_403_FORBIDDEN)
                 access_token = TakerTokenSerializer.get_access_token(existing_taker)
                 Logs.objects.create(
                     taker_id = existing_taker.id,

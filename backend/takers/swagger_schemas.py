@@ -42,12 +42,13 @@ add_taker_schema = extend_schema_view(
                 }
             ),
             status.HTTP_403_FORBIDDEN: OpenApiResponse(
-                description='시험 종료 후 요청',
+                description='시험 종료 후 요청 또는 이미 퇴실한 사용자',
                 response={
                     'type': 'object',
                     'properties': {
                         'message': {
-                            'type': 'string'
+                            'type': 'string',
+                            'example': '이미 퇴실한 사용자입니다.'
                         },
                     },
                 }
