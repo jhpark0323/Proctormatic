@@ -9,6 +9,7 @@ interface TextfieldProps {
   placeholder?: string;
   trailingIcon?: "delete" | "search";
   type?: "underline" | "default";
+  inputType?: string;
   maxLength?: number;
   value?: string;
   onChange?: (value: string) => void;
@@ -23,6 +24,7 @@ const Textfield = ({
   maxLength,
   value = "",
   type = "default",
+  inputType = "text",
   onChange,
   handleSearch,
 }: TextfieldProps) => {
@@ -53,7 +55,7 @@ const Textfield = ({
       {/* 입력 필드 */}
       <div style={{ position: "relative", width: "100%" }}>
         <input
-          type="text"
+          type={inputType}
           placeholder={placeholder}
           value={inputValue}
           onChange={handleChange}
