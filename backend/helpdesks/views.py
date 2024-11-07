@@ -136,6 +136,26 @@ def create_answer(request, question_id):
             return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
 
 
+@answer_schema
+@api_view(['PUT'])
+def update_answer(request, question_id, answer_id):
+    user_id = request.auth['user_id']
+    user = User.objects.get(pk=user_id)
+
+    question = Question.objects.filter(pk=question_id, user_id=user_id).first()
+    if question is None:
+        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    answer = Answer.objects.filter(pk=answer_id, author=user.name).first()
+    if answer is None:
+        return Response({'message': '답변이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = AnswerSerializer(answer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+
+
 @answer_admin_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
