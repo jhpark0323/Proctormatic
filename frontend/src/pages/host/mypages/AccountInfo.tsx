@@ -9,6 +9,8 @@ import { CustomToast } from "@/components/CustomToast";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import HostModal from "@/components/HostModal";
+import Textfield from "@/components/Textfield";
+import { checkPassword } from "@/utils/checkPassword";
 
 interface UserProfile {
   name: string;
@@ -22,7 +24,9 @@ interface UserProfile {
 const AccountInfo = () => {
   const [userInfo, setUserInfo] = useState<UserProfile | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isChangePWModalOpen, setIsChangePWModalOpen] = useState(false); // 비밀번호 변경 모달 상태 추가
+  const [isChangePWModalOpen, setIsChangePWModalOpen] = useState(false);
+  const [password1, setPassword1] = useState("");
+  const [password2, setPassword2] = useState("");
 
   useEffect(() => {
     axiosInstance
@@ -78,15 +82,28 @@ const AccountInfo = () => {
       });
   };
 
-  // 비밀번호 변경 모달 관련 핸들러
+  // 비밀번호 변경 모달
   const handleOpenChangePWModal = () => setIsChangePWModalOpen(true);
   const handleCloseChangePWModal = () => setIsChangePWModalOpen(false);
 
   const handleChangePWConfirmed = () => {
-    // 비밀번호 변경 로직 (여기서는 단순히 모달을 닫고 성공 메시지를 표시하도록 구현)
-    handleCloseChangePWModal();
-    CustomToast("비밀번호가 변경되었습니다.");
+    axiosInstance
+      .put("/users/password/", { password1, password2 })
+      .then(() => {
+        handleCloseChangePWModal();
+        CustomToast("비밀번호가 변경되었습니다.");
+      })
+      .catch((error) => {
+        CustomToast(error.response.data.message);
+      });
   };
+
+  const [passwordError, setPasswordError] = useState<boolean>(false);
+  const handlePasswordChange = (value: string) => {
+    setPassword1(value);
+    setPasswordError(!checkPassword(value));
+  };
+  const [isPassword2Focused, setIsPassword2Focused] = useState<boolean>(false);
 
   return (
     <div className={styles.infoContainer}>
@@ -177,13 +194,32 @@ const AccountInfo = () => {
           handleButton={handleChangePWConfirmed}
           onClose={handleCloseChangePWModal}
         >
-          <div style={{ textAlign: "center" }}>
-            <div style={{ marginBottom: "1rem" }}>
-              비밀번호를 8~30자로 입력하세요.
-            </div>
-            <div style={{ color: "var(--GRAY_500)", ...fonts.MD_REGULAR }}>
-              * 비밀번호는 8~30자, 영문, 숫자, 특수문자를 포함해야 합니다.
-            </div>
+          <div className={styles.changePWcontent}>
+            <Textfield
+              label="비밀번호 재설정"
+              trailingIcon="delete"
+              inputType="password"
+              value={password1}
+              onChange={handlePasswordChange} // 비밀번호 입력값 변경 시 검증 수행
+              helpMessage={
+                passwordError ? "올바르지 않은 비밀번호 형식이에요." : ""
+              }
+            />
+            <Textfield
+              label="비밀번호 확인"
+              trailingIcon="delete"
+              inputType="password"
+              value={password2}
+              onChange={(value) => {
+                setPassword2(value);
+                setIsPassword2Focused(true);
+              }}
+              helpMessage={
+                isPassword2Focused && password1 !== password2
+                  ? "비밀번호가 일치하지 않아요."
+                  : ""
+              }
+            />
           </div>
         </HostModal>
       )}
