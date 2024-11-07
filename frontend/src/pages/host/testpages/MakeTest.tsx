@@ -16,6 +16,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker, TimePicker } from "@mui/x-date-pickers";
 import { ko } from "date-fns/locale";
+import { formatDateAndTime } from "@/utils/handleDateTimeChange";
 
 interface TestForm {
   title: string;
@@ -65,15 +66,11 @@ const MakeTest = () => {
   }, []);
 
   // 시험 만들기
+  const { date, time } = formatDateAndTime(new Date());
   const [testForm, setTestForm] = useState<TestForm>({
     title: "",
-    date: new Date(new Date().getTime() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-    start_time: new Date(new Date().getTime() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[1]
-      .split(".")[0],
+    date: date,
+    start_time: time,
     end_time: "",
     exit_time: "",
     expected_taker: 0,
@@ -82,17 +79,11 @@ const MakeTest = () => {
 
   const handleDateTimeChange = (field: keyof TestForm, value: Date | null) => {
     if (value) {
-      let formattedValue = "";
-      if (field === "date") {
-        // 날짜: "YYYY-MM-DD"
-        formattedValue = value.toISOString().split("T")[0];
-      } else {
-        // 시간: "HH:mm:ss"
-        formattedValue = value.toISOString().split("T")[1].split(".")[0];
-      }
+      const { date, time } = formatDateAndTime(value);
+
       setTestForm((prevForm) => ({
         ...prevForm,
-        [field]: formattedValue,
+        [field]: field === "date" ? date : time,
       }));
     }
   };
@@ -321,7 +312,7 @@ const MakeTest = () => {
                                 : null
                             }
                             onChange={(newValue) =>
-                              handleDateTimeChange("end_time", newValue)
+                              handleDateTimeChange("exit_time", newValue)
                             }
                             slotProps={{
                               textField: {
