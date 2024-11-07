@@ -74,7 +74,11 @@ def question(request):
         else:
             return Response({'message': '제목은 100자를 넘길 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
-        questions = Question.objects.filter(user_id=user.id)
+        category = request.query_params.get('category')
+        questions = Question.objects.filter(user_id=user.id).order_by('-created_at')
+        if category in ['usage', 'coin', 'etc']:
+            questions = questions.filter(category=category)
+
         page = request.GET.get('page', 1)
         size = request.GET.get('size', 10)
         if int(page) <= 0:

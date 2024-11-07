@@ -95,6 +95,7 @@ question_schema = extend_schema_view(
         parameters=[
             OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, default=1),
             OpenApiParameter(name='size', type=int, location=OpenApiParameter.QUERY, default=10),
+            OpenApiParameter(name='category', type=str, location=OpenApiParameter.QUERY)
         ],
         responses={
             status.HTTP_200_OK: OpenApiResponse(
