@@ -8,6 +8,8 @@ import HostModal from "@/components/HostModal";
 import { CustomToast } from "@/components/CustomToast";
 import HeaderWhite from "@/components/HeaderWhite";
 import { formatDateAndTime } from "@/utils/handleDateTimeChange";
+import { FaRegTrashAlt } from "react-icons/fa";
+import { GoPencil } from "react-icons/go";
 
 interface FAQ {
   id: number;
@@ -30,6 +32,7 @@ interface Answer {
 }
 
 interface Question {
+  content: any;
   id: number;
   organizer: string;
   category: string;
@@ -158,11 +161,13 @@ const Helpdesk = () => {
   const [detailModalTitle, setDetailModalTitle] = useState("");
   const [detailModalContext, setDetailModalContext] = useState("");
   const [detailModalCreatedAt, setDetailModalCreatedAt] = useState("");
+  const [detailID, setDetailID] = useState(0);
 
   const getDetailModalContent = (
     type: "faq" | "notification" | "question",
     id: number
   ) => {
+    setDetailID(id);
     let endpoint = "";
 
     if (type === "faq") {
@@ -189,6 +194,42 @@ const Helpdesk = () => {
       })
       .catch((error) => {
         console.log("조회 실패: ", error);
+      });
+  };
+
+  const deleteQuestion = () => {
+    axiosInstance
+      .delete(`/helpdesk/question/${detailID}/`)
+      .then(() => {
+        CustomToast("질문이 삭제되었습니다.");
+        handleDetailModalClose();
+        fetchQuestions();
+        fetchNotifications();
+      })
+      .catch((error) => {
+        console.error("질문 삭제 실패: ", error);
+        CustomToast("다시 시도해 주세요.");
+      });
+  };
+
+  const updateQuestion = () => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .put(`/helpdesk/question/${detailID}/`, {
+        category: selectedQuestion.category,
+        title: selectedQuestion.title,
+        content: selectedQuestion.content,
+      })
+      .then(() => {
+        CustomToast("질문이 수정되었습니다.");
+        fetchQuestions();
+        fetchNotifications();
+        handleDetailModalClose();
+      })
+      .catch((error) => {
+        console.error("질문 수정 실패: ", error);
+        CustomToast("다시 시도해 주세요.");
       });
   };
 
@@ -425,15 +466,20 @@ const Helpdesk = () => {
         </HostModal>
       )}
 
-      {isDetailModalOpen && (
+      {isDetailModalOpen && selectedQuestion && (
         <HostModal onClose={handleDetailModalClose} title={detailModalTitle}>
           <div className={styles.postModal}>
             <div className={styles.questionAnswerBody}>
               {detailModalContext}
+              <div className={styles.iconWrapper}>
+                <FaRegTrashAlt
+                  onClick={() => deleteQuestion(selectedQuestion.id)}
+                />
+                <GoPencil onClick={() => updateQuestion(selectedQuestion.id)} />
+              </div>
             </div>
             <div className={styles.questionAnswerContainer}>
-              {selectedQuestion?.answerList &&
-                selectedQuestion.answerList.length > 0 &&
+              {selectedQuestion.answerList.length > 0 &&
                 selectedQuestion.answerList.map((item, index) => {
                   const { date, time } = formatDateAndTime(
                     new Date(item.updated_at)
