@@ -4,7 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import { useTakerStore } from "@/store/TakerAuthStore";
 
 const Step1: React.FC<{ onNext: () => void }> = ({ onNext }) => {
-  const [inputValue, setInputValue] = useState("https://proctormatic.kr/exams/1/"); // 개발용 추후 수정 요망
+  const [inputValue, setInputValue] = useState("https://proctormatic.kr/exams/3/"); // 개발용 추후 수정 요망
   const { setTestId } = useTakerStore();
   const [isValid, setIsValid] = useState(false);
 
