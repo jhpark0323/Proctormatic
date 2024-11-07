@@ -168,6 +168,12 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
         </div>
       </div>
 
+      {maskedIDPhoto && (
+        <div>
+          <img src={maskedIDPhoto} alt="" />
+        </div>
+      )}
+
       <div className={styles.StepFooter}>
         <CustomButton
           onClick={onNext}
