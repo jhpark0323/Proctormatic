@@ -238,3 +238,8 @@
   align-items: center;
   overflow: hidden;
 }
+.goBack {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}

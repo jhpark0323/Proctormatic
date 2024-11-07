@@ -5,8 +5,9 @@ import axiosInstance from '@/utils/axios';
 import { useTakerStore } from '@/store/TakerAuthStore';
 import { CustomToast } from '@/components/CustomToast';
 import InputField from '@/components/TakerInputField';
+import CustomTooltip from '@/components/CustomTooltip';
 
-const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
+const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, onBack }) => {
   const { testId } = useTakerStore();
   const [examInfo, setExamInfo] = useState({
     title: '',
@@ -14,7 +15,7 @@ const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     start_time: '',
     end_time: '',
   });
-
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const errorDisplayed = useRef(false);
 
   useEffect(() => {
@@ -24,6 +25,7 @@ const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         const { title, date, start_time, end_time } = response.data;
         setExamInfo({ title, date, start_time, end_time });
         errorDisplayed.current = false;
+        checkEntryAvailability(start_time);
       } catch (error: any) {
         if (!errorDisplayed.current) {
           if (error.response && error.response.data?.message) {
@@ -34,6 +36,15 @@ const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
           errorDisplayed.current = true;
         }
       }
+    };
+
+    const checkEntryAvailability = (startTime: string) => {
+      const currentTime = new Date();
+      const [hours, minutes, seconds] = startTime.split(':').map(Number);
+      const examStartTime = new Date();
+      examStartTime.setHours(hours, minutes - 30, seconds);
+
+      setIsButtonEnabled(currentTime >= examStartTime);
     };
 
     fetchExamInfo();
@@ -48,8 +59,8 @@ const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
       <div className={`${styles.StepInner} ${styles.test1}`}>
         <InputField label="시험 제목" value={examInfo.title} />
         <InputField label="시험 응시 날짜" value={examInfo.date} />
-        <InputField 
-          label="시험 응시 시간" 
+        <InputField
+          label="시험 응시 시간"
           value={
             examInfo.start_time && examInfo.end_time
               ? `${examInfo.start_time} ~ ${examInfo.end_time}`
@@ -58,7 +69,25 @@ const Step4: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         />
       </div>
       <div className={styles.StepFooter}>
-        <CustomButton onClick={onNext}>다음</CustomButton>
+        {isButtonEnabled ? (
+          <CustomButton onClick={onNext}>다음</CustomButton>
+        ) : (
+          <div className={styles.goBack}>
+            <CustomButton onClick={onBack}>돌아가기</CustomButton>
+            <CustomTooltip
+              id="entry-tooltip"
+              content="시험 30분 전부터 입실이 가능합니다"
+              type="white"
+              place="top"
+            >
+              <div>
+                <CustomButton onClick={onNext} state='disabled'>
+                  다음
+                </CustomButton>
+              </div>
+            </CustomTooltip>
+          </div>
+        )}
       </div>
     </>
   );
