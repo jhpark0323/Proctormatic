@@ -55,11 +55,10 @@ class Abnormal(models.Model):
         ('etc', 'Etc')
     )
 
-    taker = models.ForeignKey(Taker, on_delete=models.CASCADE)
+    taker = models.ForeignKey(Taker, on_delete=models.CASCADE, related_name="abnormalList")
     detected_time = models.TimeField()
     end_time = models.TimeField()
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    segment_cam = models.CharField(max_length=255)
 
     class Meta:
         db_table = 'abnormal'

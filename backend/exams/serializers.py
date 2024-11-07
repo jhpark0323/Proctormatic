@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Exam
-from takers.models import Taker, Logs
+from takers.models import Taker, Logs, Abnormal
 
 class ExamSerializer(serializers.ModelSerializer):
     cheer_msg = serializers.CharField(allow_null=True, required=False)
@@ -68,12 +68,18 @@ class ExamDetailSerializer(serializers.ModelSerializer):
             for taker in takers
         ]
 
+class AbnormalListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Abnormal
+        exclude = ('id', 'taker',)
+
 class TakerDetailSerializer(serializers.ModelSerializer):
     number_of_entry = serializers.SerializerMethodField()
+    abnormalList = AbnormalListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Taker
-        fields = ['name', 'email', 'birth', 'id_photo', 'verification_rate', 'number_of_entry', 'check_out_state']
+        fields = ['name', 'email', 'birth', 'id_photo', 'verification_rate', 'number_of_entry', 'check_out_state', 'abnormalList']
     
     def get_number_of_entry(self, obj):
         return Logs.objects.filter(taker_id=obj.id, type='entry').count()-1
