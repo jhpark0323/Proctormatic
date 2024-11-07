@@ -8,34 +8,55 @@ import HostModal from "@/components/HostModal";
 import { CustomToast } from "@/components/CustomToast";
 import HeaderWhite from "@/components/HeaderWhite";
 import { formatDateAndTime } from "@/utils/handleDateTimeChange";
+import { FaRegTrashAlt } from "react-icons/fa";
+import { GoPencil } from "react-icons/go";
 
 interface FAQ {
   id: number;
   title: string;
 }
 
-interface notification {
+interface Notification {
   id: number;
   title: string;
   category: "공지사항";
   created_at: string;
 }
 
-interface question {
+interface Answer {
+  id: number;
+  author: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Question {
+  content: any;
   id: number;
   organizer: string;
   category: string;
   title: string;
   created_at: string;
   updated_at: string;
+  answerList: Answer[];
 }
 
 const Helpdesk = () => {
   const categories = ["전체", "이용 방법", "적립금", "기타"];
   const [currentCategory, setCurrentCategory] = useState("전체");
   const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [notifications, setNotifications] = useState<notification[]>([]);
-  const [questions, setQuestions] = useState<question[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
+    null
+  );
+
+  useEffect(() => {
+    fetchFAQ();
+    fetchQuestions();
+    fetchNotifications();
+  }, [currentCategory]);
 
   const fetchFAQ = () => {
     axiosInstance
@@ -76,12 +97,6 @@ const Helpdesk = () => {
         console.error("공지 조회 실패:", error);
       });
   };
-
-  useEffect(() => {
-    fetchFAQ();
-    fetchQuestions();
-    fetchNotifications();
-  }, [currentCategory]);
 
   const getCategoryCode = (category: string) => {
     switch (category) {
@@ -146,14 +161,15 @@ const Helpdesk = () => {
   const [detailModalTitle, setDetailModalTitle] = useState("");
   const [detailModalContext, setDetailModalContext] = useState("");
   const [detailModalCreatedAt, setDetailModalCreatedAt] = useState("");
+  const [detailID, setDetailID] = useState(0);
 
   const getDetailModalContent = (
     type: "faq" | "notification" | "question",
     id: number
   ) => {
+    setDetailID(id);
     let endpoint = "";
 
-    // 구분에 따라 API 엔드포인트를 설정
     if (type === "faq") {
       endpoint = `/helpdesk/faq/${id}/`;
     } else if (type === "notification") {
@@ -165,13 +181,55 @@ const Helpdesk = () => {
     axiosInstance
       .get(endpoint)
       .then((response) => {
-        setDetailModalTitle(response.data.title);
-        setDetailModalContext(response.data.content);
-        setDetailModalCreatedAt(response.data.created_at);
+        const data = response.data;
+
+        if (type === "question") {
+          setSelectedQuestion(data); // 선택된 질문의 전체 데이터를 저장
+        }
+
+        setDetailModalTitle(data.title);
+        setDetailModalContext(data.content);
+        setDetailModalCreatedAt(data.created_at);
         handleDetailModalOpen();
       })
       .catch((error) => {
         console.log("조회 실패: ", error);
+      });
+  };
+
+  const deleteQuestion = () => {
+    axiosInstance
+      .delete(`/helpdesk/question/${detailID}/`)
+      .then(() => {
+        CustomToast("질문이 삭제되었습니다.");
+        handleDetailModalClose();
+        fetchQuestions();
+        fetchNotifications();
+      })
+      .catch((error) => {
+        console.error("질문 삭제 실패: ", error);
+        CustomToast("다시 시도해 주세요.");
+      });
+  };
+
+  const updateQuestion = () => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .put(`/helpdesk/question/${detailID}/`, {
+        category: selectedQuestion.category,
+        title: selectedQuestion.title,
+        content: selectedQuestion.content,
+      })
+      .then(() => {
+        CustomToast("질문이 수정되었습니다.");
+        fetchQuestions();
+        fetchNotifications();
+        handleDetailModalClose();
+      })
+      .catch((error) => {
+        console.error("질문 수정 실패: ", error);
+        CustomToast("다시 시도해 주세요.");
       });
   };
 
@@ -408,9 +466,45 @@ const Helpdesk = () => {
         </HostModal>
       )}
 
-      {isDetailModalOpen && (
+      {isDetailModalOpen && selectedQuestion && (
         <HostModal onClose={handleDetailModalClose} title={detailModalTitle}>
-          <div className={styles.postModal}>{detailModalContext}</div>
+          <div className={styles.postModal}>
+            <div className={styles.questionAnswerBody}>
+              {detailModalContext}
+              <div className={styles.iconWrapper}>
+                <FaRegTrashAlt
+                  onClick={() => deleteQuestion(selectedQuestion.id)}
+                />
+                <GoPencil onClick={() => updateQuestion(selectedQuestion.id)} />
+              </div>
+            </div>
+            <div className={styles.questionAnswerContainer}>
+              {selectedQuestion.answerList.length > 0 &&
+                selectedQuestion.answerList.map((item, index) => {
+                  const { date, time } = formatDateAndTime(
+                    new Date(item.updated_at)
+                  );
+                  return (
+                    <div key={index}>
+                      <div className={styles.detailCommentAuthor}>
+                        {item.author}
+                      </div>
+                      <div className={styles.detailCommentContent}>
+                        {item.content}
+                        <div
+                          style={{
+                            color: "var(--GRAY_500)",
+                            ...fonts.MD_REGULAR,
+                          }}
+                        >
+                          {date} {time}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         </HostModal>
       )}
     </>
