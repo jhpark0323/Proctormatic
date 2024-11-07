@@ -31,7 +31,7 @@ add_taker_schema = extend_schema_view(
                 }
             ),
             status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-                description='잘못된 요청',
+                description='잘못된 요청, 시험이 종료되었는데 요청하는 경우',
                 response={
                     'type': 'object',
                     'properties': {
@@ -42,12 +42,13 @@ add_taker_schema = extend_schema_view(
                 }
             ),
             status.HTTP_403_FORBIDDEN: OpenApiResponse(
-                description='시험 종료 후 요청',
+                description='이미 퇴실한 사용자, 권한이 없는 경우',
                 response={
                     'type': 'object',
                     'properties': {
                         'message': {
-                            'type': 'string'
+                            'type': 'string',
+                            'example': '이미 퇴실한 사용자입니다.'
                         },
                     },
                 }
