@@ -71,6 +71,12 @@ def create_exam(request):
     end_time = serializer.validated_data.get('end_time')
     exit_time = serializer.validated_data.get('exit_time')
 
+    # 응시 시작 시간이 응시 끝나는 시간보다 큰 경우
+    if start_time > end_time:
+        return Response({
+            "message": "응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다."
+        }, status=status.HTTP_409_CONFLICT)
+
     # exit_time은 start_time 이후 & end_time 이전으로 설정되어야 함
     if not (start_time <= exit_time <= end_time):
         return Response({
