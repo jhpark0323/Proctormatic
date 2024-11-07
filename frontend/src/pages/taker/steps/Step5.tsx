@@ -73,29 +73,28 @@ const Step5: React.FC = () => {
       console.log('이메일을 입력해주세요');
       return;
     }
-
     setIsLoading(true); // 로딩 상태 시작
     try {
       await axiosInstance.post('/taker/email/', {
         id: testId,
         email: formData.email,
       });
-
       setIsEmailSent(true);
       setVerificationError(''); // 에러 메시지 초기화
-      setTimer(300);
+      setTimer(300); // 타이머 시간 시작 300초
       setEmailStatus('인증번호가 발송되었습니다.');
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
       if (axiosError.response && axiosError.response.status === 400) {
         setEmailStatus(axiosError.response.data?.message || '잘못된 요청입니다.');
       } else if (axiosError.response && axiosError.response.status === 409) {
-        setEmailStatus('이미 입실한 응시자입니다. 재입실 해주세요.');
+        CustomToast('이미 입실한 이메일입니다. 재입실 해주세요.')
+        setEmailStatus('재입실하기 버튼을 눌러주세요.');
         setShowReenterButton(true);
       } else {
         setEmailStatus('네트워크 상태를 확인해주세요.');
       }
-      console.error('인증번호 발송 실패:', axiosError);
+      // console.error('인증번호 발송 실패:', axiosError);
     } finally {
       setIsLoading(false); // 로딩 상태 종료
     }
@@ -107,7 +106,6 @@ const Step5: React.FC = () => {
       console.log('인증 코드를 입력해주세요');
       return;
     }
-
     setIsLoading(true); // 로딩 상태 시작
     try {
       const response = await axiosInstance.put('/taker/email/', {
@@ -141,6 +139,7 @@ const Step5: React.FC = () => {
     setIsVerified(true); // 이메일 인증 완료 상태로 설정
     setEmailStatus(''); // 이메일 상태 메시지 초기화
     setTimer(0); // 타이머 초기화
+    // handleConfirm();
   };
 
   // entry_time 포맷 변환 함수
@@ -153,29 +152,28 @@ const Step5: React.FC = () => {
   };
 
   const handleConfirm = async () => {
-    if (!isVerified || !isNameValid) {
-      console.log('모든 인증을 완료해주세요');
-      return;
-    }
-
     try {
       // 회원가입 요청
       const response = await axiosInstance.post('/taker/', {
         exam: testId,
         name: formData.name,
         email: formData.email,
-        entry_time: getFormattedTime(), // 포맷된 시간 전송
       });
 
-      if (response.status === 201) {
-        console.log('회원가입 성공');
-
+      if (response.status === 200) {
+        CustomToast('시험장에 재입실하셨습니다.');
         // access 토큰을 localStorage에 저장
         const accessToken = response.data.access;
         localStorage.setItem('accessToken', accessToken);
 
         setIsModalOpen(false);
-      } else if (response.status === 400) {
+      } else if (response.status === 201) {
+        CustomToast('시험장에 입실하셨습니다.');
+        // access 토큰을 localStorage에 저장
+        const accessToken = response.data.access;
+        localStorage.setItem('accessToken', accessToken);
+      }
+      else if (response.status === 400) {
         CustomToast(response.data.message);
       }
     } catch (error) {
@@ -223,7 +221,7 @@ const Step5: React.FC = () => {
               id="emailAddress"
               value={formData.email}
               onChange={handleInputChange}
-              disabled={isVerified || isEmailSent} // 이메일 인증번호 요청 후 수정 불가
+              disabled={isVerified || isEmailSent || showReenterButton} // 이메일 인증번호 요청 후 수정 불가
             />
             {isVerified ? (
               <span
@@ -315,7 +313,7 @@ const Step5: React.FC = () => {
       <div className={styles.StepFooter}>
         <CustomButton
           onClick={() => setIsModalOpen(true)}
-          state={isVerified && isNameValid ? 'default' : 'disabled'}
+          state={isVerified && isNameValid && formData.name ? 'default' : 'disabled'}
         >
           확인했습니다
         </CustomButton>
