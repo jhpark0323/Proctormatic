@@ -33,7 +33,7 @@ const TakerHome = () => {
       case 3:
         return <Step3 onNext={() => setStep(4)} />;
       case 4:
-        return <Step4 onNext={() => setStep(5)} />;
+        return <Step4 onNext={() => setStep(5)} onBack={() => setStep(1)} />;
       case 5:
         return <Step5 />;
       default:
