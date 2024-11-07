@@ -137,8 +137,8 @@ def create_answer(request, question_id):
 
 
 @answer_schema
-@api_view(['PUT'])
-def update_answer(request, question_id, answer_id):
+@api_view(['PUT', 'DELETE'])
+def handle_answer(request, question_id, answer_id):
     user_id = request.auth['user_id']
     user = User.objects.get(pk=user_id)
 
@@ -154,6 +154,10 @@ def update_answer(request, question_id, answer_id):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+
+    elif request.method == 'DELETE':
+        answer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @answer_admin_schema
@@ -172,9 +176,9 @@ def create_answer_admin(request, question_id):
 
 
 @answer_admin_schema
-@api_view(['PUT'])
+@api_view(['PUT', 'DELETE'])
 @permission_classes([AllowAny])
-def update_answer_admin(request, question_id, answer_id):
+def handle_answer_admin(request, question_id, answer_id):
     question = Question.objects.filter(pk=question_id).first()
     if question is None:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
@@ -187,6 +191,10 @@ def update_answer_admin(request, question_id, answer_id):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+
+    elif request.method == 'DELETE':
+        answer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @faq_schema

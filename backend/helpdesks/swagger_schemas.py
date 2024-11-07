@@ -312,6 +312,23 @@ answer_schema = extend_schema_view(
                 }
             )
         }
+    ),
+    delete=extend_schema(
+        summary='답변 삭제',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='답변 삭제 성공'),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='질문 또는 답변 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
     )
 )
 
@@ -359,6 +376,23 @@ answer_admin_schema = extend_schema_view(
                     }
                 }
             ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='질문 또는 답변 미존재',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            )
+        }
+    ),
+    delete=extend_schema(
+        summary='(관리자)답변 삭제',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='답변 삭제 성공'),
             status.HTTP_404_NOT_FOUND: OpenApiResponse(
                 description='질문 또는 답변 미존재',
                 response={

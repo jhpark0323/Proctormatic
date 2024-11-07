@@ -388,17 +388,6 @@ reset_password_schema = extend_schema_view(
                         },
                     },
                 }
-            ),
-            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
-                description='인증 실패',
-                response={
-                    'type': 'object',
-                    'properties': {
-                        'message': {
-                            'type': 'string'
-                        },
-                    },
-                }
             )
         }
     )
