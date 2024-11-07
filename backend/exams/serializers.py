@@ -63,7 +63,7 @@ class ExamDetailSerializer(serializers.ModelSerializer):
                 "taker_id": taker.id,
                 "name": taker.name,
                 "verification_rate": taker.verification_rate,
-                "upload_rate": 0  # upload_rate는 0으로 고정
+                "stored_state": taker.stored_state
             }
             for taker in takers
         ]
