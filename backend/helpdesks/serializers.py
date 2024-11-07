@@ -31,7 +31,7 @@ class QuestionListSerializer(serializers.ModelSerializer):
 class AnswerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        exclude = ('id', 'question',)
+        exclude = ('question',)
 
 class QuestionSerializer(serializers.ModelSerializer):
     organizer = serializers.CharField(source='user.name', read_only=True)

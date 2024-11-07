@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.core.paginator import Paginator
 
-from .models import Notification, Question, Faq
+from .models import Notification, Question, Faq, Answer
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
     FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer, QuestionEditSerializer, \
     QuestionCreateSerializer, QuestionListSerializer, AnswerSerializer
@@ -121,7 +121,7 @@ def question_detail(request, question_id):
 
 @answer_schema
 @api_view(['POST'])
-def answer(request, question_id):
+def create_answer(request, question_id):
     user_id = request.auth['user_id']
     user = User.objects.get(pk=user_id)
 
@@ -136,10 +136,30 @@ def answer(request, question_id):
             return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
 
 
+@answer_schema
+@api_view(['PUT'])
+def update_answer(request, question_id, answer_id):
+    user_id = request.auth['user_id']
+    user = User.objects.get(pk=user_id)
+
+    question = Question.objects.filter(pk=question_id, user_id=user_id).first()
+    if question is None:
+        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    answer = Answer.objects.filter(pk=answer_id, author=user.name).first()
+    if answer is None:
+        return Response({'message': '답변이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = AnswerSerializer(answer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+
+
 @answer_admin_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def answer_admin(request, question_id):
+def create_answer_admin(request, question_id):
     question = Question.objects.filter(pk=question_id).first()
     if question is None:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
@@ -149,6 +169,24 @@ def answer_admin(request, question_id):
         if serializer.is_valid():
             serializer.save(question=question, author='admin')
             return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+
+
+@answer_admin_schema
+@api_view(['PUT'])
+@permission_classes([AllowAny])
+def update_answer_admin(request, question_id, answer_id):
+    question = Question.objects.filter(pk=question_id).first()
+    if question is None:
+        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    answer = Answer.objects.filter(pk=answer_id).first()
+    if answer is None:
+        return Response({'message': '답변이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = AnswerSerializer(answer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
 
 
 @faq_schema

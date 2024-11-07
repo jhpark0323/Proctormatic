@@ -6,8 +6,10 @@ urlpatterns = [
     path('notification/<int:notification_id>/', views.check_notification, name='check_notification'),
     path('question/', views.question, name='question'),
     path('question/<int:question_id>/', views.question_detail),
-    path('question/<int:question_id>/answer/', views.answer),
-    path('question/<int:question_id>/answer/admin/', views.answer_admin),
+    path('question/<int:question_id>/answer/', views.create_answer),
+    path('question/<int:question_id>/answer/<int:answer_id>/', views.update_answer),
+    path('question/<int:question_id>/answer/admin/', views.create_answer_admin),
+    path('question/<int:question_id>/answer/<int:answer_id>/admin/', views.update_answer_admin),
     path('faq/', views.faq),
     path('faq/<int:faq_id>/', views.faq_detail),
 ]
