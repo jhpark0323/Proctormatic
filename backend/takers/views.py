@@ -17,7 +17,6 @@ from datetime import datetime
 from django.conf import settings
 import boto3
 
-
 @add_taker_schema
 @api_view(['POST', 'PATCH'])
 @authentication_classes([CustomJWTAuthentication])
@@ -68,19 +67,23 @@ def add_taker(request):
 
     elif request.method == 'PATCH':
         taker_id = request.auth['user_id']
-        exit_time = request.data.get('exit_time')
-        exit_time = datetime.strptime(exit_time, '%H:%M:%S').time()
 
         taker = Taker.objects.filter(id=taker_id).first()
         if taker is not None:
             exam = Exam.objects.filter(id=taker.exam_id).first()
-
+            exit_time = datetime.now().time()
             if exam:
                 if exit_time < exam.exit_time:
                     return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
 
-            taker.exit_time = exit_time
+            taker.check_out_state = 'normal'
+
+            taker.stored_state = 'in_progress'
             taker.save()
+
+            log_entry = Logs(taker=taker, type='exit')
+            log_entry.save()
+
             return Response({'message': '시험이 종료되었습니다.'}, status=status.HTTP_200_OK)
         else:
             return Response({'message': "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
@@ -219,12 +222,15 @@ def add_web_cam(request):
     start_time = request.data.get('start_time')
     end_time = request.data.get('end_time')
 
+    start_time = start_time.replace(":", "")
+    end_time = end_time.replace(":", "")
+
     if not start_time:
         return Response('잘못된 요청입니다.', status=status.HTTP_400_BAD_REQUEST)
 
     s3_client = boto3.client('s3')
     _, file_extension = os.path.splitext(web_cam_file.name)
-    file_name = f'webcam_{start_time}{file_extension}'
+    file_name = f'webcam_{start_time}_{end_time}{file_extension}'
     s3_path = f"{exam_id}/{taker_id}/{file_name}"
 
     try:
