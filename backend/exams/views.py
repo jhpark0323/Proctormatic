@@ -5,7 +5,6 @@ from django.db.models import F
 from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
-from django.utils.text import slugify
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,7 +17,7 @@ from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ong
     completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
 
-User = get_user_model()  # User 모델 가져오기
+User = get_user_model()
 
 @create_exam_schema
 @api_view(['POST'])
