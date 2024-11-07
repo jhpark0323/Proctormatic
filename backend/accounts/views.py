@@ -90,10 +90,13 @@ def handle_user(request):
         error_message = next(iter(serializer.errors.values()))[0]
         return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        if not request.user.is_authenticated:
-            return Response({'message': '만료된 토큰입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+        validation_response = is_valid_user(request)
+        if isinstance(validation_response, Response):
+            return validation_response
 
         user = find_user_by_token(request)
+        if isinstance(user, Response):
+            return user
 
         if request.method == 'GET':
             serializer = UserInfoSerializer(user)
@@ -191,10 +194,13 @@ def reset_password(request):
         return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        if not request.user.is_authenticated:
-            return Response({'message': '만료된 토큰입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+        validation_response = is_valid_user(request)
+        if isinstance(validation_response, Response):
+            return validation_response
 
         user = find_user_by_token(request)
+        if isinstance(user, Response):
+            return user
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
         if serializer.is_valid():
@@ -214,11 +220,17 @@ def reset_password(request):
 
 
 def find_user_by_token(request):
+    if request.auth is None or 'user_id' not in request.auth:
+        return Response({'message': '유효하지 않은 인증 정보입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+
     user_id = request.auth['user_id']
-    user = User.objects.get(pk=user_id)
+    user = User.objects.filter(pk=user_id).first()
+
+    if user is None:
+        return Response({'message': '유저를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_401_UNAUTHORIZED)
     return user
 
 
@@ -228,3 +240,8 @@ def is_valid_email(email):
     if re.match(email_regex, email):
         return True
     return False
+
+
+def is_valid_user(request):
+    if not request.user.is_authenticated:
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_401_UNAUTHORIZED)
