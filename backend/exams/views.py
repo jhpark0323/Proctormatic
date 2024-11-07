@@ -1,8 +1,10 @@
 from datetime import date, datetime, timedelta
 from rest_framework.permissions import AllowAny
+from threading import Thread
+from django.db.models import F
+from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
-from django.utils.text import slugify
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,101 +17,97 @@ from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ong
     completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
 
-User = get_user_model()  # User 모델 가져오기
+User = get_user_model()
 
 @create_exam_schema
 @api_view(['POST'])
 def create_exam(request):
-    # JWT에서 user ID와 role을 추출
     user_id, user_role = get_user_info_from_token(request)
     if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'message': '사용자 정보가 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
     expected_taker = request.data.get("expected_taker", 0)
     if expected_taker > 999:
-        return Response({"message": "총 응시자는 999명을 넘을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
     if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-    # 요청된 데이터를 시리얼라이저로 검증
     serializer = ExamSerializer(data=request.data)
     if not serializer.is_valid():
-        return Response({
-            "message": "요청 데이터가 유효하지 않습니다. 확인해주세요.",
-        }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': '요청 데이터가 유효하지 않습니다. 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 시리얼라이저에서 cost를 가져옴
     exam_cost = serializer.validated_data.get('cost', 0)
-    user_coin_amount = user.coin_amount
 
-    # user의 코인이 exam 비용보다 작은지 확인
-    if int(user_coin_amount) < int(exam_cost):
-        return Response({
-            "message": "적립금이 부족합니다. 충전해주세요."
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    # 시험 시작 시간 검증 및 entry_time 계산
     date = serializer.validated_data.get('date')
     start_time = serializer.validated_data.get('start_time')
-    current_time = datetime.now()
-
-    # 현재 시간과 시험 시작 시간을 비교
-    start_datetime = datetime.combine(date, start_time)
-
-    # 시험 시작 시간이 현재 시간으로부터 30분 이상 남아 있지 않은 경우 처리
-    if (start_datetime - current_time) < timedelta(minutes=30):
-        return Response({
-            "message": "응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요. 응시 시작 시간을 변경해주세요."
-        }, status=status.HTTP_409_CONFLICT)
-
     end_time = serializer.validated_data.get('end_time')
     exit_time = serializer.validated_data.get('exit_time')
 
-    # 응시 시작 시간이 응시 끝나는 시간보다 큰 경우
+    current_time = datetime.now()
+    start_datetime = datetime.combine(date, start_time)
+
+    if (start_datetime - current_time) < timedelta(minutes=30):
+        return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+
     if start_time > end_time:
-        return Response({
-            "message": "응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다."
-        }, status=status.HTTP_409_CONFLICT)
+        return Response({'message': '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.'}, status=status.HTTP_409_CONFLICT)
 
-    # exit_time은 start_time 이후 & end_time 이전으로 설정되어야 함
     if not (start_time <= exit_time <= end_time):
-        return Response({
-            'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요. 퇴실 가능 시간을 변경해주세요.'
-        }, status=status.HTTP_409_CONFLICT)
+        return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
-    # entry_time 계산 (시험 시작 시간 30분 전)
     entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
 
-    # 시험 데이터 저장
-    exam_instance = serializer.save(user=user, entry_time=entry_time)
+    try:
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(id=user_id)
 
-    # URL 자동 생성
-    exam_instance.url = f"https://proctormatic.kr/exams/{exam_instance.id}/{slugify(exam_instance.title)}"
-    exam_instance.save()
-        
-    user.coin_amount = user_coin_amount - exam_cost
-    user.save()  # 변경사항 저장
+            if not user.is_active:
+                return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # Coin 내역 기록
-    Coin.objects.create(
-        user_id=user_id,
-        exam_id=exam_instance.id,
-        type='use',  # 사용 내역으로 기록
-        amount=exam_cost
-    )
+            if int(user.coin_amount) < int(exam_cost):
+                return Response({'message': '적립금이 부족합니다. 충전해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 이메일로 시험 정보 전송
-    send_exam_email(user.email, exam_instance)
+            exam_instance = serializer.save(
+                user=user,
+                entry_time=entry_time,
+            )
 
-    return Response({
-        "message": "시험이 성공적으로 예약되었습니다."
-    }, status=status.HTTP_201_CREATED)
+            # URL 설정과 함께 저장
+            exam_instance.url = f"https://k11s209.p.ssafy.io/exams/{exam_instance.id}/"
+            exam_instance.save()
+
+            # 코인 차감
+            user.coin_amount = F('coin_amount') - exam_cost
+            user.save()
+
+            # Coin 내역 생성
+            Coin.objects.create(
+                user_id=user_id,
+                exam_id=exam_instance.id,
+                type='use',
+                amount=exam_cost
+            )
+
+            # 이메일 전송 데이터 준비
+            exam_data = {
+                'title': exam_instance.title,
+                'date': exam_instance.date,
+                'entry_time': exam_instance.entry_time,
+                'start_time': exam_instance.start_time,
+                'end_time': exam_instance.end_time,
+                'url': exam_instance.url
+            }
+
+    except User.DoesNotExist:
+        return Response({'message': '사용자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # 트랜잭션이 성공적으로 완료된 후 이메일 전송
+    send_exam_email_threaded(user.email, exam_data)
+
+    return Response({'message': '시험이 성공적으로 예약되었습니다.'}, status=status.HTTP_201_CREATED)
 
 
 @scheduled_exam_list_schema
@@ -450,32 +448,38 @@ def paginate_queryset(queryset, page_number, page_size):
     return paginator.get_page(page_number)
 
 
-def send_exam_email(email, exam):
-    subject = f"[시험 예약 완료] {exam.title}"
-    message = f"""
-    안녕하세요,
+def send_exam_email_threaded(email, exam_data):
+    def send():
+        subject = f"[시험 예약 완료] {exam_data['title']}"
+        message = f"""
+        안녕하세요,
 
-    {exam.title} 시험이 성공적으로 예약되었습니다! 아래의 시험 정보를 확인해 주세요.
+        {exam_data['title']} 시험이 성공적으로 예약되었습니다! 아래의 시험 정보를 확인해 주세요.
 
-    시험 정보:
-    - 제목: {exam.title}
-    - 날짜: {exam.date}
-    - 입장 가능 시간: {exam.entry_time}
-    - 시작 시간: {exam.start_time}
-    - 종료 시간: {exam.end_time}
-    - 시험 URL: {exam.url}
+        시험 정보:
+        - 제목: {exam_data['title']}
+        - 날짜: {exam_data['date']}
+        - 입장 가능 시간: {exam_data['entry_time']}
+        - 시작 시간: {exam_data['start_time']}
+        - 종료 시간: {exam_data['end_time']}
+        - 시험 URL: {exam_data['url']}
 
-    응시를 준비하는 데 필요한 자세한 사항은 아래를 참고하세요.
+        응시를 준비하는 데 필요한 자세한 사항은 아래를 참고하세요.
 
-    [시험 응시 방법]
-    1. 위의 '시험 URL'을 클릭하여 입장하세요.
-    2. 시험 시작 시간에 맞추어 로그인하고, 필요한 절차를 진행해 주세요.
+        [시험 응시 방법]
+        1. 위의 '시험 URL'을 클릭하여 입장하세요.
+        2. 시험 시작 시간에 맞추어 로그인하고, 필요한 절차를 진행해 주세요.
 
-    응시와 관련하여 추가로 궁금한 사항이 있다면 언제든지 문의해 주세요.
+        응시와 관련하여 추가로 궁금한 사항이 있다면 언제든지 문의해 주세요.
 
-    감사합니다.
+        감사합니다.
 
-    ---
-    ※ 이 메일은 발신 전용입니다. 회신을 할 수 없습니다.
-    """
-    send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+        ---
+        ※ 이 메일은 발신 전용입니다. 회신을 할 수 없습니다.
+        """
+        try:
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+        except Exception as e:
+            print(f"이메일 전송 실패: {str(e)}")
+
+    Thread(target=send, daemon=True).start()
