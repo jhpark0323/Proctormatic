@@ -7,6 +7,7 @@ import axiosInstance from "@/utils/axios";
 import HostModal from "@/components/HostModal";
 import { CustomToast } from "@/components/CustomToast";
 import HeaderWhite from "@/components/HeaderWhite";
+import { formatDateAndTime } from "@/utils/handleDateTimeChange";
 
 interface FAQ {
   id: number;
@@ -49,7 +50,14 @@ const Helpdesk = () => {
 
   const fetchQuestions = () => {
     axiosInstance
-      .get("/helpdesk/question/")
+      .get("/helpdesk/question/", {
+        params: {
+          category:
+            currentCategory === "전체"
+              ? "all"
+              : getCategoryCode(currentCategory),
+        },
+      })
       .then((response) => {
         setQuestions(response.data.questionList);
       })
@@ -73,22 +81,23 @@ const Helpdesk = () => {
     fetchFAQ();
     fetchQuestions();
     fetchNotifications();
-  }, []);
+  }, [currentCategory]);
+
+  const getCategoryCode = (category: string) => {
+    switch (category) {
+      case "이용 방법":
+        return "usage";
+      case "적립금":
+        return "coin";
+      case "기타":
+        return "etc";
+      default:
+        return "all";
+    }
+  };
 
   const handleCategoryClick = (category: string) => {
     setCurrentCategory(category);
-
-    const params =
-      category !== "전체" ? { params: { category: category } } : {};
-
-    axiosInstance
-      .get("/helpdesk/question", params)
-      .then((response) => {
-        setQuestions(response.data.questionList);
-      })
-      .catch((error) => {
-        console.log("카테고리 검색 실패: ", error);
-      });
   };
 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -111,7 +120,7 @@ const Helpdesk = () => {
   const handlePostQuestion = () => {
     axiosInstance
       .post("/helpdesk/question/", {
-        category: postCategory,
+        category: getCategoryCode(postCategory),
         title: postTitle,
         content: postContent,
       })
@@ -195,9 +204,15 @@ const Helpdesk = () => {
           <span style={fonts.HEADING_LG_BOLD}>프록토매틱 매뉴얼</span>
         </div>
         <div className={styles.manualWrap}>
-          <div className={styles.manualItem}>시험 시작하기</div>
-          <div className={styles.manualItem}>시험 예약하기</div>
-          <div className={styles.manualItem}>응시자 영상 다시보기</div>
+          <div className={styles.manualItem} style={{ height: "8vh" }}>
+            시험 시작하기
+          </div>
+          <div className={styles.manualItem} style={{ height: "8vh" }}>
+            시험 예약하기
+          </div>
+          <div className={styles.manualItem} style={{ height: "8vh" }}>
+            응시자 영상 다시보기
+          </div>
         </div>
       </div>
 
@@ -210,19 +225,19 @@ const Helpdesk = () => {
           <div className={styles.questionContent}>
             <div className={styles.questionHeader}>
               <div className={styles.category}>
-                {categories.map((category) => (
-                  <span
-                    key={category}
-                    className={styles.categoryItem}
-                    style={{
-                      fontWeight:
-                        currentCategory === category ? "bold" : "normal",
-                    }}
-                    onClick={() => handleCategoryClick(category)}
-                  >
-                    <span> </span>
-                    {category}
-                    <span> /</span>
+                {categories.map((category, index) => (
+                  <span key={category} className={styles.categoryItemWrapper}>
+                    <span
+                      className={styles.categoryItem}
+                      style={{
+                        fontWeight:
+                          currentCategory === category ? "bold" : "normal",
+                      }}
+                      onClick={() => handleCategoryClick(category)}
+                    >
+                      {category}
+                    </span>
+                    {index < categories.length - 1 && <span> / </span>}
                   </span>
                 ))}
               </div>
@@ -251,75 +266,93 @@ const Helpdesk = () => {
               <table className={styles.table}>
                 <thead className={styles.tableTitle}>
                   <tr>
-                    <th>구분</th>
-                    <th>제목</th>
-                    <th>작성자</th>
+                    <th style={{ width: "20%" }}>구분</th>
+                    <th style={{ width: "60%" }}>제목</th>
+                    <th style={{ width: "20%" }}>작성자</th>
                   </tr>
                 </thead>
                 <tbody className={styles.tableBody}>
-                  {notifications.map((item, index) => (
-                    <tr
-                      key={index}
-                      style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
-                      onClick={() =>
-                        getDetailModalContent("notification", item.id)
-                      }
-                    >
-                      <td
-                        style={{
-                          textAlign: "center",
-                          fontWeight: "bold",
-                          color: "var(--GRAY_600)",
-                        }}
+                  {notifications.map((item, index) => {
+                    const { date, time } = formatDateAndTime(
+                      new Date(item.created_at)
+                    );
+                    return (
+                      <tr
+                        key={index}
+                        style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
+                        onClick={() =>
+                          getDetailModalContent("notification", item.id)
+                        }
                       >
-                        공지
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                        <div
-                          style={{
-                            color: "var(--GRAY_500)",
-                            ...fonts.MD_REGULAR,
-                          }}
-                        >
-                          {item.created_at}
-                        </div>
-                      </td>
-                      <td />
-                    </tr>
-                  ))}
-                  {questions.map((item, index) => (
-                    <tr
-                      key={index}
-                      onClick={() => getDetailModalContent("question", item.id)}
-                    >
-                      <td
-                        style={{
-                          textAlign: "center",
-                          fontWeight: "bold",
-                          color: "var(--GRAY_600)",
-                        }}
+                        <td>공지</td>
+                        <td style={{ textAlign: "start" }}>
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              color: "var(--BLACK)",
+                            }}
+                          >
+                            {item.title}
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--GRAY_500)",
+                              ...fonts.MD_REGULAR,
+                            }}
+                          >
+                            {date} {time}
+                          </div>
+                        </td>
+                        <td />
+                      </tr>
+                    );
+                  })}
+                  {questions.map((item, index) => {
+                    const { date, time } = formatDateAndTime(
+                      new Date(item.created_at)
+                    );
+                    return (
+                      <tr
+                        key={index}
+                        onClick={() =>
+                          getDetailModalContent("question", item.id)
+                        }
                       >
-                        {item.category}
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                        <div
-                          style={{
-                            color: "var(--GRAY_500)",
-                            ...fonts.MD_REGULAR,
-                          }}
-                        >
-                          {item.created_at}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ textAlign: "center" }}>
-                          {item.organizer}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          {item.category === "usage"
+                            ? "이용 방법"
+                            : item.category === "coin"
+                            ? "적립금"
+                            : item.category === "etc"
+                            ? "기타"
+                            : item.category}
+                        </td>
+                        <td style={{ textAlign: "start" }}>
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              color: "var(--BLACK)",
+                            }}
+                          >
+                            {item.title}
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--GRAY_500)",
+                              ...fonts.MD_REGULAR,
+                            }}
+                          >
+                            {date} {time}
+                          </div>
+                        </td>
+                        <td>
+                          <div>
+                            <div>{item.organizer}</div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -334,9 +367,14 @@ const Helpdesk = () => {
           handleButton={handlePostQuestion}
         >
           <div className={styles.postModal}>
-            <div>
-              <div className={styles.dropdown} onClick={handleDropdownToggle}>
-                <div className={styles.dropdownLabel}>{postCategory}</div>
+            <div className={styles.postTitle}>
+              <div className={styles.dropdown}>
+                <div
+                  className={styles.dropdownLabel}
+                  onClick={handleDropdownToggle}
+                >
+                  &nbsp;&nbsp;{postCategory}
+                </div>
                 {isDropdownOpen && (
                   <div className={styles.dropdownContent}>
                     {options.map((option, index) => (
@@ -358,14 +396,18 @@ const Helpdesk = () => {
                 onChange={(value) => setPostTitle(value)}
               />
             </div>
-            <Textfield
-              label="질문 내용"
-              value={postContent}
-              onChange={(value) => setPostContent(value)}
-            />
+            <div style={{ height: "50%" }}>
+              <Textfield
+                label="질문 내용"
+                value={postContent}
+                inputType="textarea"
+                onChange={(value) => setPostContent(value)}
+              />
+            </div>
           </div>
         </HostModal>
       )}
+
       {isDetailModalOpen && (
         <HostModal onClose={handleDetailModalClose} title={detailModalTitle}>
           <div className={styles.postModal}>{detailModalContext}</div>

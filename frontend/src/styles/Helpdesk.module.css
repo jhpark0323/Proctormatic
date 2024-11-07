@@ -100,7 +100,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.2rem;
 }
 
@@ -110,7 +110,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
 .category {
@@ -129,7 +129,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: 40vh;
 }
 
 .tableTitle {
@@ -147,14 +147,20 @@
 }
 
 .tableBody {
-  height: 20vh;
   border-collapse: collapse;
   border-bottom: 1px solid var(--BLACK);
 }
 
 .tableBody tr {
+  height: 7vh;
   border-collapse: collapse;
   border-bottom: 1px solid var(--BLACK);
+}
+
+.tableBody tr td {
+  text-align: center;
+  color: var(--GRAY_600);
+  font-weight: bold;
 }
 
 .tableSeparator {
@@ -164,19 +170,33 @@
 }
 
 .postModal {
+  width: 100%;
+}
+
+.postTitle {
+  display: flex;
+  align-items: end;
+  margin-bottom: 1rem;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 /* 드롭다운 */
 .dropdown {
   position: relative;
-  width: 100%;
-  margin-bottom: 1rem;
+  width: 30%;
+  display: flex;
+  justify-content: center;
+  align-items: end;
 }
 
 .dropdownLabel {
-  padding: 0.5rem;
+  padding: 0.3rem 0;
   border: 1px solid var(--GRAY_300);
+  border-radius: 0.3rem;
   cursor: pointer;
+  align-items: center;
+  width: 100%;
 }
 
 .dropdownContent {
@@ -186,12 +206,7 @@
   right: 0;
   background: var(--WHITE);
   border: 1px solid var(--GRAY_300);
-  display: none;
   z-index: 1;
-}
-
-.dropdown:hover .dropdownContent {
-  display: block;
 }
 
 .dropdownItem {
