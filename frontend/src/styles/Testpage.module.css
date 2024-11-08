@@ -118,9 +118,6 @@
   margin-top: 75px;
 }
 
-.makeTestContentItem {
-}
-
 .goBack {
   display: flex;
   align-items: center;
@@ -262,4 +259,37 @@
   border-radius: 999px;
   background: var(--PRIMARY);
   color: var(--WHITE);
+}
+
+.dropdownWrapper {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 2rem;
+  right: 0;
+  background-color: var(--WHITE);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 100;
+  width: 60px;
+}
+
+.dropdownMenu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdownMenu li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.dropdownMenu li:hover {
+  background-color: var(--LIGHT_GRAY);
 }

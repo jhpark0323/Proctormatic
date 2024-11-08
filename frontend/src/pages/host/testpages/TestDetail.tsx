@@ -11,7 +11,7 @@ interface Taker {
   taker_id: bigint;
   name: string;
   verification_rate: number;
-  upload_rate: number;
+  stored_state: number;
 }
 
 interface Exam {
@@ -42,6 +42,21 @@ const TestDetail = () => {
   }, [id]);
 
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+  const deleteTest = () => {
+    axiosInstance
+      .delete(`/exam/${id}/`)
+      .then((response) => {
+        console.log(response);
+        navigate(-1);
+      })
+      .catch((error) => {
+        console.log("시험 삭제 실패: ", error);
+      });
+  };
 
   return (
     <>
@@ -52,7 +67,18 @@ const TestDetail = () => {
             <FaArrowLeft style={{ opacity: "0.5" }} />
             <div style={fonts.HEADING_SM_BOLD}>{examData?.title}</div>
           </div>
-          <TbDotsVertical />
+          <div className={styles.dropdownWrapper}>
+            <div onClick={handleDropdownToggle}>
+              <TbDotsVertical />
+            </div>
+            {isDropdownOpen && (
+              <div className={styles.dropdownMenu}>
+                <ul>
+                  <li onClick={deleteTest}>삭제</li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={styles.detailContentWrap}>
@@ -128,7 +154,7 @@ const TestDetail = () => {
                           </div>
                         </td>
                       </td>
-                      <td>{taker.upload_rate}%</td>
+                      <td>{taker.stored_state}%</td>
                     </tr>
                   ))}
                 </tbody>

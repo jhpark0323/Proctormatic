@@ -95,10 +95,13 @@ const TestCostInfo = ({
             className={styles.coinAmount}
             style={{
               ...fonts.HEADING_MD_BOLD,
-              color: currentCoinAmount - currentCost < 0 ? "var(--DELETE)" : "",
+              color:
+                currentCoinAmount - (currentCost || 0) < 0
+                  ? "var(--DELETE)"
+                  : "",
             }}
           >
-            {currentCoinAmount - currentCost}
+            {currentCoinAmount - (currentCost || 0)}
           </div>
 
           <div className={styles.makeTestContentTitle}>C</div>
