@@ -69,13 +69,20 @@ const MakeTest = () => {
   const [currentCost, setCurrentCost] = useState(0);
 
   useEffect(() => {
-    const diff = calculateTimeDifference(
-      testForm.date,
-      testForm.start_time,
-      testForm.end_time
-    );
+    // 시간 차이 계산 (시간이 없으면 기본값 0)
+    const diff =
+      testForm.start_time && testForm.end_time
+        ? calculateTimeDifference(
+            testForm.date,
+            testForm.start_time,
+            testForm.end_time
+          )
+        : 0;
     setTimeDifference(diff);
-    setCurrentCost(diff * 10 * expectedTaker);
+
+    // 비용 계산 (값이 없으면 0으로 처리)
+    const cost = diff * 10 * (expectedTaker || 0);
+    setCurrentCost(cost);
   }, [testForm, expectedTaker]);
 
   // 시험 생성 함수
@@ -86,6 +93,7 @@ const MakeTest = () => {
       exit_time: testForm.exit_time || testForm.end_time,
     };
 
+    // 필수 입력 값 체크
     if (!completeForm.title) {
       CustomToast("제목을 입력해주세요.");
       return;
@@ -96,18 +104,24 @@ const MakeTest = () => {
       !completeForm.end_time ||
       !expectedTaker
     ) {
-      CustomToast("비어있는 칸이 있습니다!");
+      CustomToast("시간을 설정해주세요.");
       return;
     }
 
-    try {
-      const response = await axiosInstance.post("/exam/", completeForm);
-      CustomToast(response.data.message);
-      navigate("/host/myTest");
-    } catch (error) {
-      CustomToast("시험 생성 실패");
-      console.error("시험 생성 실패: ", error);
-    }
+    axiosInstance
+      .post("/exam/", completeForm)
+      .then((response) => {
+        CustomToast(response.data.message);
+        navigate("/host/myTest");
+      })
+      .catch((error) => {
+        if (error.response?.status === 409) {
+          CustomToast(error.response.data.message);
+        } else {
+          CustomToast("다시 시도해주세요.");
+        }
+        console.error("시험 생성 실패: ", error);
+      });
   };
 
   return (
