@@ -111,12 +111,13 @@
 
 .button {
   display: inline-flex;
-  height: 30px;
+  height: 40px;
   padding: 5px 30px;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   font-size: small;
+  border: none;
 }
 
 .button.rectangular {

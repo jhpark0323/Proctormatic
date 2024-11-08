@@ -22,6 +22,7 @@ interface CustomButtonProps {
   type?: "rectangular" | "oval";
   children: React.ReactNode;
   onClick?: () => void;
+  buttonType?: "button" | "submit" | "reset"; // HTML button의 type 속성
 }
 
 const CustomButton = ({
@@ -30,17 +31,19 @@ const CustomButton = ({
   type = "oval",
   children,
   onClick,
+  buttonType = "button", // HTML button의 type을 buttonType으로 설정
 }: CustomButtonProps) => {
   return (
-    <div
+    <button
       className={`${styles.button} ${styles[type]} ${styles[style]} ${
         state === "disabled" ? styles.disabled : ""
       }`}
       onClick={state !== "disabled" ? onClick : undefined}
       style={{ cursor: state === "disabled" ? "not-allowed" : "pointer" }}
+      type={buttonType} // HTML button의 type 설정
     >
       {children}
-    </div>
+    </button>
   );
 };
 
