@@ -17,9 +17,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = 'api/media/'
-
 # env 연결
 env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env(
@@ -82,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.CustomAuthFailedMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -241,9 +239,7 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'api/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATICFILES_DIRS = []
 
 # S3 설정
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
@@ -257,6 +253,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 
 # 미디어 파일 URL 설정
+MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 
 # Default primary key field type
