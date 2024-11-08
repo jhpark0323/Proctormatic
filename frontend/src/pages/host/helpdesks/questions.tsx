@@ -4,20 +4,39 @@ import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import CustomButton from "@/components/CustomButton";
 import Textfield from "@/components/Textfield";
+import HostModal from "@/components/HostModal";
+import { FaRegTrashAlt } from "react-icons/fa";
+import { GoPencil } from "react-icons/go";
+import { FaCheck } from "react-icons/fa";
+import { formatDateAndTime } from "@/utils/handleDateTimeChange";
+import { useAuthStore } from "@/store/useAuthStore";
+import { getCategoryEng, getCategoryKor } from "@/hooks/getCategory";
+import { CustomToast } from "@/components/CustomToast";
 
 interface Notification {
   id: number;
   title: string;
   category: "공지사항";
+  content: string;
   created_at: string;
+}
+
+interface Answer {
+  id: number;
+  author: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Question {
   id: number;
   category: string;
   title: string;
+  content: string;
   created_at: string;
   organizer: string;
+  answerList: Answer[];
 }
 
 const Questions = () => {
@@ -25,6 +44,21 @@ const Questions = () => {
   const [currentCategory, setCurrentCategory] = useState("전체");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedNotification, setSelectedNotification] =
+    useState<Notification | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
+    null
+  );
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const { user } = useAuthStore();
+
+  const [postCategory, setPostCategory] = useState("카테고리 선택");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [postTitle, setPostTitle] = useState("");
+  const [postContent, setPostContent] = useState("");
+
+  const [answer, setAnswer] = useState("");
 
   useEffect(() => {
     fetchQuestions();
@@ -38,7 +72,7 @@ const Questions = () => {
           category:
             currentCategory === "전체"
               ? "all"
-              : getCategoryCode(currentCategory),
+              : getCategoryEng(currentCategory),
         },
       })
       .then((response) => {
@@ -60,21 +94,158 @@ const Questions = () => {
       });
   };
 
-  const getCategoryCode = (category: string) => {
-    switch (category) {
-      case "이용 방법":
-        return "usage";
-      case "적립금":
-        return "coin";
-      case "기타":
-        return "etc";
-      default:
-        return "all";
-    }
-  };
-
   const handleCategoryClick = (category: string) => {
     setCurrentCategory(category);
+  };
+
+  // 디테일 모달 관련
+  const handleQuestionClick = (question: Question) => {
+    axiosInstance
+      .get(`/helpdesk/question/${question.id}/`)
+      .then((response) => {
+        const data = response.data;
+        setSelectedQuestion({
+          id: question.id,
+          category: data.category,
+          title: data.title,
+          content: data.content,
+          created_at: data.created_at,
+          organizer: data.organizer,
+          answerList: data.answerList,
+        });
+        setIsDetailModalOpen(true);
+      })
+      .catch((error) => {
+        console.error("질문 상세 조회 실패:", error);
+      });
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    axiosInstance
+      .get(`/helpdesk/notification/${notification.id}/`)
+      .then((response) => {
+        const data = response.data;
+        setSelectedNotification({
+          id: data.id,
+          title: data.title,
+          category: "공지사항",
+          content: data.content,
+          created_at: data.created_at,
+        });
+        setIsDetailModalOpen(true);
+      })
+      .catch((error) => {
+        console.error("공지 상세 조회 실패:", error);
+      });
+  };
+
+  const handleDetailModalClose = () => {
+    setIsDetailModalOpen(false);
+    setSelectedQuestion(null);
+    setSelectedNotification(null);
+    setAnswer("");
+  };
+
+  // 글 작성하기
+  const handlePostModalOpen = () => {
+    setIsPostModalOpen(true);
+  };
+
+  const handlePostModalClose = () => {
+    setIsPostModalOpen(false);
+    setPostTitle("");
+    setPostContent("");
+    setPostCategory("카테고리 선택");
+  };
+
+  // 카테고리 드롭다운
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleOptionClick = (option: string) => {
+    setPostCategory(option);
+    setIsDropdownOpen(false);
+  };
+
+  const postQuestion = () => {
+    axiosInstance
+      .post("/helpdesk/question/", {
+        category: getCategoryEng(postCategory),
+        title: postTitle,
+        content: postContent,
+      })
+      .then(() => {
+        setIsPostModalOpen(false);
+        setPostTitle("");
+        setPostContent("");
+        setPostCategory("카테고리 선택");
+        fetchQuestions();
+      })
+      .catch((error) => {
+        console.error("질문 등록 실패:", error);
+      });
+  };
+
+  // 질문 삭제
+  const deleteQuestion = (answerId: number) => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .delete(`/helpdesk/question/${selectedQuestion.id}`)
+      .then(() => {
+        fetchQuestions();
+        handleDetailModalClose();
+        CustomToast("질문이 삭제되었습니다.");
+      })
+      .catch((error) => {
+        console.error("질문 삭제 실패:", error);
+      });
+  };
+
+  // 댓글 작성
+  const fetchQuestion = (questionId: number) => {
+    axiosInstance
+      .get(`/helpdesk/question/${questionId}/`)
+      .then((response) => {
+        setSelectedQuestion(response.data);
+      })
+      .catch((error) => {
+        console.error("질문 데이터를 가져오지 못했습니다:", error);
+      });
+  };
+
+  const postAnswer = () => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .post(`/helpdesk/question/${selectedQuestion.id}/answer/`, {
+        content: answer,
+      })
+      .then((response) => {
+        if (response.status === 201) {
+          fetchQuestion(selectedQuestion.id);
+          setAnswer("");
+        }
+      })
+      .catch((error) => {
+        console.error("답변 등록 실패:", error);
+      });
+  };
+
+  // 댓글 삭제
+  const deleteAnswer = (answerId: number) => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .delete(`/helpdesk/question/${selectedQuestion.id}/answer/${answerId}`)
+      .then(() => {
+        fetchQuestion(selectedQuestion.id);
+        CustomToast("질문이 삭제되었습니다.");
+      })
+      .catch((error) => {
+        console.error("질문 삭제 실패:", error);
+      });
   };
 
   return (
@@ -116,14 +287,13 @@ const Questions = () => {
               <CustomButton
                 style="primary_fill"
                 type="rectangular"
-                onClick={() => console.log("글 작성 클릭")}
+                onClick={handlePostModalOpen}
               >
                 글 작성하기
               </CustomButton>
             </div>
           </div>
 
-          {/* Questions & Notifications Table */}
           <div className={styles.questionTable}>
             <table className={styles.table}>
               <thead className={styles.tableTitle}>
@@ -134,11 +304,11 @@ const Questions = () => {
                 </tr>
               </thead>
               <tbody className={styles.tableBody}>
-                {notifications.map((item, index) => (
+                {notifications.map((item) => (
                   <tr
-                    key={index}
+                    key={item.id}
                     style={{ backgroundColor: "rgba(200, 59, 56, 0.1)" }}
-                    onClick={() => console.log(`공지 ${item.id} 클릭`)}
+                    onClick={() => handleNotificationClick(item)}
                   >
                     <td>공지</td>
                     <td style={{ textAlign: "start" }}>
@@ -151,12 +321,9 @@ const Questions = () => {
                     <td />
                   </tr>
                 ))}
-                {questions.map((item, index) => (
-                  <tr
-                    key={index}
-                    onClick={() => console.log(`질문 ${item.id} 클릭`)}
-                  >
-                    <td>{item.category}</td>
+                {questions.map((item) => (
+                  <tr key={item.id} onClick={() => handleQuestionClick(item)}>
+                    <td>{getCategoryKor(item.category)}</td>
                     <td style={{ textAlign: "start" }}>
                       <div
                         style={{ fontWeight: "bold", color: "var(--BLACK)" }}
@@ -174,6 +341,143 @@ const Questions = () => {
           </div>
         </div>
       </div>
+
+      {/* 질문 상세 모달 */}
+      {isDetailModalOpen && (selectedQuestion || selectedNotification) && (
+        <HostModal
+          onClose={handleDetailModalClose}
+          title={
+            selectedQuestion
+              ? selectedQuestion.title
+              : selectedNotification?.title
+          }
+          isButtonHidden={selectedNotification ? false : true}
+        >
+          <div className={styles.postModal}>
+            <div className={styles.questionAnswerBody}>
+              {selectedQuestion ? (
+                <div>
+                  <div className={styles.iconWrapper}>
+                    <FaRegTrashAlt
+                      onClick={() => deleteQuestion(selectedQuestion.id)}
+                    />
+                    <GoPencil
+                      onClick={() => console.log("수정 기능 추가 예정")}
+                    />
+                  </div>
+                  <div>{selectedQuestion.content}</div>
+                </div>
+              ) : (
+                <div>
+                  <div>{selectedNotification?.content}</div>
+                </div>
+              )}
+            </div>
+            {selectedQuestion && (
+              <div className={styles.questionAnswerContainer}>
+                <div className={styles.questionPostBox}>
+                  <Textfield
+                    placeholder="답변 입력"
+                    value={answer}
+                    onChange={setAnswer}
+                  />
+                  <CustomButton onClick={postAnswer}>
+                    <FaCheck style={{ color: "var(--WHITE)" }} />
+                  </CustomButton>
+                </div>
+                {selectedQuestion.answerList.length > 0 &&
+                  selectedQuestion.answerList.map((item) => {
+                    const { date, time } = formatDateAndTime(
+                      new Date(item.updated_at)
+                    );
+                    return (
+                      <div key={item.id}>
+                        <div className={styles.detailCommentAuthor}>
+                          {item.author}
+                          {user?.name === item.author && (
+                            <div className={styles.detailCommentIcon}>
+                              <FaRegTrashAlt
+                                onClick={() => deleteAnswer(item.id)}
+                              />
+                              <GoPencil
+                                onClick={() =>
+                                  console.log("수정 기능 추가 예정")
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div className={styles.detailCommentContent}>
+                          {item.content}
+                          <div
+                            style={{
+                              color: "var(--GRAY_500)",
+                              ...fonts.MD_REGULAR,
+                            }}
+                          >
+                            {date} {time}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </HostModal>
+      )}
+
+      {/* 글 작성 모달 */}
+      {isPostModalOpen && (
+        <HostModal
+          onClose={handlePostModalClose}
+          title="질문 작성하기"
+          buttonLabel="질문 게시하기"
+          handleButton={postQuestion}
+        >
+          <div className={styles.postModal}>
+            <div className={styles.postTitle}>
+              <div className={styles.dropdown}>
+                <div
+                  className={styles.dropdownLabel}
+                  onClick={handleDropdownToggle}
+                >
+                  &nbsp;&nbsp;{postCategory}
+                </div>
+                {isDropdownOpen && (
+                  <div className={styles.dropdownContent}>
+                    {categories
+                      .filter((cat) => cat !== "전체")
+                      .map((option, index) => (
+                        <div
+                          key={index}
+                          className={styles.dropdownItem}
+                          onClick={() => handleOptionClick(option)}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+              <Textfield
+                label="제목"
+                maxLength={100}
+                value={postTitle}
+                onChange={(value) => setPostTitle(value)}
+              />
+            </div>
+            <div style={{ height: "50%" }}>
+              <Textfield
+                label="질문 내용"
+                value={postContent}
+                inputType="textarea"
+                onChange={(value) => setPostContent(value)}
+              />
+            </div>
+          </div>
+        </HostModal>
+      )}
     </div>
   );
 };
