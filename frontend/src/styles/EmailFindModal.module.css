@@ -321,3 +321,53 @@
     transform: rotate(360deg); /* 한 바퀴 회전 */
   }
 }
+
+
+.resultBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.findResultBox {
+  width: 350px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgb(223, 223, 223);
+}
+
+.foundEmail {
+  color: rgb(34, 118, 220);
+  font-size: 18px;
+  font-family: var(--font-md_medium-fontfamily);
+  line-height: 24px;
+}
+
+.noticeMessage {
+  font-family: var(--font-md_regular-fontfamily);
+  font-size: 11px;
+  line-height: 16px;
+  margin-top: 8px;
+  align-self: self-start;
+  margin-left: 50px;
+  margin-bottom: 30px;
+}
+
+.joinedOn {
+  color: rgb(129, 129, 129);
+  font-size: 14px;
+  font-family: var(--font-md_regular-fontfamily);
+  line-height: 24px;
+  text-align: center;
+}
+
+.noResult {
+  font-size: 16px;
+  font-family: var(--font-md_regular-fontfamily);
+  line-height: 24px;
+  color: rgb(189, 189, 189);
+}
