@@ -12,9 +12,10 @@ from django_redis import get_redis_connection
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from .serializers import CustomTokenObtainPairSerializer, SendEmailVerificationSerializer, EmailVerificationSerializer, \
     UserSerializer, UserInfoSerializer, EditMarketingSerializer, FindEmailRequestSerializer, \
-    FindEmailResponseSerializer, ResetPasswordRequestSerializer, ResetPasswordEmailCheckSerializer, LoginSerializer
+    FindEmailResponseSerializer, ResetPasswordRequestSerializer, ResetPasswordEmailCheckSerializer, LoginSerializer, \
+    ResetPasswordSerializer
 from .swagger_schemas import email_verification_schema, user_schema, token_schema, find_email_schema, \
-    reset_password_schema
+    reset_password_schema, reset_password_without_login_schema
 
 User = get_user_model()
 
@@ -39,9 +40,11 @@ def handle_email_verification(request):
         serializer = SendEmailVerificationSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data.get('email')
+            re_enter = serializer.validated_data.get('re_enter')
 
-            if User.objects.filter(email=email).exists():
-                return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.'}, status=status.HTTP_409_CONFLICT)
+            if re_enter == False:
+                if User.objects.filter(email=email).exists():
+                    return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.'}, status=status.HTTP_409_CONFLICT)
 
             code = generate_verification_code()
             send_verification_email(email, code)
@@ -207,6 +210,33 @@ def reset_password(request):
             password1 = serializer.validated_data.get('password1')
             password2 = serializer.validated_data.get('password2')
 
+            if password1 != password2:
+                return Response({'message': '비밀번호가 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if len(password1) < 8:
+                return Response({'message': '비밀번호는 최소 8자리입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if check_password(password1, user.password):
+                return Response({'message': '기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
+
+            user.set_password(password1)
+            user.save()
+            return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
+
+
+@reset_password_without_login_schema
+@api_view(['PUT'])
+@permission_classes([AllowAny])
+def reset_password_without_login(request):
+    if request.method == 'PUT':
+        serializer = ResetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            password1 = serializer.validated_data.get('password1')
+            password2 = serializer.validated_data.get('password2')
+
+            user = User.objects.filter(email=email, is_active=True).first()
+
+            if user is None:
+                return Response({'message': '가입되지 않은 사용자입니다.'}, status=status.HTTP_404_NOT_FOUND)
             if password1 != password2:
                 return Response({'message': '비밀번호가 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if len(password1) < 8:

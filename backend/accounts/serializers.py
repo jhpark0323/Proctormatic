@@ -25,6 +25,7 @@ class SendEmailVerificationSerializer(serializers.Serializer):
             'invalid': '이메일 형식을 확인해주세요.'
         }
     )
+    re_enter = serializers.BooleanField(required=False, default=False)
 
 class EmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(
@@ -177,3 +178,22 @@ class ResetPasswordEmailCheckSerializer(serializers.Serializer):
     password2 = serializers.CharField(required=True, error_messages={
         'required': '비밀번호 확인이 입력되지 않았습니다.'
     })
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        error_messages={
+            'required': '이메일을 입력해주세요.',
+            'blank': '이메일을 입력해주세요.',
+            'invalid': '잘못된 이메일 형식입니다.'
+        }
+    )
+    password1 = serializers.CharField(
+        error_messages={
+            'required': '비밀번호가 입력되지 않았습니다.'
+        }
+    )
+    password2 = serializers.CharField(
+        error_messages={
+            'required': '비밀번호 확인이 입력되지 않았습니다.'
+        }
+    )
