@@ -10,7 +10,9 @@ import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
 import HeaderWhite from "@/components/HeaderWhite";
 import ReservationDateTime from "./ReservationDateTime";
+import TestCostInfo from "./TestCostInfo";
 import { formatDateAndTime } from "@/utils/handleDateTimeChange";
+import { calculateTimeDifference } from "@/utils/calculateTimeDifference";
 
 interface TestForm {
   title: string;
@@ -61,11 +63,26 @@ const MakeTest = () => {
     cost: 0,
   });
 
+  // 시험 시간 및 비용 계산
+  const [expectedTaker, setExpectedTaker] = useState(testForm.expected_taker);
+  const [timeDifference, setTimeDifference] = useState(0);
+  const [currentCost, setCurrentCost] = useState(0);
+
+  useEffect(() => {
+    const diff = calculateTimeDifference(
+      testForm.date,
+      testForm.start_time,
+      testForm.end_time
+    );
+    setTimeDifference(diff);
+    setCurrentCost(diff * 10 * expectedTaker);
+  }, [testForm, expectedTaker]);
+
   // 시험 생성 함수
   const submitTestForm = async () => {
     const completeForm = {
       ...testForm,
-      cost: testForm.expected_taker * 60,
+      cost: currentCost,
       exit_time: testForm.exit_time || testForm.end_time,
     };
 
@@ -77,7 +94,7 @@ const MakeTest = () => {
       !completeForm.date ||
       !completeForm.start_time ||
       !completeForm.end_time ||
-      !completeForm.expected_taker
+      !expectedTaker
     ) {
       CustomToast("비어있는 칸이 있습니다!");
       return;
@@ -130,7 +147,7 @@ const MakeTest = () => {
               }
             />
 
-            {/* 시험 날짜 및 시간 설정 컴포넌트 */}
+            {/* 시험 날짜 및 시간 설정 */}
             <ReservationDateTime
               testForm={testForm}
               setTestForm={setTestForm}
@@ -138,102 +155,22 @@ const MakeTest = () => {
               setIsExitPermitted={setIsExitPermitted}
             />
 
-            <div className={styles.makeTestContentItem}>
-              <div className={styles.makeTestContentTitle}>서비스 요금</div>
-              <div className={styles.newTestInfoBox}>
-                <div className={styles.testInfoItem}>
-                  <div className={styles.newTestInfoTitle}>총 시험 시간</div>
-                  <div
-                    className={styles.testInfoContent}
-                    style={fonts.HEADING_LG_BOLD}
-                  >
-                    100%
-                  </div>
-                </div>
-                <div className={styles.newTestSeperate} />
-                <div className={styles.testInfoItem}>
-                  <div className={styles.newTestInfoTitle}>10분 당</div>
-                  <div
-                    className={styles.testInfoContent}
-                    style={fonts.HEADING_LG_BOLD}
-                  >
-                    10C
-                  </div>
-                </div>
-                <div className={styles.newTestSeperate} />
-                <div className={styles.testInfoItem}>
-                  <div className={styles.newTestInfoTitle}>서비스 요금</div>
-                  <div
-                    className={styles.testInfoContent}
-                    style={fonts.HEADING_LG_BOLD}
-                  >
-                    60C/명
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className={styles.makeTestContentItem}>
-              <div className={styles.makeTestContentTitle}>응시 인원</div>
-              <div className={styles.peopelNumWrap}>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "1.5rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <div style={{ width: "15%" }}>
-                    <Textfield
-                      placeholder="0"
-                      maxLength={3}
-                      value={testForm.expected_taker.toString()}
-                      onChange={(value) =>
-                        setTestForm({
-                          ...testForm,
-                          expected_taker: parseInt(value) || 0,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className={styles.makeTestContentTitle}>명</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "end" }}>
-                  <div
-                    className={styles.coinAmount}
-                    style={fonts.HEADING_MD_BOLD}
-                  >
-                    {testForm.expected_taker * 60}
-                  </div>
-                  <div className={styles.makeTestContentTitle}>C</div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={styles.makeTestContentItem}
-              style={{ display: "flex", justifyContent: "space-between" }}
-            >
-              <div>
-                <div>결제 후 적립금</div>
-                <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
-                  * 수정 후 적립금 차액은 다시 돌려드려요.
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "end" }}>
-                <div
-                  className={styles.coinAmount}
-                  style={fonts.HEADING_MD_BOLD}
-                >
-                  {currentCoinAmount - testForm.expected_taker * 60}
-                </div>
-                <div className={styles.makeTestContentTitle}>C</div>
-              </div>
-            </div>
+            {/* 서비스 요금 및 응시 인원 설정 */}
+            <TestCostInfo
+              timeDifference={timeDifference}
+              expectedTaker={expectedTaker}
+              setExpectedTaker={(value) => {
+                setExpectedTaker(value);
+                setTestForm({ ...testForm, expected_taker: value });
+              }}
+              currentCost={currentCost}
+              currentCoinAmount={currentCoinAmount}
+            />
           </div>
         </div>
 
         <div className={styles.submitButton}>
-          <CustomButton onClick={() => submitTestForm()}>
+          <CustomButton onClick={submitTestForm}>
             <span style={fonts.MD_SEMIBOLD}>결제 및 예약하기</span>
           </CustomButton>
         </div>

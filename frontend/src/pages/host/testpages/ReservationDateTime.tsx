@@ -10,9 +10,20 @@ import styles from "@/styles/Testpage.module.css";
 import { formatDateAndTime } from "@/utils/handleDateTimeChange";
 import { fonts } from "@/constants";
 
+interface TestForm {
+  title: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  exit_time?: string;
+  expected_taker: number;
+  cheer_msg?: string;
+  cost: number;
+}
+
 interface ReservationDateTimeProps {
-  testForm: any;
-  setTestForm: React.Dispatch<React.SetStateAction<any>>;
+  testForm: TestForm;
+  setTestForm: React.Dispatch<React.SetStateAction<TestForm>>;
   isExitPermitted: boolean;
   setIsExitPermitted: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -29,7 +40,7 @@ const ReservationDateTime = ({
   ) => {
     if (value) {
       const { date, time } = formatDateAndTime(value);
-      setTestForm((prevForm: any) => ({
+      setTestForm((prevForm: TestForm) => ({
         ...prevForm,
         [field]: field === "date" ? date : time,
       }));
