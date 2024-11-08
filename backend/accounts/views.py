@@ -1,5 +1,5 @@
 import re
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import check_password
 from django_redis import get_redis_connection
 
+from .authentications import CustomAuthentication
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from .serializers import CustomTokenObtainPairSerializer, SendEmailVerificationSerializer, EmailVerificationSerializer, \
     UserSerializer, UserInfoSerializer, EditMarketingSerializer, FindEmailRequestSerializer, \
@@ -78,6 +79,7 @@ def handle_email_verification(request):
 
 @user_schema
 @api_view(['GET', 'POST', 'PUT', 'PATCH'])
+@authentication_classes([CustomAuthentication])
 @permission_classes([AllowAny])
 def handle_user(request):
     if request.method == 'POST':
@@ -98,8 +100,6 @@ def handle_user(request):
             return validation_response
 
         user = find_user_by_token(request)
-        if isinstance(user, Response):
-            return user
 
         if request.method == 'GET':
             serializer = UserInfoSerializer(user)
@@ -175,6 +175,7 @@ def find_email(request):
 
 @reset_password_schema
 @api_view(['POST', 'PUT'])
+@authentication_classes([CustomAuthentication])
 @permission_classes([AllowAny])
 def reset_password(request):
     if request.method == 'POST':
@@ -202,8 +203,6 @@ def reset_password(request):
             return validation_response
 
         user = find_user_by_token(request)
-        if isinstance(user, Response):
-            return user
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
         if serializer.is_valid():
@@ -250,17 +249,8 @@ def reset_password_without_login(request):
 
 
 def find_user_by_token(request):
-    if request.auth is None or 'user_id' not in request.auth:
-        return Response({'message': '유효하지 않은 인증 정보입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
     user_id = request.auth['user_id']
     user = User.objects.filter(pk=user_id).first()
-
-    if user is None:
-        return Response({'message': '유저를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-
-    if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_401_UNAUTHORIZED)
     return user
 
 
