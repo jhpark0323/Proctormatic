@@ -1,14 +1,23 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-  // 테스트 환경 설정
+  // 설정한 테스트 환경
   testEnvironment: 'jest-environment-jsdom',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
-
-  // TypeScript와 JSX를 처리하기 위해 ts-jest 사용
+  
+  // Babel 설정을 통해 TypeScript, JSX 변환
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          '@babel/preset-typescript',
+          ['@babel/preset-react', { runtime: 'automatic' }]
+        ]
+      }
+    ]
   },
-
+  
   // 테스트 준비 파일 설정
   setupFilesAfterEnv: ['./jest.setup.ts'],
 
@@ -21,16 +30,16 @@ export default {
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/pages/(.*)$': '<rootDir>/src/pages/$1',
     '^@/store/(.*)$': '<rootDir>/src/store/$1',
-    '^@/utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@/utils/(.*)$': '<rootDir>/src/utils/$1', // 추가된 매핑
   },
 
   // 모듈 디렉토리 설정
   moduleDirectories: ['node_modules', 'src'],
 
-  // transform에서 제외할 패턴
+  // Node_modules 제외 패턴 설정
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
 
-  // Jest 환경 옵션 설정
+  // 환경 옵션 설정
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons']
   },
@@ -42,17 +51,5 @@ export default {
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.[jt]s?(x)',
     '<rootDir>/src/**/?(*.)+(spec|test).[jt]s?(x)'
-  ],
-
-  // 커버리지 수집 설정
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov'],
-  
-  // 전체 파일에 대해 커버리지를 수집하도록 설정
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}', // src 폴더의 모든 ts, tsx 파일
-    '!src/**/*.d.ts', // 타입 선언 파일 제외
-    '!src/**/__mocks__/**', // __mocks__ 폴더 제외
-  ],
+  ]
 };
