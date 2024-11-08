@@ -35,6 +35,7 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
         src={mainLogo}
         alt="Logo"
         onClick={() => navigate("/")}
+        data-testid = 'logo'
       />
 
       {user?.role === "host" && (
@@ -42,18 +43,21 @@ const HeaderWhite: React.FC<HeaderWhiteProps> = ({ onLoginClick }) => {
           <a
             onClick={() => navigate("/host/myTest")}
             className={styles.menuIcon}
+            data-testid = 'host-mytest'
           >
             내 시험 관리
           </a>
           <a
             onClick={() => navigate("/host/helpdesk")}
             className={styles.menuIcon}
+            data-testid = 'host-helpdesk'
           >
             고객 센터
           </a>
           <a
             onClick={() => navigate("/host/mypage")}
             className={styles.menuIcon}
+            data-testid = 'host-mypage'
           >
             마이 페이지
           </a>
