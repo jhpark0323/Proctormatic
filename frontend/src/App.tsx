@@ -20,7 +20,7 @@ import Mypage from "./pages/host/mypages/Mypage";
 import MakeTest from "./pages/host/testpages/MakeTest";
 import MyTest from "./pages/host/testpages/MyTest";
 import TestDetail from "./pages/host/testpages/TestDetail";
-import Helpdesk from "./pages/host/Helpdesk";
+import Helpdesk from "./pages/host/helpdesks/Helpdesk";
 
 function App() {
   useEffect(() => {
