@@ -7,6 +7,7 @@ import { fonts } from "@/constants";
 interface HostModalProps {
   children: ReactNode;
   title?: string;
+  isButtonHidden?: boolean;
   buttonLabel?: string;
   handleButton?: () => void;
   onClose: () => void;
@@ -16,6 +17,7 @@ const HostModal = ({
   children,
   title,
   buttonLabel = "확인",
+  isButtonHidden = false,
   handleButton,
   onClose,
 }: HostModalProps) => {
@@ -35,11 +37,13 @@ const HostModal = ({
           </div>
         </div>
         <div className={styles.modalBody}>{children}</div>
-        <div className={styles.modalButton}>
-          <CustomButton onClick={handleButton ? handleButton : onClose}>
-            {buttonLabel}
-          </CustomButton>
-        </div>
+        {!isButtonHidden && (
+          <div className={styles.modalButton}>
+            <CustomButton onClick={handleButton ? handleButton : onClose}>
+              {buttonLabel}
+            </CustomButton>
+          </div>
+        )}
       </div>
     </div>
   );
