@@ -99,7 +99,7 @@ def handle_user(request):
         if isinstance(validation_response, Response):
             return validation_response
 
-        user = find_user_by_token(request)
+        user = request.user
 
         if request.method == 'GET':
             serializer = UserInfoSerializer(user)
@@ -202,7 +202,7 @@ def reset_password(request):
         if isinstance(validation_response, Response):
             return validation_response
 
-        user = find_user_by_token(request)
+        user = request.user
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
         if serializer.is_valid():
@@ -246,12 +246,6 @@ def reset_password_without_login(request):
             user.set_password(password1)
             user.save()
             return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
-
-
-def find_user_by_token(request):
-    user_id = request.auth['user_id']
-    user = User.objects.filter(pk=user_id).first()
-    return user
 
 
 def is_valid_email(email):
