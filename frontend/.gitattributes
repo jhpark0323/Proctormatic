@@ -1,5 +1,0 @@
-# 텍스트 파일을 LF로 처리
-* text=auto eol=lf
-
-# 특정 폴더나 파일은 Git에서 제외하도록 설정 (coverage 폴더 제외 예시)
-coverage/* -text
