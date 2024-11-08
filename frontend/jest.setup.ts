@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
-// 브라우저 API mocks
-global.matchMedia = global.matchMedia || function(query) {
+// 브라우저 API mocks 설정
+global.matchMedia = global.matchMedia || function (query) {
   return {
     matches: false,
     media: query,
@@ -27,3 +27,6 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 } as any;
+
+// ESM 환경을 위한 빈 export 추가
+export default {};
