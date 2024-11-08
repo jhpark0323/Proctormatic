@@ -3,12 +3,12 @@ from .models import Exam
 from takers.models import Taker, Logs, Abnormal
 
 class ExamSerializer(serializers.ModelSerializer):
-    cheer_msg = serializers.CharField(allow_null=True, required=False)
+    cheer_msg = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     class Meta:
         model = Exam
         fields = ['title', 'date', 'start_time', 'end_time', 'exit_time', 'expected_taker', 'cheer_msg', 'cost']
-        read_only_fields = ['user']  # user는 뷰에서 처리되므로 시리얼라이저에서 읽기 전용
+        read_only_fields = ['user']
 
 class ScheduledExamListSerializer(serializers.ModelSerializer):
     class Meta:
