@@ -118,6 +118,9 @@
   margin-top: 75px;
 }
 
+.makeTestContentItem {
+}
+
 .goBack {
   display: flex;
   align-items: center;
@@ -148,6 +151,7 @@
   display: flex;
   margin-top: 0.5rem;
   gap: 1rem;
+  align-items: baseline;
 }
 
 .endTimeWrap {
