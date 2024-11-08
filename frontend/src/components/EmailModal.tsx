@@ -43,7 +43,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ onClose, email, onVerificationS
   // 인증 이메일 재발송
   const sendVerificationEmail = async () => {
     try {
-      const response = await axiosInstance.post('/users/email/', { email });
+      const response = await axiosInstance.post('/users/email/', { email, re_enter: true });
       if (response.status === 200) {
         CustomToast('인증번호가 발송되었습니다.');
         setTimeLeft(300); // 타이머를 5분으로 리셋

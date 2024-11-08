@@ -11,6 +11,7 @@ interface LoginModalProps {
   onClose: () => void;
   onRegisterClick: () => void;
   onEmailFindClick: () => void;
+  onPwdResetClick: () => void; // 비밀번호 재설정 함수 prop 추가
   title: string;
   subtitle: string | string[];
 }
@@ -19,6 +20,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onRegisterClick,
   onEmailFindClick,
+  onPwdResetClick, // prop 추가
   title,
   subtitle,
 }) => {
@@ -38,7 +40,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   const handleHostLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // 폼 기본 제출 동작 방지
+    e.preventDefault();
     setError('');
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
@@ -106,7 +108,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <div className={styles.finding}>
           <span onClick={onEmailFindClick}>아이디 찾기</span>
           &nbsp;ㆍ&nbsp;
-          <span>비밀번호 재설정</span>
+          <span onClick={onPwdResetClick}>비밀번호 재설정</span> {/* 비밀번호 재설정 함수 호출 */}
         </div>
       </div>
 
