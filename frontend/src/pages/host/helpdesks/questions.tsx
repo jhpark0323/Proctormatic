@@ -59,6 +59,11 @@ const Questions = () => {
   const [postContent, setPostContent] = useState("");
 
   const [answer, setAnswer] = useState("");
+  const [newAnswer, setNewAnswer] = useState("");
+  const [isAvailableEdit, setIsAvailableEdit] = useState(false);
+
+  const [canQuestionEdit, setCanQuestionEdit] = useState(false);
+  const [editedQuestionContent, setEditedQuestionContent] = useState("");
 
   useEffect(() => {
     fetchQuestions();
@@ -203,12 +208,61 @@ const Questions = () => {
       });
   };
 
-  // 댓글 작성
-  const fetchQuestion = (questionId: number) => {
+  // 질문 수정
+  const fetchContent = () => {
+    if (!selectedQuestion) return;
+
     axiosInstance
-      .get(`/helpdesk/question/${questionId}/`)
+      .get(`/helpdesk/question/${selectedQuestion.id}/`)
       .then((response) => {
-        setSelectedQuestion(response.data);
+        setSelectedQuestion((prevQuestion) => {
+          if (!prevQuestion) return null;
+          return {
+            ...prevQuestion,
+            content: response.data.content,
+          };
+        });
+      })
+      .catch((error) => {
+        console.error("새 질문 내용 조회 실패:", error);
+      });
+  };
+
+  const updateQuestion = () => {
+    if (!selectedQuestion) return;
+    setCanQuestionEdit(false);
+
+    axiosInstance
+      .put(`/helpdesk/question/${selectedQuestion.id}/`, {
+        category: selectedQuestion.category,
+        title: selectedQuestion.title,
+        content: editedQuestionContent,
+      })
+      .then(() => {
+        fetchContent();
+        CustomToast("질문이 수정되었습니다.");
+      })
+      .catch((error) => {
+        console.error("질문 수정 실패:", error);
+        CustomToast("다시 시도해주세요.");
+      });
+  };
+
+  // 댓글 작성
+  const fetchAnswer = () => {
+    if (!selectedQuestion) return;
+
+    axiosInstance
+      .get(`/helpdesk/question/${selectedQuestion.id}/`)
+      .then((response) => {
+        setSelectedQuestion((prevQuestion) => {
+          if (!prevQuestion) return null;
+
+          return {
+            ...prevQuestion,
+            answerList: response.data.answerList,
+          };
+        });
       })
       .catch((error) => {
         console.error("질문 데이터를 가져오지 못했습니다:", error);
@@ -224,7 +278,7 @@ const Questions = () => {
       })
       .then((response) => {
         if (response.status === 201) {
-          fetchQuestion(selectedQuestion.id);
+          fetchAnswer();
           setAnswer("");
         }
       })
@@ -240,11 +294,28 @@ const Questions = () => {
     axiosInstance
       .delete(`/helpdesk/question/${selectedQuestion.id}/answer/${answerId}`)
       .then(() => {
-        fetchQuestion(selectedQuestion.id);
+        fetchAnswer();
         CustomToast("질문이 삭제되었습니다.");
       })
       .catch((error) => {
         console.error("질문 삭제 실패:", error);
+      });
+  };
+
+  // 댓글 수정
+  const updateAnswer = (answerId: number) => {
+    if (!selectedQuestion) return;
+    setIsAvailableEdit(false);
+    axiosInstance
+      .put(`/helpdesk/question/${selectedQuestion.id}/answer/${answerId}/`, {
+        content: newAnswer,
+      })
+      .then(() => {
+        fetchAnswer();
+      })
+      .catch((error) => {
+        console.error("질문 수정 실패:", error);
+        CustomToast("다시 시도해주세요.");
       });
   };
 
@@ -358,22 +429,57 @@ const Questions = () => {
               {selectedQuestion ? (
                 <div>
                   <div className={styles.iconWrapper}>
-                    <FaRegTrashAlt
-                      onClick={() => deleteQuestion(selectedQuestion.id)}
-                    />
-                    <GoPencil
-                      onClick={() => console.log("수정 기능 추가 예정")}
-                    />
+                    {/* 수정 버튼과 삭제 버튼 */}
+                    {!canQuestionEdit &&
+                      user?.name === selectedQuestion.organizer && (
+                        <>
+                          <FaRegTrashAlt
+                            onClick={() => deleteQuestion(selectedQuestion.id)}
+                          />
+                          <GoPencil
+                            onClick={() => {
+                              setCanQuestionEdit(true);
+                              setEditedQuestionContent(
+                                selectedQuestion.content
+                              );
+                            }}
+                          />
+                        </>
+                      )}
+
+                    {/* canQuestionEdit이 true일 때 확인 버튼 표시 */}
+                    {canQuestionEdit && (
+                      <button
+                        onClick={updateQuestion}
+                        className={styles.editButton}
+                      >
+                        확인
+                      </button>
+                    )}
                   </div>
-                  <div>{selectedQuestion.content}</div>
+
+                  {/* 질문 내용 수정 또는 표시 */}
+                  {canQuestionEdit ? (
+                    <div className={styles.editQuestionDiv}>
+                      <textarea
+                        value={editedQuestionContent}
+                        onChange={(e) =>
+                          setEditedQuestionContent(e.target.value)
+                        }
+                        className={styles.editTextarea}
+                        style={{ ...fonts.MD_REGULAR }}
+                      />
+                    </div>
+                  ) : (
+                    <div>{selectedQuestion.content}</div>
+                  )}
                 </div>
               ) : (
-                <div>
-                  <div>{selectedNotification?.content}</div>
-                </div>
+                <div>{selectedNotification?.content}</div>
               )}
             </div>
-            {selectedQuestion && (
+
+            {selectedQuestion && !canQuestionEdit && (
               <div className={styles.questionAnswerContainer}>
                 <div className={styles.questionPostBox}>
                   <Textfield
@@ -394,29 +500,52 @@ const Questions = () => {
                       <div key={item.id}>
                         <div className={styles.detailCommentAuthor}>
                           {item.author}
-                          {user?.name === item.author && (
+                          {user?.name === item.author && !isAvailableEdit && (
                             <div className={styles.detailCommentIcon}>
                               <FaRegTrashAlt
                                 onClick={() => deleteAnswer(item.id)}
                               />
                               <GoPencil
-                                onClick={() =>
-                                  console.log("수정 기능 추가 예정")
-                                }
+                                onClick={() => {
+                                  setIsAvailableEdit(true);
+                                  setNewAnswer(item.content);
+                                }}
                               />
                             </div>
                           )}
                         </div>
                         <div className={styles.detailCommentContent}>
-                          {item.content}
-                          <div
-                            style={{
-                              color: "var(--GRAY_500)",
-                              ...fonts.MD_REGULAR,
-                            }}
-                          >
-                            {date} {time}
-                          </div>
+                          {isAvailableEdit ? (
+                            <div className={styles.editDiv}>
+                              <input
+                                type="text"
+                                value={newAnswer}
+                                onChange={(e) => setNewAnswer(e.target.value)}
+                                className={styles.editInput}
+                                style={{
+                                  ...fonts.MD_REGULAR,
+                                }}
+                              />
+                              <button
+                                onClick={() => updateAnswer(item.id)}
+                                className={styles.editButton}
+                              >
+                                확인
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              {item.content}
+                              <div
+                                style={{
+                                  color: "var(--GRAY_500)",
+                                  ...fonts.MD_REGULAR,
+                                }}
+                              >
+                                {date} {time}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
