@@ -16,6 +16,7 @@ class Taker(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
     birth = models.DateField(null=True, blank=True)
+    web_cam = models.CharField(null=True,blank=True,max_length=255)
     id_photo = models.CharField(null=True,blank=True,max_length=255)
     verification_rate = models.IntegerField(null=True, blank=True)
     check_out_state = models.CharField(max_length=255, choices=CHECK_OUT_STATE_CHOICES, default='abnormal')
