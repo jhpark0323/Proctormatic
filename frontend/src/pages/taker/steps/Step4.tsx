@@ -25,7 +25,7 @@ const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, o
         const { title, date, start_time, end_time } = response.data;
         setExamInfo({ title, date, start_time, end_time });
         errorDisplayed.current = false;
-        checkEntryAvailability(start_time);
+        checkEntryAvailability(date, start_time);
       } catch (error: any) {
         if (!errorDisplayed.current) {
           if (error.response && error.response.data?.message) {
@@ -38,13 +38,15 @@ const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, o
       }
     };
 
-    const checkEntryAvailability = (startTime: string) => {
-      const currentTime = new Date();
+    const checkEntryAvailability = (examDate: string, startTime: string) => {
+      const currentDate = new Date();
+      const [examYear, examMonth, examDay] = examDate.split('-').map(Number);
       const [hours, minutes, seconds] = startTime.split(':').map(Number);
-      const examStartTime = new Date();
-      examStartTime.setHours(hours, minutes - 30, seconds);
 
-      setIsButtonEnabled(currentTime >= examStartTime);
+      const examStartTime = new Date(examYear, examMonth - 1, examDay, hours, minutes - 30, seconds);
+
+      setIsButtonEnabled(currentDate >= examStartTime && 
+                         currentDate.toDateString() === new Date(examYear, examMonth - 1, examDay).toDateString());
     };
 
     fetchExamInfo();
