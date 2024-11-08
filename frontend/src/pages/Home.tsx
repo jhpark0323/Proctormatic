@@ -3,6 +3,7 @@ import HeaderWhite from "@/components/HeaderWhite";
 import LoginModal from "@/components/LoginModal";
 import RegisterModal from "@/components/RegisterModal";
 import EmailFindModal from "@/components/EmailFindModal";
+import PwdResetModal from "@/components/PwdResetModal";
 import styles from "@/styles/Home.module.css";
 import SwiperComponent from "@/components/Swiper";
 
@@ -10,6 +11,7 @@ const Home = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isEmailFindModalOpen, setIsEmailFindModalOpen] = useState(false);
+  const [isPwdResetModalOpen, setIsPwdResetModalOpen] = useState(false);
   const [isEmailFound, setIsEmailFound] = useState(false);
   const [foundCount, setFoundCount] = useState(0);
   const [emailFindTitle, setEmailFindTitle] = useState("아이디 찾기");
@@ -28,12 +30,19 @@ const Home = () => {
 
   const openEmailFindModal = () => {
     closeLoginModal();
-    resetEmailFindModal(); // 초기 상태로 설정 후 모달 열기
+    resetEmailFindModal();
     setIsEmailFindModalOpen(true);
   };
 
   const closeRegisterModal = () => setIsRegisterModalOpen(false);
   const closeEmailFindModal = () => setIsEmailFindModalOpen(false);
+
+  const openPwdResetModal = () => {
+    closeLoginModal();
+    setIsPwdResetModalOpen(true);
+  };
+
+  const closePwdResetModal = () => setIsPwdResetModalOpen(false);
 
   const resetEmailFindModal = () => {
     setEmailFindTitle("아이디 찾기");
@@ -58,10 +67,10 @@ const Home = () => {
   };
 
   const handleRetrySearch = () => {
-    closeEmailFindModal(); // 모달을 닫고
+    closeEmailFindModal();
     setTimeout(() => {
-      openEmailFindModal(); // 초기화한 상태로 모달을 다시 엽니다.
-    }, 0); // 딜레이를 줘서 닫힌 후에 다시 열리도록 합니다.
+      openEmailFindModal();
+    }, 0);
   };
 
   return (
@@ -79,7 +88,7 @@ const Home = () => {
           subtitle={emailFindSubtitle}
           onSubmit={handleEmailFindSubmit}
           onLoginRedirect={handleLoginRedirect}
-          onRetrySearch={handleRetrySearch} // "검색 다시하기" 기능 추가
+          onRetrySearch={handleRetrySearch}
         />
       )}
 
@@ -88,6 +97,7 @@ const Home = () => {
           onClose={closeLoginModal}
           onRegisterClick={openRegisterModal}
           onEmailFindClick={openEmailFindModal}
+          onPwdResetClick={openPwdResetModal} // 비밀번호 재설정 열기 함수 전달
           title="AI 온라인 시험 자동 관리감독 서비스"
           subtitle={[
             "어렵고 피곤한 시험 감시와 검증은 그만!",
@@ -105,13 +115,25 @@ const Home = () => {
         />
       )}
 
-      {(isLoginModalOpen || isRegisterModalOpen) && (
+      {isPwdResetModalOpen && (
+        <PwdResetModal
+          onClose={closePwdResetModal}
+          title="비밀번호 재설정"
+          subtitle={[
+            "비밀번호가 기억나지 않으신가요?",
+            "간편하게 다시 설정할 수 있어요!",
+          ]}
+        />
+      )}
+
+      {(isLoginModalOpen || isRegisterModalOpen || isPwdResetModalOpen) && (
         <div
           className={styles.backdrop}
           data-testid="backdrop"
           onClick={() => {
             if (isLoginModalOpen) closeLoginModal();
             if (isRegisterModalOpen) closeRegisterModal();
+            if (isPwdResetModalOpen) closePwdResetModal();
           }}
         ></div>
       )}
