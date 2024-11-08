@@ -112,6 +112,7 @@ def handle_user(request):
                 user.marketing = serializer.data.get('marketing')
                 user.save()
                 return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         elif request.method == 'PATCH':
             user.is_active = False

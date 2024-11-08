@@ -18,8 +18,10 @@ class CustomAuthentication(BaseAuthentication):
         try:
             decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             user_id = decoded_token.get('user_id')
-            if user_id is None:
-                raise AuthenticationFailed('유효하지 않은 토큰입니다.')
+            role = decoded_token.get('role')
+
+            if user_id is None or role != 'host':
+                raise AuthenticationFailed('권한이 없습니다.')
 
             user = User.objects.get(pk=user_id)
 
