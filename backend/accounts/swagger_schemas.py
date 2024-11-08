@@ -3,7 +3,7 @@ from rest_framework import status
 
 from .serializers import SendEmailVerificationSerializer, EmailVerificationSerializer, UserSerializer, \
     FindEmailRequestSerializer, FindEmailResponseSerializer, ResetPasswordEmailCheckSerializer, \
-    ResetPasswordRequestSerializer, LoginSerializer
+    ResetPasswordRequestSerializer, LoginSerializer, ResetPasswordSerializer
 
 email_verification_schema = extend_schema_view(
     get=extend_schema(
@@ -380,6 +380,70 @@ reset_password_schema = extend_schema_view(
             ),
             status.HTTP_400_BAD_REQUEST: OpenApiResponse(
                 description='비밀번호 미입력 또는 불일치',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='기존 비밀번호와 동일',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            )
+        }
+    )
+)
+
+reset_password_without_login_schema = extend_schema_view(
+put=extend_schema(
+        summary='분실 비밀번호 재설정',
+        request=ResetPasswordSerializer,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='비밀번호 재설정 완료',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    }
+                }
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description='비밀번호 미입력 또는 불일치',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='존재하지 않는 회원',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {
+                            'type': 'string'
+                        },
+                    },
+                }
+            ),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='기존 비밀번호와 동일',
                 response={
                     'type': 'object',
                     'properties': {
