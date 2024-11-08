@@ -16,6 +16,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.conf import settings
 import boto3
+from takers.tasks import merge_videos_task
 
 @add_taker_schema
 @api_view(['POST', 'PATCH'])
@@ -80,6 +81,7 @@ def add_taker(request):
 
             taker.check_out_state = 'normal'
 
+            task = merge_videos_task.delay(taker_id, taker.exam.id)
             taker.stored_state = 'in_progress'
             taker.save()
 
