@@ -35,11 +35,15 @@ class AnswerListSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     organizer = serializers.CharField(source='user.name', read_only=True)
-    answerList = AnswerListSerializer(many=True, read_only=True)
+    answerList = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = ('organizer', 'category', 'title', 'content', 'created_at', 'updated_at', 'answerList')
+
+    def get_answerList(self, obj):
+        answers = obj.answerList.order_by('-created_at')
+        return AnswerListSerializer(answers, many=True).data
 
 class QuestionEditSerializer(serializers.ModelSerializer):
     class Meta:
