@@ -215,7 +215,7 @@ def reset_password(request):
             if len(password1) < 8:
                 return Response({'message': '비밀번호는 최소 8자리입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if check_password(password1, user.password):
-                return Response({'message': '기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
+                return Response({'message': '기존 비밀번호와 다른 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
 
             user.set_password(password1)
             user.save()
@@ -242,7 +242,7 @@ def reset_password_without_login(request):
             if len(password1) < 8:
                 return Response({'message': '비밀번호는 최소 8자리입니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if check_password(password1, user.password):
-                return Response({'message': '기존 비밀번호와 동일합니다. 새로운 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
+                return Response({'message': '기존 비밀번호와 다른 비밀번호를 입력해주세요.'}, status=status.HTTP_409_CONFLICT)
 
             user.set_password(password1)
             user.save()
