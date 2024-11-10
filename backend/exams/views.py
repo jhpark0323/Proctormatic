@@ -331,32 +331,60 @@ def exam_detail(request, pk):
         # PUT 요청 처리: 특정 시험 수정
         serializer = ExamSerializer(exam, data=request.data, partial=True)
         if not serializer.is_valid():
-            return Response({"message": "요청 데이터가 유효하지 않습니다. 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': '요청 데이터가 유효하지 않습니다. 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # expected_taker 값이 999를 넘지 않도록 검증
         expected_taker = serializer.validated_data.get("expected_taker", exam.expected_taker)
         if expected_taker > 999:
-            return Response({"message": "총 응시자는 999명을 넘을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 수정할 날짜 및 시간 필드 가져오기
+        date = serializer.validated_data.get('date', exam.date)
+        start_time = serializer.validated_data.get('start_time', exam.start_time)
+        end_time = serializer.validated_data.get('end_time', exam.end_time)
+        exit_time = serializer.validated_data.get('exit_time', exam.exit_time)
+
+        current_time = datetime.now()
+        start_datetime = datetime.combine(date, start_time)
+        end_datetime = datetime.combine(date, end_time)
+
+        # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
+        if start_datetime < current_time:
+            return Response({'message': '시험 예약은 오늘 이후의 날짜로만 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+
+        if (start_datetime - current_time) < timedelta(minutes=30):
+            return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+
+        if (end_datetime - start_datetime) > timedelta(minutes=120):
+            return Response({'message': '시험 예약 시간은 최대 2시간입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if start_time > end_time:
+            return Response({'message': '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.'}, status=status.HTTP_409_CONFLICT)
+
+        if not (start_time <= exit_time <= end_time):
+            return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
         # 기존 비용과 수정된 비용의 차이 계산
         original_cost = exam.cost
-        new_cost = serializer.validated_data['cost']
+        new_cost = serializer.validated_data.get('cost', original_cost)
         cost_difference = new_cost - original_cost
 
         # 시험 생성자의 현재 코인을 가져옴
         exam_creator = exam.user
-        creator_coin_amount = exam_creator.coin_amount
-
-        # 시험 생성자의 코인이 비용 차액을 충당할 수 있는지 확인
-        if creator_coin_amount < cost_difference:
+        if int(exam_creator.coin_amount) < cost_difference:
             return Response({"message": "적립금이 부족합니다. 충전해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 데이터 수정 및 저장
+        serializer.save()
 
         # 차액에 따른 코인 사용 내역 추가
         if cost_difference > 0:
             transaction_type = "use"
         elif cost_difference < 0:
             transaction_type = "refund"
-        exam_creator.coin_amount = creator_coin_amount - cost_difference
+
+        # 코인 차액 업데이트
+        exam_creator.coin_amount = F('coin_amount') - cost_difference
         exam_creator.save()
 
         # Coin 내역 기록
@@ -367,9 +395,6 @@ def exam_detail(request, pk):
                 type=transaction_type,
                 amount=abs(cost_difference)
             )
-
-        # 데이터 수정 및 저장
-        serializer.save()
 
         return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
 
