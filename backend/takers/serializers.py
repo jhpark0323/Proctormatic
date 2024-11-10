@@ -3,7 +3,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from exams.models import Exam
 from datetime import date, datetime
-from .models import Taker
+from .models import Taker, Abnormal
+
 
 class TakerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,3 +49,13 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
         token['exp'] = int(exam_end_datetime_utc.astimezone(timezone.utc).timestamp())
 
         return token
+
+class AbnormalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Abnormal
+        fields = ['taker', 'detected_time', 'end_time', 'type']
+
+    def validate(self, data):
+        if data['detected_time'] >= data['end_time']:
+            raise serializers.ValidationError("발생시간이 종료시간보다 큽니다.")
+        return data

@@ -381,3 +381,53 @@ add_web_cam_schame = extend_schema_view(
         }
     )
 )
+add_abnormal_schema = extend_schema(
+    summary="이상행동 추가",
+    description="특정 taker에게 이상 상태를 추가합니다.",
+    request=OpenApiRequest({
+        'type': 'object',
+        'properties': {
+            'type': {
+                'type': 'string',
+                'enum': [
+                    'eyesight', 'absence', 'overcrowded', 'paper', 'pen',
+                    'cup', 'watch', 'earphone', 'mobilephone', 'etc'
+                ]
+            },
+            'detected_time': {
+                'type': 'string',
+                'format': 'time',
+                'description': '이상이 감지된 시간 (HH:MM:SS 형식)'
+            },
+            'end_time': {
+                'type': 'string',
+                'format': 'time',
+                'description': '이상이 종료된 시간 (HH:MM:SS 형식)'
+            }
+        },
+        'required': ['type', 'detected_time', 'end_time']
+    }),
+    responses={
+        status.HTTP_201_CREATED: OpenApiResponse(
+            description="이상 상태 추가 성공",
+            response={
+                'type': 'object',
+                'properties': {
+                    'message': {
+                        'type': 'string',
+                        'example': "이상행동 영상이 등록되었습니다."
+                    }
+                }
+            }
+        ),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+            description="잘못된 요청 데이터 또는 시간 값 오류",
+            response={
+                'type': 'object',
+                'properties': {
+                    'message': {'type': 'string'}
+                }
+            }
+        )
+    }
+)
