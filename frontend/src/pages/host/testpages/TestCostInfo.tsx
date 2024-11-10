@@ -1,6 +1,7 @@
 import Textfield from "@/components/Textfield";
 import styles from "@/styles/Testpage.module.css";
 import { fonts } from "@/constants";
+import { useLocation } from "react-router-dom";
 
 interface TestCostInfoProps {
   timeDifference: number;
@@ -17,6 +18,9 @@ const TestCostInfo = ({
   currentCost,
   currentCoinAmount,
 }: TestCostInfoProps) => {
+  const location = useLocation();
+  const isScheduledTest = location.pathname.includes("scheduledtest");
+
   return (
     <>
       {/* 서비스 요금 */}
@@ -86,9 +90,11 @@ const TestCostInfo = ({
       >
         <div>
           <div>결제 후 적립금</div>
-          <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
-            * 수정 후 적립금 차액은 다시 돌려드려요.
-          </div>
+          {isScheduledTest && (
+            <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
+              * 수정 후 적립금 차액은 다시 돌려드려요.
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "end" }}>
           <div
@@ -103,7 +109,6 @@ const TestCostInfo = ({
           >
             {currentCoinAmount - (currentCost || 0)}
           </div>
-
           <div className={styles.makeTestContentTitle}>C</div>
         </div>
       </div>
