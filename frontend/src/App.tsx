@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { CustomToast } from "@/components/CustomToast";
 import Home from "@/pages/Home";
 import TakerHome from "./pages/taker/TakerHome";
 import TakerHome2 from "./pages/taker/TakerHome2";
@@ -21,6 +20,7 @@ import MakeTest from "./pages/host/testpages/MakeTest";
 import MyTest from "./pages/host/testpages/MyTest";
 import TestDetail from "./pages/host/testpages/TestDetail";
 import Helpdesk from "./pages/host/helpdesks/Helpdesk";
+import ScheduledTest from "./pages/host/testpages/ScheduledTest";
 
 function App() {
   useEffect(() => {
@@ -122,6 +122,14 @@ function App() {
           element={
             <PrivateRoute allowedRoles={["host"]}>
               <TestDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/scheduledtest/:id"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <ScheduledTest />
             </PrivateRoute>
           }
         />

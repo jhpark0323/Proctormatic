@@ -5,6 +5,11 @@ import { FaAngleDown } from "react-icons/fa";
 import axiosInstance from "@/utils/axios";
 import { useNavigate } from "react-router-dom";
 import HeaderWhite from "@/components/HeaderWhite";
+import {
+  renderScheduledExamTable,
+  renderCompletedExamTable,
+  renderExamTable,
+} from "@/hooks/testHooks/renderTable";
 
 interface Exam {
   id: number;
@@ -59,74 +64,6 @@ const MyTest = () => {
         : 0;
     setProgressPercentage(progress);
   }, [scheduledExams, onGoingExams, completedExams]);
-
-  const renderExamTable = (exams: Exam[]) => (
-    <table className={styles.historyTable}>
-      <thead className={styles.tableHeader}>
-        <tr>
-          <th className={styles.tableCell}>시험명</th>
-          <th className={styles.tableCell}>날짜와 시간</th>
-          <th className={styles.tableCell}>시험 입장</th>
-          <th className={styles.tableCell}>예상 응시 인원</th>
-        </tr>
-      </thead>
-      <tbody>
-        {exams.map((exam) => (
-          <tr key={exam.id} className="border-t border-gray-200">
-            <td className={styles.tableCell}>{exam.title}</td>
-            <td className={styles.tableCell}>
-              <div>{exam.date}</div>
-              <div>{`${exam.start_time} ~ ${exam.end_time}`}</div>
-            </td>
-            <td className={styles.tableCell}>
-              <a
-                href={exam.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                입장
-              </a>
-            </td>
-            <td className={styles.tableCell}>{exam.expected_taker}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-
-  const renderCompletedExamTable = (exams: Exam[]) => (
-    <table className={styles.historyTable}>
-      <thead className={styles.tableHeader}>
-        <tr>
-          <th className={styles.tableCell}>시험명</th>
-          <th className={styles.tableCell}>날짜와 시간</th>
-          <th className={styles.tableCell}>업로드 된 영상</th>
-          <th className={styles.tableCell}>결과 보고서</th>
-        </tr>
-      </thead>
-      <tbody>
-        {exams.map((exam) => (
-          <tr key={exam.id}>
-            <td className={styles.tableCell}>{exam.title}</td>
-            <td className={styles.tableCell}>
-              <div>{exam.date}</div>
-              <div>{`${exam.start_time} ~ ${exam.end_time}`}</div>
-            </td>
-            <td className={styles.tableCell}>{exam.expected_taker}</td>
-            <td className={styles.tableCell}>
-              <div
-                className={styles.reportButton}
-                onClick={() => navigate(`/host/test/${exam.id}`)}
-              >
-                보기
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
 
   return (
     <>
@@ -184,7 +121,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {scheduledExams.length > 0 ? (
-              renderExamTable(scheduledExams)
+              renderScheduledExamTable(scheduledExams, navigate)
             ) : (
               <div className={styles.testContent}>예정된 시험이 없습니다.</div>
             )}
@@ -208,7 +145,7 @@ const MyTest = () => {
               <FaAngleDown />
             </div>
             {completedExams.length > 0 ? (
-              renderCompletedExamTable(completedExams)
+              renderCompletedExamTable(completedExams, navigate)
             ) : (
               <div className={styles.testContent}>이전 시험이 없습니다.</div>
             )}

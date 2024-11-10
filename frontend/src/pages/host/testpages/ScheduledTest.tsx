@@ -4,7 +4,7 @@ import { fonts } from "@/constants";
 import styles from "@/styles/Testpage.module.css";
 import { FaArrowLeft } from "react-icons/fa6";
 import CustomButton from "@/components/CustomButton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
@@ -13,6 +13,7 @@ import ReservationDateTime from "./ReservationDateTime";
 import TestCostInfo from "./TestCostInfo";
 import { formatDateAndTime } from "@/utils/handleDateTimeChange";
 import { calculateTimeDifference } from "@/utils/calculateTimeDifference";
+import { AxiosError } from "axios";
 
 interface TestForm {
   title: string;
@@ -25,7 +26,7 @@ interface TestForm {
   cost: number;
 }
 
-const MakeTest = () => {
+const ScheduledTest = () => {
   const [isExitPermitted, setIsExitPermitted] = useState(false);
   const navigate = useNavigate();
 
@@ -46,10 +47,6 @@ const MakeTest = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
   // 시험 생성 폼 초기 상태 설정
   const { date, time } = formatDateAndTime(new Date());
   const [testForm, setTestForm] = useState<TestForm>({
@@ -63,13 +60,39 @@ const MakeTest = () => {
     cost: 0,
   });
 
-  // 시험 시간 및 비용 계산
+  const { id } = useParams();
   const [expectedTaker, setExpectedTaker] = useState(testForm.expected_taker);
   const [timeDifference, setTimeDifference] = useState(0);
   const [currentCost, setCurrentCost] = useState(0);
 
+  // 시험 정보 가져오기
+  const fetchTestInfo = async () => {
+    try {
+      const response = await axiosInstance.get(`/exam/${id}`);
+      const data = response.data;
+
+      setTestForm({
+        title: data.title || "",
+        date: data.date || "",
+        start_time: data.start_time || "",
+        end_time: data.end_time || "",
+        exit_time: data.exit_time || "",
+        expected_taker: data.expected_taker || 0,
+        cheer_msg: data.cheer_msg || "",
+        cost: data.cost || 0,
+      });
+      setExpectedTaker(data.expected_taker || 0);
+    } catch (error) {
+      console.error("시험 정보 조회 실패:", error);
+    }
+  };
+
   useEffect(() => {
-    // 시간 차이 계산 (시간이 없으면 기본값 0)
+    fetchUserData();
+    fetchTestInfo();
+  }, [id]);
+
+  useEffect(() => {
     const diff =
       testForm.start_time && testForm.end_time
         ? calculateTimeDifference(
@@ -78,9 +101,10 @@ const MakeTest = () => {
             testForm.end_time
           )
         : 0;
+
     setTimeDifference(diff);
 
-    // 비용 계산 (값이 없으면 0으로 처리)
+    // 비용 계산: 10C * (시간 차이 / 10분) * 예상 응시자 수
     const cost = diff * 10 * (expectedTaker || 0);
     setCurrentCost(cost);
   }, [testForm, expectedTaker]);
@@ -88,11 +112,17 @@ const MakeTest = () => {
   // 시험 생성 함수
   const submitTestForm = async () => {
     const completeForm = {
-      ...testForm,
-      cost: currentCost,
+      title: testForm.title,
+      date: testForm.date,
+      start_time: testForm.start_time,
+      end_time: testForm.end_time,
       exit_time: testForm.exit_time || testForm.end_time,
+      expected_taker: expectedTaker,
+      updated_cost: currentCost,
     };
+    console.log(completeForm);
 
+    // 입력 검증
     if (!completeForm.title) {
       CustomToast("제목을 입력해주세요.");
       return;
@@ -112,20 +142,22 @@ const MakeTest = () => {
       return;
     }
 
-    axiosInstance
-      .post("/exam/", completeForm)
-      .then((response) => {
-        CustomToast(response.data.message);
-        navigate("/host/myTest");
-      })
-      .catch((error) => {
-        if (error.response?.status === 409) {
-          CustomToast(error.response.data.message);
-        } else {
-          CustomToast("다시 시도해주세요.");
-        }
-        console.error("시험 생성 실패: ", error);
-      });
+    try {
+      const response = await axiosInstance.put(`/exam/${id}`, completeForm);
+      CustomToast(response.data.message);
+      navigate("/host/myTest");
+    } catch (err) {
+      const error = err as AxiosError;
+      const errorMessage = (error.response?.data as { message: string })
+        ?.message;
+
+      if (error.response?.status === 409) {
+        CustomToast(errorMessage || "중복된 데이터입니다.");
+      } else {
+        CustomToast("다시 시도해주세요.");
+      }
+      console.error("시험 수정 실패:", error);
+    }
   };
 
   return (
@@ -189,7 +221,7 @@ const MakeTest = () => {
 
         <div className={styles.submitButton}>
           <CustomButton onClick={submitTestForm}>
-            <span style={fonts.MD_SEMIBOLD}>결제 및 예약하기</span>
+            <span style={fonts.MD_SEMIBOLD}>결제 및 수정하기</span>
           </CustomButton>
         </div>
       </div>
@@ -197,4 +229,4 @@ const MakeTest = () => {
   );
 };
 
-export default MakeTest;
+export default ScheduledTest;
