@@ -9,8 +9,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .authentication import CustomJWTAuthentication
 from .models import Taker, Logs
-from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer
-from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema
+from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer, AbnormalSerializer
+from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_schame, update_taker_schema, \
+    add_abnormal_schema
 from django_redis import get_redis_connection
 from django.utils import timezone
 from datetime import datetime
@@ -249,6 +250,25 @@ def add_web_cam(request):
         return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({'message': '웹캠 영상이 저장되었습니다.'}, status=status.HTTP_200_OK)
+
+@add_abnormal_schema
+@api_view(['POST'])
+@authentication_classes([CustomJWTAuthentication])
+def add_abnormal(request):
+    taker_id = request.auth['user_id']
+    taker = Taker.objects.filter(id=taker_id).first()
+
+    data = request.data.copy()
+    data['taker'] = taker.id
+
+    serializer = AbnormalSerializer(data=data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message" : "이상행동 영상이 등록되었습니다."}, status=201)
+    else:
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def is_valid_email(email):
