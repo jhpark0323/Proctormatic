@@ -120,9 +120,6 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError('비밀번호가 일치하지 않습니다. 확인 후 다시 시도해 주세요.')
             raise serializers.ValidationError('입력한 이메일은 등록되어 있지 않습니다.')
 
-        if not user.is_active:
-            raise serializers.ValidationError('탈퇴한 사용자입니다.')
-
         data['user'] = user
         return data
 

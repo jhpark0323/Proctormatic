@@ -4,10 +4,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.exceptions import TokenError
+from jwt import decode
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import check_password
 from django_redis import get_redis_connection
+from django.conf import settings
 
 from .authentications import CustomAuthentication
 from .utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
@@ -144,14 +147,19 @@ def handle_token(request):
             return Response({'message': 'refresh token이 입력되지 않았습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            try:
+                decode(refresh_token, settings.SECRET_KEY, algorithms=['HS256'])
+            except ExpiredSignatureError:
+                return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
+            except InvalidTokenError:
+                return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
             refresh = RefreshToken(refresh_token)
             new_access_token = str(refresh.access_token)
             return Response({'access': new_access_token}, status=status.HTTP_200_OK)
 
-        except TokenError as e:
-            if isinstance(e, InvalidToken):
-                return Response({'message': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'message': '토큰이 만료되었습니다. 다시 로그인 해주세요.'}, status=status.HTTP_401_UNAUTHORIZED)
+        except TokenError:
+            return Response({'message': '토큰 오류가 발생했습니다. 다시 시도해 주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @find_email_schema
