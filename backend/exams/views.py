@@ -46,9 +46,16 @@ def create_exam(request):
 
     current_time = datetime.now()
     start_datetime = datetime.combine(date, start_time)
+    end_datetime = datetime.combine(date, end_time)
+
+    if start_datetime < current_time:
+        return Response({'message': '시험 예약은 오늘 이후의 날짜로만 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
     if (start_datetime - current_time) < timedelta(minutes=30):
         return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+
+    if (end_datetime - start_datetime) > timedelta(minutes=120):
+        return Response({'message': '시험 예약 시간은 최대 2시간입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if start_time > end_time:
         return Response({'message': '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.'}, status=status.HTTP_409_CONFLICT)
