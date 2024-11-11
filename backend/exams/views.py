@@ -339,14 +339,14 @@ def exam_detail(request, pk):
             return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 수정할 날짜 및 시간 필드 가져오기
-        date = serializer.validated_data.get('date', exam.date)
+        exam_date = serializer.validated_data.get('date', exam.date)
         start_time = serializer.validated_data.get('start_time', exam.start_time)
         end_time = serializer.validated_data.get('end_time', exam.end_time)
         exit_time = serializer.validated_data.get('exit_time', exam.exit_time)
 
         current_time = datetime.now()
-        start_datetime = datetime.combine(date, start_time)
-        end_datetime = datetime.combine(date, end_time)
+        start_datetime = datetime.combine(exam_date, start_time)
+        end_datetime = datetime.combine(exam_date, end_time)
 
         # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
         if start_datetime < current_time:
