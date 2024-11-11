@@ -1,10 +1,11 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from rest_framework import status
 from rest_framework.response import Response
 
+from accounts.authentications import CustomAuthentication
 from .models import Coin, CoinCode
 from .serializers import CoinCodeSerializer, CoinCodeCreateSerializer, CoinSerializer, CoinHistorySerializer
 from .swagger_schemas import coin_schema, create_coin_code_schema, coin_history_schema
@@ -14,8 +15,9 @@ User = get_user_model()
 
 @coin_schema
 @api_view(['GET', 'POST'])
+@authentication_classes([CustomAuthentication])
 def handle_coin(request):
-    user = find_user_by_token(request)
+    user = request.user
 
     if request.method == 'GET':
         return Response({'coin': user.coin_amount}, status=status.HTTP_200_OK)
@@ -42,6 +44,9 @@ def handle_coin(request):
                 serializer.save()
                 return Response({'message': '적립금 충전 완료'}, status=status.HTTP_201_CREATED)
 
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @create_coin_code_schema
 @api_view(['POST'])
@@ -54,9 +59,10 @@ def create_coin_code(request):
 
 
 @coin_history_schema
+@authentication_classes([CustomAuthentication])
 @api_view(['GET'])
 def coin_history(request):
-    user = find_user_by_token(request)
+    user = request.user
 
     coin_type = request.query_params.get('type')
     history = Coin.objects.filter(user=user.id).order_by('-created_at')
@@ -81,12 +87,3 @@ def coin_history(request):
         "next": paginated_history.has_next(),
         "totalPage": paginator.num_pages,
     }, status=status.HTTP_200_OK)
-
-
-def find_user_by_token(request):
-    user_id = request.auth['user_id']
-    user = User.objects.get(pk=user_id)
-
-    if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
-    return user

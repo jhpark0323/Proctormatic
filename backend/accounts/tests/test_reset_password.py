@@ -2,8 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from unittest.mock import patch
-from django.conf import settings
-import jwt
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 User = get_user_model()
@@ -24,11 +23,8 @@ class CommonTestSetUp(TestCase):
         self.url2 = '/api/users/email/password/'
 
     def get_token(self, user):
-        token = jwt.encode(
-            {'user_id': user.id, 'role': 'host'},
-            settings.SECRET_KEY,
-            algorithm="HS256"
-        )
+        token = AccessToken.for_user(user)
+        token['role'] = 'host'
         return token
 
 class SendEmailForResetPasswordTestCase(CommonTestSetUp):
