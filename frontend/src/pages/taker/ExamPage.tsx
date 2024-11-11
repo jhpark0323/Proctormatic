@@ -1,13 +1,18 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 import HeaderBlue from "@/components/HeaderBlue";
 import styles from "@/styles/ExamPage.module.css";
+import { formatDateAndTime } from "@/utils/handleDateTimeChange";
 
 interface ExamPageProps {}
 
 const ExamPage = ({}: ExamPageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -28,12 +33,28 @@ const ExamPage = ({}: ExamPageProps) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+
+        // 캔버스 스트림 생성 및 MediaRecorder 초기화
+        if (canvasRef.current) {
+          const canvasStream = canvasRef.current.captureStream(30);
+          mediaRecorderRef.current = new MediaRecorder(canvasStream, {
+            mimeType: "video/webm",
+          });
+
+          mediaRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              setRecordedChunks((prev) => [...prev, event.data]);
+            }
+          };
+
+          mediaRecorderRef.current.onstop = handleUpload;
+        }
       } catch (err) {
         console.error("카메라 접근에 실패했습니다:", err);
       }
     };
 
-    const startFaceTracking = async () => {
+    const startFaceTracking = () => {
       if (videoRef.current) {
         videoRef.current.addEventListener("play", () => {
           if (canvasRef.current && videoRef.current) {
@@ -57,6 +78,7 @@ const ExamPage = ({}: ExamPageProps) => {
                   displaySize
                 );
                 const context = canvas.getContext("2d");
+
                 if (context) {
                   context.clearRect(0, 0, canvas.width, canvas.height);
                   canvas.width = displaySize.width;
@@ -68,28 +90,22 @@ const ExamPage = ({}: ExamPageProps) => {
                     0,
                     canvas.width,
                     canvas.height
-                  ); // 비디오 배경 그리기
+                  );
 
-                  // 얼굴을 사다리꼴 모양으로 마스킹하고 모서리를 둥글게 처리하기
                   resizedDetections.forEach((detection) => {
                     const landmarks = detection.landmarks;
                     const leftEye = landmarks.getLeftEye();
                     const rightEye = landmarks.getRightEye();
                     const mouth = landmarks.getMouth();
 
-                    // 마스킹 범위 계산 (사다리꼴 형태)
-                    const minX =
-                      Math.min(...leftEye.map((point) => point.x)) - 20; // 왼쪽 눈보다 조금 더 왼쪽으로 확장
-                    const maxX =
-                      Math.max(...rightEye.map((point) => point.x)) + 20; // 오른쪽 눈보다 조금 더 오른쪽으로 확장
-                    const minY = Math.min(leftEye[0].y, rightEye[0].y) - 10; // 눈 위쪽보다 약간 위로
-                    const maxY = Math.max(...mouth.map((point) => point.y)); // 입 끝 좌표
+                    const minX = Math.min(...leftEye.map((p) => p.x)) - 20;
+                    const maxX = Math.max(...rightEye.map((p) => p.x)) + 20;
+                    const minY = Math.min(leftEye[0].y, rightEye[0].y) - 10;
+                    const maxY = Math.max(...mouth.map((p) => p.y));
 
                     const trapezoidWidth = maxX - minX;
                     const trapezoidHeight = maxY - minY;
-                    const borderRadius = 20; // 둥근 모서리 반경 설정
 
-                    // 얼굴 영역 가져오기
                     const faceRegion = context.getImageData(
                       minX,
                       minY,
@@ -97,8 +113,7 @@ const ExamPage = ({}: ExamPageProps) => {
                       trapezoidHeight
                     );
 
-                    // 축소 및 확대를 통한 모자이크 처리 (더 강한 모자이크)
-                    const v = 15; // 모자이크 강도를 더 높임
+                    const v = 15;
                     const smallWidth = Math.max(
                       1,
                       Math.floor(trapezoidWidth / v)
@@ -108,11 +123,11 @@ const ExamPage = ({}: ExamPageProps) => {
                       Math.floor(trapezoidHeight / v)
                     );
 
-                    // 축소
                     const smallCanvas = document.createElement("canvas");
                     smallCanvas.width = smallWidth;
                     smallCanvas.height = smallHeight;
                     const smallContext = smallCanvas.getContext("2d");
+
                     if (smallContext) {
                       smallContext.putImageData(faceRegion, 0, 0);
                       smallContext.drawImage(
@@ -127,38 +142,17 @@ const ExamPage = ({}: ExamPageProps) => {
                         smallHeight
                       );
 
-                      // 확대 후 원래 영역에 그리기 (사다리꼴 마스킹 처리)
                       context.save();
                       context.beginPath();
-                      context.moveTo(minX + borderRadius, minY);
-                      context.lineTo(maxX - borderRadius, minY);
-                      context.quadraticCurveTo(
-                        maxX,
-                        minY,
-                        maxX,
-                        minY + borderRadius
-                      );
-                      context.lineTo(maxX, maxY - borderRadius);
-                      context.quadraticCurveTo(
-                        maxX,
-                        maxY,
-                        maxX - borderRadius,
-                        maxY
-                      );
-                      context.lineTo(minX + borderRadius, maxY);
-                      context.quadraticCurveTo(
-                        minX,
-                        maxY,
-                        minX,
-                        maxY - borderRadius
-                      );
-                      context.lineTo(minX, minY + borderRadius);
-                      context.quadraticCurveTo(
-                        minX,
-                        minY,
-                        minX + borderRadius,
-                        minY
-                      );
+                      context.moveTo(minX + 20, minY);
+                      context.lineTo(maxX - 20, minY);
+                      context.quadraticCurveTo(maxX, minY, maxX, minY + 20);
+                      context.lineTo(maxX, maxY - 20);
+                      context.quadraticCurveTo(maxX, maxY, maxX - 20, maxY);
+                      context.lineTo(minX + 20, maxY);
+                      context.quadraticCurveTo(minX, maxY, minX, maxY - 20);
+                      context.lineTo(minX, minY + 20);
+                      context.quadraticCurveTo(minX, minY, minX + 20, minY);
                       context.clip();
                       context.drawImage(
                         smallCanvas,
@@ -189,12 +183,60 @@ const ExamPage = ({}: ExamPageProps) => {
     });
   }, []);
 
+  const handleStartRecording = () => {
+    if (mediaRecorderRef.current) {
+      setRecordedChunks([]);
+      const { time } = formatDateAndTime(new Date());
+      setStartTime(time);
+      mediaRecorderRef.current.start();
+      console.log("녹화를 시작합니다.");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current) {
+      const { time } = formatDateAndTime(new Date());
+      setEndTime(time);
+      mediaRecorderRef.current.stop();
+      console.log("녹화를 종료합니다.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (recordedChunks.length > 0 && startTime && endTime) {
+      const blob = new Blob(recordedChunks, { type: "video/webm" });
+      const formData = new FormData();
+      formData.append("web_cam", blob, "recorded_video.webm");
+      formData.append("start_time", startTime);
+      formData.append("end_time", endTime);
+
+      try {
+        const response = await fetch("/taker/webcam/", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          console.log("업로드 성공");
+        } else {
+          console.error("업로드 실패");
+        }
+      } catch (err) {
+        console.error("서버 통신에 실패했습니다:", err);
+      }
+    }
+  };
+
   return (
     <>
       <HeaderBlue />
       <div className={styles.container}>
         <video ref={videoRef} autoPlay className={styles.video} />
         <canvas ref={canvasRef} className={styles.canvas} />
+        <div className={styles.controls}>
+          <button onClick={handleStartRecording}>녹화 시작</button>
+          <button onClick={handleStopRecording}>녹화 종료</button>
+        </div>
       </div>
     </>
   );
