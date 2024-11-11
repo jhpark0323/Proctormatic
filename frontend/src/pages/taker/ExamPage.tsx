@@ -2,13 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import HeaderBlue from "@/components/HeaderBlue";
 import styles from "@/styles/ExamPage.module.css";
 import useFaceApiModels from "@/hooks/webcamHooks/useFaceApiModels";
-import useCameraStream from "@/hooks/webcamHooks/useCameraStream";
 import useFaceTracking from "@/hooks/webcamHooks/useFaceTracking";
-import {
-  startRecording,
-  stopRecording,
-  uploadRecordedVideo,
-} from "@/utils/handleRecording";
+import { startRecording, stopRecording } from "@/utils/handleRecording";
 
 const ExamPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -19,23 +14,50 @@ const ExamPage = () => {
   const [endTime, setEndTime] = useState<string | null>(null);
 
   useFaceApiModels();
-  useCameraStream(videoRef);
   useFaceTracking(videoRef, canvasRef);
 
-  const handleStartRecording = () => {
-    console.log("버튼 누름");
+  // 카메라 스트림 설정 및 MediaRecorder 초기화
+  useEffect(() => {
+    const initializeMediaRecorder = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
 
-    if (mediaRecorderRef.current) {
-      setRecordedChunks([]);
+          // MediaRecorder 초기화
+          mediaRecorderRef.current = new MediaRecorder(stream, {
+            mimeType: "video/webm",
+          });
 
-      if (mediaRecorderRef.current.state === "inactive") {
-        console.log("녹화를 시작합니다.");
-        startRecording(mediaRecorderRef.current, setStartTime);
-      } else {
-        console.warn("녹화가 이미 진행 중입니다.");
+          // 녹화된 데이터 조각 저장
+          mediaRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              setRecordedChunks((prev) => [...prev, event.data]);
+            }
+          };
+        }
+      } catch (err) {
+        console.error("카메라 접근에 실패했습니다:", err);
       }
+    };
+
+    initializeMediaRecorder();
+  }, []);
+
+  const handleStartRecording = () => {
+    console.log("녹화 시작 버튼 클릭");
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "inactive"
+    ) {
+      setRecordedChunks([]); // 녹화된 조각 초기화
+      startRecording(mediaRecorderRef.current, setStartTime);
     } else {
-      console.error("MediaRecorder가 초기화되지 않았습니다.");
+      console.error(
+        "MediaRecorder가 초기화되지 않았거나 녹화가 이미 진행 중입니다."
+      );
     }
   };
 
@@ -48,6 +70,8 @@ const ExamPage = () => {
         startTime,
         endTime
       );
+    } else {
+      console.error("MediaRecorder가 초기화되지 않았습니다.");
     }
   };
 

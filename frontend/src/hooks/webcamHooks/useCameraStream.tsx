@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 // 카메라 스트림 설정
 const useCameraStream = (videoRef: React.RefObject<HTMLVideoElement>) => {

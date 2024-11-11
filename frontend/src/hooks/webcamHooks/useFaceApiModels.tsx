@@ -17,4 +17,15 @@ const useFaceApiModels = () => {
   }, []);
 };
 
+export const loadFaceApiModels = async () => {
+  try {
+    await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+    await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+    await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+    console.log("Face API 모델 로딩 완료");
+  } catch (err) {
+    console.error("Face API 모델 로딩 실패:", err);
+  }
+};
+
 export default useFaceApiModels;
