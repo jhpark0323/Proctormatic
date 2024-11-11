@@ -208,7 +208,7 @@ def update_taker(request):
 
 
 @add_web_cam_schame
-@api_view(['PATCH'])
+@api_view(['POST'])
 @authentication_classes([CustomJWTAuthentication])
 @parser_classes([MultiPartParser])
 def add_web_cam(request):
