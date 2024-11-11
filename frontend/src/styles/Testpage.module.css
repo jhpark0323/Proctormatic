@@ -106,6 +106,7 @@
   width: fit-content;
   border-radius: 1rem;
   display: inline-flex;
+  cursor: pointer;
 }
 
 /* MakeTest */

@@ -67,14 +67,17 @@ const renderExamTable = (exams: Exam[]) => (
             <div>{`${exam.start_time} ~ ${exam.end_time}`}</div>
           </td>
           <td className={styles.tableCell}>
-            <a
-              href={exam.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
-              입장
-            </a>
+            <div className={styles.reportButton}>
+              <a
+                href={exam.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+                style={{ color: "var(--WHITE)", textDecoration: "none" }}
+              >
+                입장
+              </a>
+            </div>
           </td>
           <td className={styles.tableCell}>{exam.expected_taker}</td>
         </tr>
