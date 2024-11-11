@@ -15,8 +15,9 @@ class CommonTestSetUp(TestCase):
             policy=True,
             marketing=True,
             is_active=True,
-            created_at=datetime(2024, 1, 1)
         )
+        self.user1.created_at = datetime(2024, 1, 1)
+        self.user1.save()
         self.user2 = User.objects.create(
             name="test",
             birth="1999-01-01",
@@ -24,8 +25,9 @@ class CommonTestSetUp(TestCase):
             policy=True,
             marketing=True,
             is_active=True,
-            created_at=datetime(2024, 7, 1)
         )
+        self.user2.created_at = datetime(2024, 7, 1)
+        self.user2.save()
         self.inactive_user = User.objects.create(
             name="inactive",
             birth="1999-01-01",
@@ -33,8 +35,9 @@ class CommonTestSetUp(TestCase):
             policy=True,
             marketing=True,
             is_active=False,
-            created_at=datetime(2024, 1, 1)
         )
+        self.inactive_user.created_at = datetime(2024, 1, 1)
+        self.inactive_user.save()
         self.url = '/api/users/find/email/'
 
 class FindEmailTestCase(CommonTestSetUp):
