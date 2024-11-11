@@ -1,8 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from django.conf import settings
-import jwt
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 User = get_user_model()
@@ -38,11 +37,8 @@ class CommenTestSetUp(TestCase):
         self.url = '/api/users/'
 
     def get_token(self, user, role):
-        token = jwt.encode(
-            {'user_id': user.id, 'role': role},
-            settings.SECRET_KEY,
-            algorithm="HS256"
-        )
+        token = AccessToken.for_user(user)
+        token['role'] = role
         return token
 
 class UserCreateTestCase(CommenTestSetUp):
