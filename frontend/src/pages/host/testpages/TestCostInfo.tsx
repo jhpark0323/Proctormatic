@@ -2,6 +2,7 @@ import Textfield from "@/components/Textfield";
 import styles from "@/styles/Testpage.module.css";
 import { fonts } from "@/constants";
 import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 interface TestCostInfoProps {
   timeDifference: number;
@@ -9,8 +10,7 @@ interface TestCostInfoProps {
   setExpectedTaker: (value: number) => void;
   currentCost: number;
   currentCoinAmount: number;
-  updatedCost?: number;
-  setUpdatedCost?: (value: number) => void;
+  originalCost?: number;
 }
 
 const TestCostInfo = ({
@@ -19,8 +19,7 @@ const TestCostInfo = ({
   setExpectedTaker,
   currentCost,
   currentCoinAmount,
-  updatedCost,
-  setUpdatedCost,
+  originalCost = 0,
 }: TestCostInfoProps) => {
   const location = useLocation();
   const isScheduledTest = location.pathname.includes("scheduledtest");
@@ -107,12 +106,12 @@ const TestCostInfo = ({
               style={{
                 ...fonts.HEADING_MD_BOLD,
                 color:
-                  currentCoinAmount - (updatedCost || 0) < 0
+                  currentCoinAmount - (currentCost || 0) + originalCost < 0
                     ? "var(--DELETE)"
                     : "",
               }}
             >
-              {currentCoinAmount - (updatedCost || 0)}
+              {currentCoinAmount - (currentCost || 0) + originalCost}
             </div>
           ) : (
             <div

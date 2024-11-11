@@ -64,6 +64,7 @@ const ScheduledTest = () => {
   const [expectedTaker, setExpectedTaker] = useState(testForm.expected_taker);
   const [timeDifference, setTimeDifference] = useState(0);
   const [currentCost, setCurrentCost] = useState(0);
+  const [originalCost, setOriginalCost] = useState(0);
 
   // 시험 정보 가져오기
   const fetchTestInfo = async () => {
@@ -82,6 +83,7 @@ const ScheduledTest = () => {
         cost: data.cost || 0,
       });
       setExpectedTaker(data.expected_taker || 0);
+      setOriginalCost(data.cost);
     } catch (error) {
       console.error("시험 정보 조회 실패:", error);
     }
@@ -108,8 +110,6 @@ const ScheduledTest = () => {
     const cost = diff * 10 * (expectedTaker || 0);
     setCurrentCost(cost);
   }, [testForm, expectedTaker]);
-
-  const [updatedCost, setUpdatedCost] = useState(0);
 
   // 시험 생성 함수
   const submitTestForm = async () => {
@@ -219,8 +219,7 @@ const ScheduledTest = () => {
               }}
               currentCost={currentCost}
               currentCoinAmount={currentCoinAmount}
-              updatedCost={updatedCost}
-              setUpdatedCost={setUpdatedCost}
+              originalCost={originalCost}
             />
           </div>
         </div>
