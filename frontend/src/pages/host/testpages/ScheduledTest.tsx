@@ -68,7 +68,7 @@ const ScheduledTest = () => {
   // 시험 정보 가져오기
   const fetchTestInfo = async () => {
     try {
-      const response = await axiosInstance.get(`/exam/${id}`);
+      const response = await axiosInstance.get(`/exam/${id}/`);
       const data = response.data;
 
       setTestForm({
@@ -143,8 +143,9 @@ const ScheduledTest = () => {
     }
 
     try {
-      const response = await axiosInstance.put(`/exam/${id}`, completeForm);
-      CustomToast(response.data.message);
+      const response = await axiosInstance.put(`/exam/${id}/`, completeForm);
+      CustomToast("수정되었습니다.");
+      console.log(response.data);
       navigate("/host/myTest");
     } catch (err) {
       const error = err as AxiosError;
@@ -152,7 +153,7 @@ const ScheduledTest = () => {
         ?.message;
 
       if (error.response?.status === 409) {
-        CustomToast(errorMessage || "중복된 데이터입니다.");
+        CustomToast(errorMessage || "다시 시도해주세요.");
       } else {
         CustomToast("다시 시도해주세요.");
       }
