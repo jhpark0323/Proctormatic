@@ -109,6 +109,8 @@ const ScheduledTest = () => {
     setCurrentCost(cost);
   }, [testForm, expectedTaker]);
 
+  const [updatedCost, setUpdatedCost] = useState(0);
+
   // 시험 생성 함수
   const submitTestForm = async () => {
     const completeForm = {
@@ -118,6 +120,7 @@ const ScheduledTest = () => {
       end_time: testForm.end_time,
       exit_time: testForm.exit_time || testForm.end_time,
       expected_taker: expectedTaker,
+      cheer_msg: testForm.cheer_msg,
       updated_cost: currentCost,
     };
     console.log(completeForm);
@@ -216,6 +219,8 @@ const ScheduledTest = () => {
               }}
               currentCost={currentCost}
               currentCoinAmount={currentCoinAmount}
+              updatedCost={updatedCost}
+              setUpdatedCost={setUpdatedCost}
             />
           </div>
         </div>
