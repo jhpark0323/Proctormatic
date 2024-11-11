@@ -9,6 +9,8 @@ interface TestCostInfoProps {
   setExpectedTaker: (value: number) => void;
   currentCost: number;
   currentCoinAmount: number;
+  updatedCost?: number;
+  setUpdatedCost?: (value: number) => void;
 }
 
 const TestCostInfo = ({
@@ -17,6 +19,8 @@ const TestCostInfo = ({
   setExpectedTaker,
   currentCost,
   currentCoinAmount,
+  updatedCost,
+  setUpdatedCost,
 }: TestCostInfoProps) => {
   const location = useLocation();
   const isScheduledTest = location.pathname.includes("scheduledtest");
@@ -97,18 +101,33 @@ const TestCostInfo = ({
           )}
         </div>
         <div style={{ display: "flex", alignItems: "end" }}>
-          <div
-            className={styles.coinAmount}
-            style={{
-              ...fonts.HEADING_MD_BOLD,
-              color:
-                currentCoinAmount - (currentCost || 0) < 0
-                  ? "var(--DELETE)"
-                  : "",
-            }}
-          >
-            {currentCoinAmount - (currentCost || 0)}
-          </div>
+          {isScheduledTest ? (
+            <div
+              className={styles.coinAmount}
+              style={{
+                ...fonts.HEADING_MD_BOLD,
+                color:
+                  currentCoinAmount - (updatedCost || 0) < 0
+                    ? "var(--DELETE)"
+                    : "",
+              }}
+            >
+              {currentCoinAmount - (updatedCost || 0)}
+            </div>
+          ) : (
+            <div
+              className={styles.coinAmount}
+              style={{
+                ...fonts.HEADING_MD_BOLD,
+                color:
+                  currentCoinAmount - (currentCost || 0) < 0
+                    ? "var(--DELETE)"
+                    : "",
+              }}
+            >
+              {currentCoinAmount - (currentCost || 0)}
+            </div>
+          )}
           <div className={styles.makeTestContentTitle}>C</div>
         </div>
       </div>
