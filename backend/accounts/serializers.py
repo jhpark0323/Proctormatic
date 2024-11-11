@@ -158,23 +158,31 @@ class FindEmailResponseSerializer(serializers.ModelSerializer):
         return instance.created_at.strftime('%Y-%m-%d')
 
 class ResetPasswordRequestSerializer(serializers.Serializer):
-    name = serializers.CharField(required=True, error_messages={
-        'required': '성명을 입력해주세요.',
-        'blank': '성명을 입력해주세요.',
-    })
-    email = serializers.EmailField(required=True, error_messages={
-        'required': '이메일을 입력해주세요.',
-        'blank': '이메일을 입력해주세요.',
-        'invalid': '잘못된 이메일 형식입니다.',
-    })
+    name = serializers.CharField(
+        error_messages={
+            'required': '성명을 입력해주세요.',
+            'blank': '성명을 입력해주세요.'
+        }
+    )
+    email = serializers.EmailField(
+        error_messages={
+            'required': '이메일을 입력해주세요.',
+            'blank': '이메일을 입력해주세요.',
+            'invalid': '잘못된 이메일 형식입니다.'
+        }
+    )
 
 class ResetPasswordEmailCheckSerializer(serializers.Serializer):
-    password1 = serializers.CharField(required=True, error_messages={
-        'required': '비밀번호가 입력되지 않았습니다.'
-    })
-    password2 = serializers.CharField(required=True, error_messages={
-        'required': '비밀번호 확인이 입력되지 않았습니다.'
-    })
+    password1 = serializers.CharField(
+        error_messages={
+            'required': '비밀번호가 입력되지 않았습니다.'
+        }
+    )
+    password2 = serializers.CharField(
+        error_messages={
+            'required': '비밀번호 확인이 입력되지 않았습니다.'
+        }
+    )
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(

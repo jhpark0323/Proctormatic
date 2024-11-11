@@ -229,6 +229,9 @@ def reset_password(request):
             user.save()
             return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
 
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @reset_password_without_login_schema
 @api_view(['PUT'])
@@ -255,6 +258,9 @@ def reset_password_without_login(request):
             user.set_password(password1)
             user.save()
             return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def is_valid_email(email):
