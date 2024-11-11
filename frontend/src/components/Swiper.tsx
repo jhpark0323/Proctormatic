@@ -2,7 +2,7 @@ import { Navigation, Autoplay } from 'swiper/modules';
 import Landing1 from '../assets/Landing1.png';
 import semiLogo from '../assets/semiLogo.png';
 import cLab from '../assets/cLab.png';
-import metamong from '../assets/metamong.avif';
+import metamong from '@/assets/metamong.avif';
 import phones from '../assets/phones.png';
 import styles from '../styles/Swiper.module.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -42,7 +42,7 @@ const SwiperComponent = () => {
             </div>
             <div className={styles.leftImgBlock}>
               <img className={styles.ces} src={cLab} alt="" />
-              <img className={styles.if} src={metamong} alt="" />
+              <img className={styles.if} src={metamong} alt="메타몽사진" />
             </div>
           </div>
           <img className={styles.rightImgBox} src={Landing1} alt="" />
