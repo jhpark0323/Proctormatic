@@ -49,7 +49,7 @@ def create_exam(request):
     end_datetime = datetime.combine(date, end_time)
 
     if start_datetime < current_time:
-        return Response({'message': '시험 예약은 오늘 이후의 날짜로만 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요..'}, status=status.HTTP_409_CONFLICT)
 
     if (start_datetime - current_time) < timedelta(minutes=30):
         return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
@@ -350,7 +350,7 @@ def exam_detail(request, pk):
 
         # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
         if start_datetime < current_time:
-            return Response({'message': '시험 예약은 오늘 이후의 날짜로만 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+            return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요..'}, status=status.HTTP_409_CONFLICT)
 
         if (start_datetime - current_time) < timedelta(minutes=30):
             return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
@@ -364,6 +364,9 @@ def exam_detail(request, pk):
         if not (start_time <= exit_time <= end_time):
             return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
+        # entry_time 계산
+        entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
+
         # 기존 비용과 수정된 비용의 차이 계산
         original_cost = exam.cost
         new_cost = serializer.validated_data.get('cost', original_cost)
@@ -375,7 +378,7 @@ def exam_detail(request, pk):
             return Response({"message": "적립금이 부족합니다. 충전해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 데이터 수정 및 저장
-        serializer.save()
+        serializer.save(entry_time=entry_time)
 
         # 차액에 따른 코인 사용 내역 추가
         if cost_difference > 0:
