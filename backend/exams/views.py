@@ -383,8 +383,7 @@ def exam_detail(request, pk):
         elif cost_difference < 0:
             transaction_type = "refund"
 
-        # 코인 차액 업데이트
-        exam_creator.coin_amount = F('coin_amount') - cost_difference
+        exam_creator.coin_amount = exam_creator.coin_amount - cost_difference
         exam_creator.save()
 
         # Coin 내역 기록
