@@ -51,8 +51,8 @@ class ExamDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = [
-            'id', 'title', 'date', 'start_time', 'end_time', 'expected_taker',
-            'total_taker', 'cheer_msg', 'taker_list'
+            'id', 'title', 'date', 'start_time', 'end_time', 'exit_time', 'expected_taker',
+            'total_taker', 'cheer_msg', 'cost', 'taker_list'
         ]
 
     def get_taker_list(self, obj):
