@@ -306,7 +306,7 @@ update_taker_schema = extend_schema_view(
 )
 
 add_web_cam_schame = extend_schema_view(
-    patch=extend_schema(
+    post=extend_schema(
         summary='웹캠 파일 추가',
         request=OpenApiRequest({
             'type': 'object',
