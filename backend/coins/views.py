@@ -72,13 +72,13 @@ def coin_history(request):
     page = request.GET.get('page', 1)
     size = request.GET.get('size', 10)
 
-    paginator = Paginator(history, size)
-    paginated_history = paginator.get_page(page)
-
     if int(page) <= 0:
         return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
     if int(size) <= 0:
         return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    paginator = Paginator(history, size)
+    paginated_history = paginator.get_page(page)
 
     serializer = CoinHistorySerializer(paginated_history, many=True)
     return Response({
