@@ -106,7 +106,7 @@ class NotificationListTestCase(CommenTestSetUp):
 
     def test_notification_list_with_pagination(self):
         '''
-        페이지네이션을 사용하여 코인 내역을 요청할 경우, 각 페이지에 해당하는 내역을 반환한다
+        페이지네이션을 사용하여 공지사항 목록을 요청할 경우, 각 페이지에 해당하는 내역을 반환한다
         '''
         # given
         params = {

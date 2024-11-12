@@ -56,6 +56,8 @@ class AnswerSerializer(serializers.ModelSerializer):
         fields = ('content',)
 
 class FaqCreateSerializer(serializers.ModelSerializer):
+    category = serializers.ChoiceField(choices=Faq.TYPE_CHOICES)
+
     class Meta:
         model = Faq
         fields = '__all__'
