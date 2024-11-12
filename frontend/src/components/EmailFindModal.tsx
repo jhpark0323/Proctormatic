@@ -15,12 +15,9 @@ interface EmailFindModalProps {
 // 이메일 마스킹 함수
 const maskEmail = (email: string) => {
   const [localPart, domain] = email.split("@");
-  
-  if (localPart.length <= 3) {
-    return `${localPart[0]}***@${domain}`;
-  } else {
-    return `${localPart.slice(0, localPart.length - 3)}***@${domain}`;
-  }
+  return localPart.length <= 3
+    ? `${localPart[0]}***@${domain}`
+    : `${localPart.slice(0, localPart.length - 3)}***@${domain}`;
 };
 
 const EmailFindModal: React.FC<EmailFindModalProps> = ({
@@ -69,7 +66,7 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
   return (
     <>
       <div className={styles.blurBackground} />
-      <div className={styles.Modal} data-testid="register-modal">
+      <div className={styles.Modal} data-testid="email-find-modal">
         <div className={styles.wrapper}>
           <div className={styles.headerBox}>
             <img
@@ -93,17 +90,25 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
               {!isSubmitted ? (
                 <form onSubmit={handleSubmit}>
                   <div className={styles.formInner}>
+                    <div className={styles.formInnerNameBox}>
+                      <span className={styles.formInnerName}>주최자 이름 (한글 2 - 10 자)</span>
+                    </div>
+
                     <input
                       type="text"
                       className={styles.formInput}
                       placeholder="이름 입력"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      autoComplete="off"
                       data-testid="name-input"
                     />
                   </div>
 
                   <div className={styles.formInner}>
+                    <div className={styles.formInnerNameBox}>
+                      <span className={styles.formInnerName}>생년월일</span>
+                    </div>
                     <div className={styles.birthDateBox}>
                       <div className={styles.birthInner}>
                         <select value={year} onChange={(e) => setYear(e.target.value)} data-testid="year-select">
@@ -148,15 +153,31 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
                 </form>
               ) : (
                 <div className={styles.resultBox}>
+                  <div className={styles.findResultBox} data-testid="email-find-result">
+                    {foundEmails.length > 0 ? (
+                      foundEmails.map((item, index) => (
+                        <div data-testid="success-message" key={index} className={styles.emailInfo}>
+                          <div className={styles.foundEmail}>{item.email}</div>
+                          <div className={styles.joinedOn}>({item.joinedOn} 가입)</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div data-testid="error-message" className={styles.noResult}>검색된 아이디가 없음.</div>
+                    )}
+                  </div>
+
+                  <div className={styles.noticeMessage}>
+                    * 보안을 위해 아이디의 일부만 표기되어요.
+                  </div>
+                  
                   {foundEmails.length > 0 ? (
-                    foundEmails.map((item, index) => (
-                      <div data-testid="success-message" key={index} className={styles.emailInfo}>
-                        <div className={styles.foundEmail}>{item.email}</div>
-                        <div className={styles.joinedOn}>({item.joinedOn} 가입)</div>
-                      </div>
-                    ))
+                    <button className={styles.registerButton} onClick={onLoginRedirect} data-testid="go-to-login-button">
+                      로그인 바로가기
+                    </button>
                   ) : (
-                    <div data-testid="error-message" className={styles.noResult}>검색된 아이디가 없음.</div>
+                    <button className={styles.registerButton} onClick={onRetrySearch} data-testid="retry-button">
+                      검색 다시하기
+                    </button>
                   )}
                 </div>
               )}

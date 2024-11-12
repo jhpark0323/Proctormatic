@@ -84,7 +84,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ onClose, email, onVerificationS
           <img src={closeBtn} className={styles.closeBtn} alt="close" onClick={onClose} />
         </div>
         <div className={styles.EmailBody}>
-          <div className={styles.InfoBox}>
+          <div className={styles.InfoBox} data-testid="info-box">
             <span>{email}</span>으로 인증번호가 발송되었습니다.
           </div>
           <div className={styles.InputBox}>
