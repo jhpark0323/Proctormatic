@@ -42,7 +42,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   };
 
   const loadModels = async () => {
-    const MODEL_URL = "/models";
+    const MODEL_URL = "../models";
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     setModelsLoaded(true);
   };
