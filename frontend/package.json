@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules --experimental-json-modules node_modules/jest/bin/jest.js --verbose --watch",
-    "test:ci": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules --experimental-json-modules node_modules/jest/bin/jest.js --ci"
+    "test": "jest --verbose --watch",
+    "test:ci": "jest --ci"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
