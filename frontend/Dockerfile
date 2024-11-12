@@ -18,7 +18,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # 추가: public 폴더의 모델 파일 복사
-COPY --from=build /app/public/models /usr/share/nginx/html/models
+# COPY --from=build /app/public/models /usr/share/nginx/html/dist/models
 
 # Nginx 기본 설정 유지
 CMD ["nginx", "-g", "daemon off;"]
