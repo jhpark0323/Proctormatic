@@ -14,8 +14,8 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
-    }
-    // "outDir": "./dist"
+    },
+    "outDir": "./dist"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"]
 }

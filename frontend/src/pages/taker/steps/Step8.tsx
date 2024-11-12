@@ -1,9 +1,9 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import * as faceapi from 'face-api.js';
-import styles from '@/styles/Step.module.css';
-import CustomButton from '@/components/CustomButton';
-import { usePhotoStore } from '@/store/usePhotoStore';
-import { CustomToast } from '@/components/CustomToast';
+import React, { useRef, useEffect, useCallback, useState } from "react";
+import * as faceapi from "face-api.js";
+import styles from "@/styles/Step.module.css";
+import CustomButton from "@/components/CustomButton";
+import { usePhotoStore } from "@/store/usePhotoStore";
+import { CustomToast } from "@/components/CustomToast";
 import { FaCamera } from "react-icons/fa";
 
 const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
@@ -17,14 +17,18 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
   const startWebcam = async () => {
-    if (!stream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (
+      !stream &&
+      navigator.mediaDevices &&
+      navigator.mediaDevices.getUserMedia
+    ) {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             width: { ideal: 640 },
             height: { ideal: 480 },
-            facingMode: 'user'
-          }
+            facingMode: "user",
+          },
         });
         setStream(mediaStream);
         if (videoRef.current) {
@@ -38,7 +42,8 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   };
 
   const loadModels = async () => {
-    const MODEL_URL = '/models';
+    // const MODEL_URL = '/models'; // 로컬 주소
+    const MODEL_URL = "dist/models"; // 빌드용 주소
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     setModelsLoaded(true);
   };
@@ -61,7 +66,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     if (!isVideoLoaded || !modelsLoaded) return;
 
     if (videoRef.current && photoCanvasRef.current) {
-      const context = photoCanvasRef.current.getContext('2d');
+      const context = photoCanvasRef.current.getContext("2d");
       if (context) {
         const video = videoRef.current;
         const canvas = photoCanvasRef.current;
@@ -72,7 +77,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const imageDataUrl = canvas.toDataURL('image/png');
+        const imageDataUrl = canvas.toDataURL("image/png");
 
         const img = new Image();
         img.src = imageDataUrl;
@@ -110,38 +115,45 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
     <>
       <div className={styles.StepTitleBox}>
         <div className={styles.StepTitle}>본인 사진 촬영</div>
-        <div className={styles.StepSubTitle}>본인 확인을 위해 셀프 이미지를 촬영해요.</div>
+        <div className={styles.StepSubTitle}>
+          본인 확인을 위해 셀프 이미지를 촬영해요.
+        </div>
       </div>
       <div className={styles.StepInner}>
         <div className={styles.StepVideo}>
-          {error && (
-            <div className="text-red-500 p-4 text-center">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-red-500 p-4 text-center">{error}</div>}
           {!isPhotoTaken ? (
             <>
-              <video 
-                ref={videoRef} 
-                autoPlay 
+              <video
+                ref={videoRef}
+                autoPlay
                 playsInline
-                className={styles.StepVideoInner} 
+                className={styles.StepVideoInner}
                 onLoadedMetadata={() => setIsVideoLoaded(true)}
               />
-              <canvas ref={photoCanvasRef} style={{ display: 'none' }} />
+              <canvas ref={photoCanvasRef} style={{ display: "none" }} />
               <div className={styles.buttonContainer}>
-                <CustomButton onClick={capturePhoto} state={!isVideoLoaded || !modelsLoaded ? 'disabled' : 'default' }>
-                  <FaCamera color='white' />
+                <CustomButton
+                  onClick={capturePhoto}
+                  state={
+                    !isVideoLoaded || !modelsLoaded ? "disabled" : "default"
+                  }
+                >
+                  <FaCamera color="white" />
                 </CustomButton>
               </div>
             </>
           ) : (
             <>
               <div className={styles.StepVideoInner}>
-                <img 
-                  src={photoStep8 || ''} 
+                <img
+                  src={photoStep8 || ""}
                   alt="촬영된 사진"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
                 />
               </div>
               <div className={styles.buttonContainer}>
@@ -152,7 +164,10 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
         </div>
       </div>
       <div className={styles.StepFooter}>
-        <CustomButton onClick={onNext} state={!isPhotoTaken ? 'disabled' : 'default'}>
+        <CustomButton
+          onClick={onNext}
+          state={!isPhotoTaken ? "disabled" : "default"}
+        >
           다음
         </CustomButton>
       </div>
