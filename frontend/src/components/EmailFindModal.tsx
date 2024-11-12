@@ -17,10 +17,8 @@ const maskEmail = (email: string) => {
   const [localPart, domain] = email.split("@");
   
   if (localPart.length <= 3) {
-    // localPart가 3자리 이하인 경우 앞 한 글자만 남기고 마스킹
     return `${localPart[0]}***@${domain}`;
   } else {
-    // localPart가 4자리 이상인 경우 마지막 세 자리를 제외하고 마스킹
     return `${localPart.slice(0, localPart.length - 3)}***@${domain}`;
   }
 };
@@ -40,22 +38,6 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [foundEmails, setFoundEmails] = useState<{ email: string; joinedOn: string }[]>([]);
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setYear(e.target.value);
-  };
-
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setMonth(e.target.value);
-  };
-
-  const handleDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDay(e.target.value);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const birth = `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
@@ -68,7 +50,7 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
       if (response.status === 200) {
         const { emailList, size } = response.data;
         const emails = emailList.map((item: { email: string; joined_on: string }) => ({
-          email: maskEmail(item.email), // 마스킹된 이메일
+          email: maskEmail(item.email),
           joinedOn: item.joined_on,
         }));
 
@@ -111,26 +93,20 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
               {!isSubmitted ? (
                 <form onSubmit={handleSubmit}>
                   <div className={styles.formInner}>
-                    <div className={styles.formInnerNameBox}>
-                      <span className={styles.formInnerName}>주최자 이름 (한글 2 - 10 자)</span>
-                    </div>
                     <input
                       type="text"
                       className={styles.formInput}
                       placeholder="이름 입력"
                       value={name}
-                      onChange={handleNameChange}
-                      autoComplete="off"
+                      onChange={(e) => setName(e.target.value)}
+                      data-testid="name-input"
                     />
                   </div>
 
                   <div className={styles.formInner}>
-                    <div className={styles.formInnerNameBox}>
-                      <span className={styles.formInnerName}>생년월일</span>
-                    </div>
                     <div className={styles.birthDateBox}>
                       <div className={styles.birthInner}>
-                        <select value={year} onChange={handleYearChange}>
+                        <select value={year} onChange={(e) => setYear(e.target.value)} data-testid="year-select">
                           {[...Array(2023 - 1924 + 1)].map((_, i) => (
                             <option key={i} value={(2023 - i).toString()}>
                               {2023 - i}년
@@ -139,7 +115,7 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
                         </select>
                       </div>
                       <div className={styles.birthInner}>
-                        <select value={month} onChange={handleMonthChange}>
+                        <select value={month} onChange={(e) => setMonth(e.target.value)} data-testid="month-select">
                           {[...Array(12)].map((_, i) => (
                             <option key={i} value={(i + 1).toString()}>
                               {i + 1}월
@@ -148,7 +124,7 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
                         </select>
                       </div>
                       <div className={styles.birthInner}>
-                        <select value={day} onChange={handleDayChange}>
+                        <select value={day} onChange={(e) => setDay(e.target.value)} data-testid="day-select">
                           {[...Array(31)].map((_, i) => (
                             <option key={i} value={(i + 1).toString()}>
                               {i + 1}일
@@ -160,10 +136,11 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
                   </div>
 
                   <div className={styles.buttonBox}>
-                    <button
-                      type="submit"
-                      className={styles.registerButton}
-                      disabled={!name.trim()}
+                    <button 
+                      type="submit" 
+                      className={styles.registerButton} 
+                      disabled={!name.trim()} 
+                      data-testid="search-button"
                     >
                       검색하기
                     </button>
@@ -171,31 +148,15 @@ const EmailFindModal: React.FC<EmailFindModalProps> = ({
                 </form>
               ) : (
                 <div className={styles.resultBox}>
-                  <div className={styles.findResultBox}>
-                    {foundEmails.length > 0 ? (
-                      foundEmails.map((item, index) => (
-                        <div key={index} className={styles.emailInfo}>
-                          <div className={styles.foundEmail}>{item.email}</div>
-                          <div className={styles.joinedOn}>({item.joinedOn} 가입)</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className={styles.noResult}>검색된 아이디가 없음.</div>
-                    )}
-                  </div>
-
-                  <div className={styles.noticeMessage}>
-                    * 보안을 위해 아이디의 일부만 표기되어요.
-                  </div>
-                  
                   {foundEmails.length > 0 ? (
-                    <button className={styles.registerButton} onClick={onLoginRedirect}>
-                      로그인 바로가기
-                    </button>
+                    foundEmails.map((item, index) => (
+                      <div data-testid="success-message" key={index} className={styles.emailInfo}>
+                        <div className={styles.foundEmail}>{item.email}</div>
+                        <div className={styles.joinedOn}>({item.joinedOn} 가입)</div>
+                      </div>
+                    ))
                   ) : (
-                    <button className={styles.registerButton} onClick={onRetrySearch}>
-                      검색 다시하기
-                    </button>
+                    <div data-testid="error-message" className={styles.noResult}>검색된 아이디가 없음.</div>
                   )}
                 </div>
               )}
