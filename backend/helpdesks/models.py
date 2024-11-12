@@ -10,7 +10,13 @@ class Notification(models.Model):
         db_table = 'notification'
 
 class Faq(models.Model):
-    category = models.CharField(max_length=255)
+    TYPE_CHOICES = (
+        ('usage', 'Usage'),
+        ('coin', 'Coin'),
+        ('etc', 'Etc'),
+    )
+
+    category = models.CharField(max_length=255, choices=TYPE_CHOICES)
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -19,8 +25,14 @@ class Faq(models.Model):
         db_table = 'faq'
 
 class Question(models.Model):
+    TYPE_CHOICES = (
+        ('usage', 'Usage'),
+        ('coin', 'Coin'),
+        ('etc', 'Etc'),
+    )
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
-    category = models.CharField(max_length=255)
+    category = models.CharField(max_length=255, choices=TYPE_CHOICES)
     title = models.CharField(max_length=100)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
