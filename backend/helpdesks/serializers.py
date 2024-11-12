@@ -18,6 +18,13 @@ class NotificationObjectSerializer(serializers.ModelSerializer):
         exclude = ['id']
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(
+        max_length=100,
+        error_messages={
+            'max_length': '제목은 100자를 넘길 수 없습니다.'
+        }
+    )
+
     class Meta:
         model = Question
         fields = ['category', 'title', 'content']
@@ -46,6 +53,13 @@ class QuestionSerializer(serializers.ModelSerializer):
         return AnswerListSerializer(answers, many=True).data
 
 class QuestionEditSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(
+        max_length=100,
+        error_messages={
+            'max_length': '제목은 100자를 넘길 수 없습니다.'
+        }
+    )
+
     class Meta:
         model = Question
         fields = ('category', 'title', 'content',)
