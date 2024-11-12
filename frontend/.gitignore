@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 *.env
+
+# 보고서 파일은 올리지 않습니다.
+coverage/

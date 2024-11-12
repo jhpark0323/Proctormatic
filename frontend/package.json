@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest --verbose --watch",
-    "test:ci": "jest --ci"
+    "test:ci": "jest --ci",
+    "coverage": "jest --coverage"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
