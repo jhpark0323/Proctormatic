@@ -220,6 +220,7 @@ def faq(request):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '자주 묻는 질문이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @faq_detail_schema
