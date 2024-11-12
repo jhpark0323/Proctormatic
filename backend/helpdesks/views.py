@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.core.paginator import Paginator
 
+from accounts.authentications import CustomAuthentication
 from .models import Notification, Question, Faq, Answer
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
     FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer, QuestionEditSerializer, \
@@ -68,16 +69,19 @@ def check_notification(request, notification_id):
 
 @question_schema
 @api_view(['POST', 'GET'])
+@authentication_classes([CustomAuthentication])
 def question(request):
-    user = find_user_by_token(request)
+    user = request.user
 
     if request.method == 'POST':
         serializer = QuestionCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)
             return Response({'message': '등록이 완료되었습니다.'}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({'message': '제목은 100자를 넘길 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        error_message = next(iter(serializer.errors.values()))[0]
+        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
         category = request.query_params.get('category')
         questions = Question.objects.filter(user_id=user.id).order_by('-created_at')
@@ -104,12 +108,11 @@ def question(request):
 
 @question_detail_schema
 @api_view(['GET', 'PUT', 'DELETE'])
+@authentication_classes([CustomAuthentication])
 def question_detail(request, question_id):
-    user_id = request.auth['user_id']
-
-    try:
-        question = Question.objects.get(pk=question_id, user_id=user_id)
-    except:
+    user = request.user
+    question = Question.objects.filter(pk=question_id, user_id=user.id).first()
+    if question is None:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
@@ -131,10 +134,9 @@ def question_detail(request, question_id):
 @answer_schema
 @api_view(['POST'])
 def create_answer(request, question_id):
-    user_id = request.auth['user_id']
-    user = User.objects.get(pk=user_id)
+    user = request.user
 
-    question = Question.objects.filter(pk=question_id, user_id=user_id).first()
+    question = Question.objects.filter(pk=question_id, user_id=user.id).first()
     if question is None:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -148,10 +150,9 @@ def create_answer(request, question_id):
 @answer_schema
 @api_view(['PUT', 'DELETE'])
 def handle_answer(request, question_id, answer_id):
-    user_id = request.auth['user_id']
-    user = User.objects.get(pk=user_id)
+    user = request.user
 
-    question = Question.objects.filter(pk=question_id, user_id=user_id).first()
+    question = Question.objects.filter(pk=question_id, user_id=user.id).first()
     if question is None:
         return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
     answer = Answer.objects.filter(pk=answer_id, author=user.name).first()
@@ -227,9 +228,8 @@ def faq(request):
 @api_view(['GET', 'DELETE'])
 @permission_classes([AllowAny])
 def faq_detail(request, faq_id):
-    try:
-        faq = Faq.objects.get(id=faq_id)
-    except:
+    faq = Faq.objects.filter(pk=faq_id).first()
+    if faq is None:
         return Response({'message': '자주 묻는 질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
@@ -238,12 +238,3 @@ def faq_detail(request, faq_id):
     elif request.method == 'DELETE':
         faq.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-def find_user_by_token(request):
-    user_id = request.auth['user_id']
-    user = User.objects.get(pk=user_id)
-
-    if not user.is_active:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
-    return user
