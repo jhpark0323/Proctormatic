@@ -42,8 +42,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   };
 
   const loadModels = async () => {
-    // const MODEL_URL = '/models'; // 로컬 주소
-    const MODEL_URL = "dist/models"; // 빌드용 주소
+    const MODEL_URL = "/models";
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     setModelsLoaded(true);
   };
