@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// Jest 전역 설정
+global.jest = jest;
+
 // 브라우저 API mocks
 global.matchMedia = global.matchMedia || function(query) {
   return {
@@ -27,3 +30,12 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 } as any;
+
+// Swiper mocks
+jest.mock('swiper/modules', () => ({
+  Navigation: jest.fn(),
+  Autoplay: jest.fn(),
+  Virtual: jest.fn(),
+}));
+
+jest.mock('swiper/css', () => ({}));
