@@ -24,38 +24,43 @@ def notification(request):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '공지사항이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
         notifications = Notification.objects.all()
         page = request.GET.get('page', 1)
         size = request.GET.get('size', 10)
+
         if int(page) <= 0:
             return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
         if int(size) <= 0:
             return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
         paginator = Paginator(notifications, size)
         page_obj = paginator.get_page(page)
         serializer = NotificationListSerializer(page_obj, many=True)
-        data = {
+
+        return Response({
             "notificationList": serializer.data,
             "prev": page_obj.has_previous(),
             "next": page_obj.has_next(),
-            "totalPage": paginator.num_pages,
-        }
-        return Response(data, status=status.HTTP_200_OK)
+            "totalPage": paginator.num_pages
+        }, status=status.HTTP_200_OK)
 
 
 @check_notification_schema
 @api_view(['GET', 'DELETE'])
 @permission_classes([AllowAny])
 def check_notification(request, notification_id):
-    try:
-        notification = Notification.objects.get(pk=notification_id)
-    except:
+    notification = Notification.objects.filter(pk=notification_id).first()
+
+    if notification is None:
         return Response({'message': '공지 사항이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         serializer = NotificationObjectSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
     elif request.method == 'DELETE':
         notification.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
