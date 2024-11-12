@@ -42,7 +42,7 @@ const Step8: React.FC<{ onNext: () => void }> = ({ onNext }) => {
   };
 
   const loadModels = async () => {
-    const MODEL_URL = `${process.env.PUBLIC_URL}/dist/models`;
+    const MODEL_URL = "https://k11s209.p.ssafy.io/dist/models";
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     setModelsLoaded(true);
   };
