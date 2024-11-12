@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BrowserRouter as Router } from "react-router-dom";
 import "@testing-library/jest-dom";
@@ -5,8 +6,8 @@ import Home from "@/pages/Home";
 
 // Swiper 컴포넌트 모킹
 jest.mock('swiper/react', () => ({
-  Swiper: ({ children }) => <div data-testid="SwiperComponent">{children}</div>,
-  SwiperSlide: ({ children }) => <div>{children}</div>,
+  Swiper: ({ children }: { children: ReactNode }) => <div data-testid="SwiperComponent">{children}</div>,
+  SwiperSlide: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 // 테스트 헬퍼 함수: 로컬 스토리지 초기화
@@ -31,7 +32,6 @@ describe("Home 페이지 테스트", () => {
   it("홈페이지에 헤더와 배너가 정상적으로 렌더링 되는지 확인", () => {
     renderHome();
     expect(screen.getByText("로그인 / 가입")).toBeInTheDocument();
-    // SwiperComponent가 하나 이상 존재하는지 확인
     const swiperComponents = screen.queryAllByTestId("SwiperComponent");
     expect(swiperComponents.length).toBeGreaterThan(0);
   });
