@@ -171,8 +171,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
           <div className={styles.inBoxInner}>
             {/* titleBox 부분 */}
             <div className={styles.titleBox}>
-              <div className={styles.upLine}>{title}</div>
-              <div className={styles.downLine}>
+              <div className={styles.upLine} data-testid="modal-title">{title}</div>
+              <div className={styles.downLine} data-testid="modal-subtitle">
                 {Array.isArray(subtitle)
                   ? subtitle.map((line, index) => <p key={index}>{line}</p>)
                   : subtitle}
@@ -250,7 +250,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                       />
                       <div className={`${styles.rowGrayBar} ${emailError ? styles.errorRow : ''}`}></div>
                     </div>
-                    <div className={styles.verifyButton} onClick={!isLoading ? onVerifyEmail : undefined}>
+                    <div className={styles.verifyButton} onClick={!isLoading ? onVerifyEmail : undefined} data-testid="email-send-button">
                       {isEmailVerified ? (
                         <div className={styles.verifiedText}>인증완료</div>
                       ) : (
