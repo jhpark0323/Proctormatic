@@ -83,8 +83,6 @@ def add_taker(request):
             taker.check_out_state = 'normal'
 
             task = merge_videos_task.delay(taker_id, taker.exam.id)
-            taker.stored_state = 'in_progress'
-            taker.save()
 
             log_entry = Logs(taker=taker, type='exit')
             log_entry.save()

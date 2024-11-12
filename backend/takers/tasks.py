@@ -3,6 +3,7 @@ import logging
 import boto3
 import ffmpeg
 from botocore.config import Config
+from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from celery import shared_task
 import tempfile
@@ -46,17 +47,24 @@ def clean_temp_files(file_paths):
             logging.error(f"Error cleaning up file {file_path}: {str(e)}")
 
 
-@shared_task
-def merge_videos_task(taker_id, exam_id):
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
+def merge_videos_task(self, taker_id, exam_id):
+    folder_path = None
     temp_files = []
 
     try:
+        taker = Taker.objects.filter(id=taker_id).first()
+
+        taker.stored_state = 'in_progress'
+        taker.save()
+
         s3_client = get_s3_client()
         folder_path = f"{exam_id}/{taker_id}"
         concat_file_path = os.path.join(TEMP_DIR, 'concat.txt')
-        merged_output_path = os.path.join(TEMP_DIR, 'merged.mp4')
+        merged_output_path = os.path.join(TEMP_DIR, 'merged.webm')
 
-        logging.info(f"Searching for videos in path: {folder_path}")
+        logging.info(f"비디오를 검색하는 경로: {folder_path}")
 
         response = s3_client.list_objects_v2(
             Bucket=settings.AWS_STORAGE_BUCKET_NAME,
@@ -64,16 +72,17 @@ def merge_videos_task(taker_id, exam_id):
         )
 
         if 'Contents' not in response:
-            return "No video files found"
+            raise Exception("비디오 파일을 찾을 수 없습니다.")
+
 
         video_files = [
             obj['Key'] for obj in response.get('Contents', [])
-            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith(('.mp4', '.mov', '.avi'))
+            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith(('.mp4', '.webm', '.avi'))
         ]
         video_files.sort()
 
         if not video_files:
-            return "No valid video files to merge"
+            return "병합할 유효한 비디오 파일이 없습니다."
 
         processed_videos = []
         previous_end_time = None
@@ -86,7 +95,7 @@ def merge_videos_task(taker_id, exam_id):
 
                 if previous_end_time is not None and start_time > previous_end_time:
                     gap_duration = start_time - previous_end_time
-                    black_video_path = os.path.join(TEMP_DIR, f'black_{previous_end_time}_{start_time}.mp4')
+                    black_video_path = os.path.join(TEMP_DIR, f'black_{previous_end_time}_{start_time}.webm')
 
                     stream = ffmpeg.input('color=c=black:s=1280x720:d={}'.format(gap_duration),
                                           f='lavfi')
@@ -95,8 +104,8 @@ def merge_videos_task(taker_id, exam_id):
 
                     stream = ffmpeg.output(stream, audio,
                                            black_video_path,
-                                           vcodec='libx264',
-                                           acodec='aac',
+                                           vcodec='vp8',
+                                           acodec='libvorbis',
                                            pix_fmt='yuv420p')
 
                     ffmpeg.run(stream, overwrite_output=True)
@@ -117,8 +126,8 @@ def merge_videos_task(taker_id, exam_id):
                 stream = ffmpeg.input(local_video_path)
                 stream = ffmpeg.output(stream,
                                        output_resized_path,
-                                       vcodec='libx264',
-                                       acodec='aac',
+                                       vcodec='vp8',
+                                       acodec='libvorbis',
                                        preset='medium',
                                        crf=23,
                                        video_bitrate='2000k',
@@ -136,11 +145,11 @@ def merge_videos_task(taker_id, exam_id):
                 temp_files.remove(local_video_path)
 
             except Exception as e:
-                logging.error(f"Error processing video {video_file}: {str(e)}")
+                logging.error(f"다운로드 실패 {video_file}: {str(e)}")
                 continue
 
         if not processed_videos:
-            return "Failed to process any videos"
+            return "처리된 비디오 파일이 없습니다."
 
         with open(concat_file_path, 'w', encoding='utf-8') as f:
             for video_path in processed_videos:
@@ -152,8 +161,8 @@ def merge_videos_task(taker_id, exam_id):
             stream = ffmpeg.input(concat_file_path, format='concat', safe=0)
             stream = ffmpeg.output(stream,
                                    merged_output_path,
-                                   vcodec='libx264',
-                                   acodec='aac',
+                                   vcodec='vp8',
+                                   acodec='libvorbis',
                                    preset='medium',
                                    crf=23,
                                    pix_fmt='yuv420p')
@@ -164,29 +173,32 @@ def merge_videos_task(taker_id, exam_id):
             s3_client.upload_file(
                 Filename=merged_output_path,
                 Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                Key=f"{folder_path}/merged.mp4"
+                Key=f"{folder_path}/merged.webm"
             )
 
-            return f'Successfully merged {len(video_files)} videos with black screens for gaps'
-
-        except Exception as e:
-            logging.error(f"Error during final video merging: {str(e)}")
-            raise
-
-    except Exception as e:
-        logging.error(f"Unexpected error in merge_videos_task: {str(e)}")
-        return f"Error: {str(e)}"
-
-    finally:
-        try:
-            merged_video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder_path}/merged.mp4"
+            merged_video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder_path}/merged.webm"
 
             taker = Taker.objects.get(id=taker_id)
             taker.stored_state = 'done'
             taker.web_cam = merged_video_url
             taker.save()
-            logging.info(f"Successfully updated Taker {taker_id} stored_state to 'done'.")
-        except Taker.DoesNotExist:
-            logging.error(f"Taker with id {taker_id} does not exist.")
 
+            return f'블랙스크린이 추가된 {len(video_files)} 개의 비디오가 성공적으로 병합되었습니다.'
+
+        except Exception as e:
+            logging.error(f"최종 비디오 병합 중 오류 발생: {str(e)}")
+            raise
+
+    except Exception as e:
+        logging.error(f"merge_videos_task에서 예기치 못한 오류 발생: {str(e)}")
+
+        # 작업 실패 시 재시도
+        try:
+            self.retry(exc=e)
+        except MaxRetriesExceededError:
+            logging.error(f"작업 {self.request.id}의 최대 재시도 횟수 초과. 오류: {str(e)}")
+            return f"Error: {str(e)}"
+        return f"Error: {str(e)}"
+
+    finally:
         clean_temp_files(temp_files)
