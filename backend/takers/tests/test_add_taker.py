@@ -101,7 +101,7 @@ class AddTakerTestCase(TestCase):
         시험 시작 15분 이후 입실하려는 경우 - 400
         '''
         # Given
-        self.exam.start_time = (timezone.now() - timedelta(minutes=15)).time()
+        self.exam.start_time = (timezone.now() - timedelta(minutes=20)).time()
         self.exam.save()
 
         data = {
