@@ -6,7 +6,7 @@ const useYoloPostProcessing = (output: Float32Array | undefined) => {
   const processOutput = () => {
     if (!output) return;
 
-    const numClasses = 80;
+    const numClasses = 4;
     const gridSize = 80;
     const anchors = 3;
     const outputSize = 85;

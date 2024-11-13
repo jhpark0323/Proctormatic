@@ -70,6 +70,9 @@ export const stopRecording = (
           .catch((error) => {
             console.error("업로드 실패: ", error);
           });
+
+        // recordedChunksRef 초기화
+        recordedChunksRef.current = [];
       } else {
         console.error("녹화된 데이터가 없습니다.");
       }

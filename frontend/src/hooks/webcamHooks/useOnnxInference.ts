@@ -24,7 +24,20 @@ const useOnnxInference = (videoRef: React.RefObject<HTMLVideoElement>) => {
 
   // ONNX 추론 실행
   const runOnnxInference = async () => {
-    if (!session || !videoRef.current || !onnxCanvasRef.current) return;
+    if (!session) {
+      console.error("ONNX 세션이 초기화되지 않았습니다.");
+      return;
+    }
+    if (!videoRef.current) {
+      console.error("비디오 요소가 존재하지 않습니다.");
+      return;
+    }
+    if (!onnxCanvasRef.current) {
+      console.error("ONNX 캔버스가 초기화되지 않았습니다.");
+      return;
+    }
+
+    console.log("ONNX 추론 준비 완료");
 
     const canvas = onnxCanvasRef.current;
     const ctx = canvas.getContext("2d");
