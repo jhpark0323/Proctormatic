@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from exams.models import Exam
 from coins.models import Coin
