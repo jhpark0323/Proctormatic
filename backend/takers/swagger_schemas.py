@@ -290,17 +290,6 @@ update_taker_schema = extend_schema_view(
                     },
                 }
             ),
-            status.HTTP_404_NOT_FOUND: OpenApiResponse(
-                description='존재하지 않는 응시자',
-                response={
-                    'type': 'object',
-                    'properties': {
-                        'message': {
-                            'type': 'string'
-                        },
-                    },
-                }
-            )
         }
     )
 )
