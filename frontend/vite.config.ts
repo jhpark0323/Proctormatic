@@ -10,4 +10,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    minify: 'terser', // 'terser'를 사용해 최적화
+    terserOptions: {
+      compress: false, // 압축 해제
+      mangle: false, // 난독화 해제
+    },
+  },
 });
