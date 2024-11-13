@@ -102,7 +102,7 @@ class QuestionCreateTestCase(CommenTestSetUp):
         response = self.client.post(self.url, data, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_question_create_title_exceeds_max_length(self):

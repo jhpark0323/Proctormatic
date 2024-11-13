@@ -118,7 +118,7 @@ class AnswerUpdateTestCase(CommenTestSetUp):
         token = self.get_token(self.user)
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
         invalid_question_id = 999
-        url = f'{self.url.replace('<id>', str(invalid_question_id))}{self.answer.id}/'
+        url = f'{self.url.replace("<id>", str(invalid_question_id))}{self.answer.id}/'
         data = {
             'content': 'update_answer',
         }
@@ -192,7 +192,7 @@ class AnswerDeleteTestCase(CommenTestSetUp):
         token = self.get_token(self.user)
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
         invalid_question_id = 999
-        url = f'{self.url.replace('<id>', str(invalid_question_id))}{self.answer.id}/'
+        url = f'{self.url.replace("<id>", str(invalid_question_id))}{self.answer.id}/'
 
         # when
         response = self.client.delete(url, **headers)
