@@ -165,8 +165,6 @@ def update_taker(request):
             return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     taker = Taker.objects.filter(id=taker_id).first()
-    if not taker:
-        return Response({'message': '응시자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     s3_client = boto3.client('s3')
 
@@ -203,6 +201,7 @@ def update_taker(request):
         return Response({'message': error_messages[0]}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @add_web_cam_schame
