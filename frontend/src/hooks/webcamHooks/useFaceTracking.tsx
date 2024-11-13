@@ -135,3 +135,42 @@ const useFaceTracking = (
 };
 
 export default useFaceTracking;
+
+// import { useEffect } from "react";
+// import * as faceapi from "face-api.js";
+
+// const useFaceTracking = (
+//   videoRef: React.RefObject<HTMLVideoElement>,
+//   canvasRef: React.RefObject<HTMLCanvasElement>,
+//   modelsLoaded: boolean
+// ) => {
+//   useEffect(() => {
+//     if (!modelsLoaded) return;
+
+//     const intervalId = setInterval(async () => {
+//       if (videoRef.current && canvasRef.current) {
+//         const video = videoRef.current;
+//         const canvas = canvasRef.current;
+//         const ctx = canvas.getContext("2d");
+//         canvas.width = 640;
+//         canvas.height = 480;
+
+//         const detections = await faceapi.detectAllFaces(
+//           video,
+//           new faceapi.TinyFaceDetectorOptions()
+//         );
+
+//         ctx!.clearRect(0, 0, canvas.width, canvas.height);
+//         detections.forEach((detection) => {
+//           const { x, y, width, height } = detection.box;
+//           ctx!.fillStyle = "rgba(0, 0, 0, 0.5)";
+//           ctx!.fillRect(x, y, width, height);
+//         });
+//       }
+//     }, 500);
+
+//     return () => clearInterval(intervalId);
+//   }, [modelsLoaded, videoRef, canvasRef]);
+// };
+
+// export default useFaceTracking;

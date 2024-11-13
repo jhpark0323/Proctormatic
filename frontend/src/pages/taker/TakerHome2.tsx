@@ -27,15 +27,9 @@ const TakerHome2 = () => {
       if (modelsLoaded) return;
       try {
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(
-            "https://k11s209.p.ssafy.io/models"
-          ),
-          faceapi.nets.faceRecognitionNet.loadFromUri(
-            "https://k11s209.p.ssafy.io/models"
-          ),
-          faceapi.nets.faceLandmark68Net.loadFromUri(
-            "https://k11s209.p.ssafy.io/models"
-          ),
+          faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
         ]);
         setModelsLoaded(true);
       } catch (error) {
