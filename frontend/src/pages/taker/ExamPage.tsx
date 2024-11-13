@@ -46,12 +46,18 @@ const ExamPage = () => {
   useFaceTracking(videoRef, faceCanvasRef);
 
   // 3. ONNX 모델 로드 및 추론
-  const {
-    output,
-    runOnnxInference,
-    onnxCanvasRef: onnxCanvas,
-  } = useOnnxInference(videoRef);
+  const { session, output, runOnnxInference } = useOnnxInference(
+    videoRef,
+    onnxCanvasRef
+  );
   const { processedResults } = useYoloPostProcessing(output);
+
+  // ONNX 모델이 로드된 후 추론 시작
+  useEffect(() => {
+    if (session && onnxCanvasRef.current) {
+      runOnnxInference();
+    }
+  }, [session, videoRef.current, onnxCanvasRef.current]);
 
   // 4. 주기적으로 ONNX 추론 실행 (2번 캔버스는 비공개)
   useEffect(() => {
@@ -94,6 +100,13 @@ const ExamPage = () => {
     }
   };
 
+  const LABELS: { [key: number]: string } = {
+    0: "person",
+    1: "watch",
+    2: "earphone",
+    3: "phone",
+  };
+
   return (
     <>
       <HeaderBlue />
@@ -119,13 +132,21 @@ const ExamPage = () => {
             <div>
               <h3>검출된 객체:</h3>
               <ul>
-                {processedResults.map((result, index) => (
-                  <li key={index}>
-                    {`클래스: ${result.classId}, 신뢰도: ${(
-                      result.confidence * 100
-                    ).toFixed(2)}%, 좌표: [${result.bbox}]`}
-                  </li>
-                ))}
+                {processedResults.map((result, index) => {
+                  const confidence =
+                    result.confidence > 1
+                      ? result.confidence
+                      : result.confidence * 100;
+                  return (
+                    <li key={index}>
+                      {`클래스: ${
+                        LABELS[result.classId] || "알 수 없음"
+                      }, 신뢰도: ${confidence.toFixed(2)}%, 좌표: [${
+                        result.bbox
+                      }]`}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
