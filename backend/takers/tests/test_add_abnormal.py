@@ -67,7 +67,7 @@ class UpdateTakerTestCase(APITestCase):
 
     def test_add_abnormal_failure(self):
         '''
-        이상행동 구간 등록 실패(누락된 데이터) - 400
+        이상행동 구간 등록 실패(누락된 데이터, request data 중 하나라도 누락된다면 발생), - 400
         '''
         # Given
         data = {
