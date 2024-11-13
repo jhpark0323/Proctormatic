@@ -9,6 +9,9 @@ RUN pip3 install -r requirements.txt
 # 정적파일 생성
 RUN python manage.py collectstatic --noinput
 
+RUN python manage.py makemigrations
+RUN python manage.py migrate
+
 # 테스트 및 커버리지 리포트 생성
 RUN coverage run manage.py test --noinput --keepdb
 RUN coverage xml
