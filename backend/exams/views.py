@@ -299,23 +299,12 @@ def exam_taker_detail(request, pk):
 
 @exam_detail_schema
 @api_view(['GET', 'PUT', 'DELETE'])
+@authentication_classes([CustomAuthentication])
 def exam_detail(request, pk):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 탈퇴한 유저일 경우
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+    user = request.user
 
     # 특정 ID의 시험이 존재하는지 확인
-    exam = Exam.objects.filter(pk=pk, user_id=user_id, is_deleted=False).first()
+    exam = Exam.objects.filter(pk=pk, user_id=user.id, is_deleted=False).first()
     if not exam:
         return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -347,7 +336,7 @@ def exam_detail(request, pk):
 
         # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
         if start_datetime < current_time:
-            return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요..'}, status=status.HTTP_409_CONFLICT)
+            return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
         if (start_datetime - current_time) < timedelta(minutes=30):
             return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
@@ -362,7 +351,7 @@ def exam_detail(request, pk):
             return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
         # entry_time 계산
-        entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
+        entry_time = (datetime.combine(exam_date, start_time) - timedelta(minutes=30)).time()
 
         # 기존 비용과 수정된 비용의 차이 계산
         original_cost = exam.cost
