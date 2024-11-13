@@ -77,7 +77,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
     setEmailModalOpen(false); // EmailModal 닫기
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // 폼 제출 방지
     const isValid = validateAllFields();
   
     // 입력값 검증 실패
@@ -192,7 +193,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                   onChange={(e) => validateName(e.target.value)}
                   autoComplete="off"
                 />
-                {nameError && <div className={styles.errorCase}>올바르지 않은 이름이에요.</div>}
+                {nameError && <div className={styles.errorCase} data-testid="not-correct-name">올바르지 않은 이름이에요.</div>}
               </div>
 
               <div className={styles.formInner}>
@@ -204,6 +205,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                     <select 
                       value={birthYear} 
                       onChange={(e) => setBirthYear(e.target.value)}
+                      data-testid="birthYear-select"
                     >
                       {years.map((year) => (
                         <option key={year} value={year}>{year}년</option>
@@ -214,6 +216,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                     <select 
                       value={birthMonth} 
                       onChange={(e) => setBirthMonth(e.target.value)}
+                      data-testid="birthMonth-select"
                     >
                       {months.map((month) => (
                         <option key={month} value={month}>{month}월</option>
@@ -224,6 +227,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                     <select 
                       value={birthDay} 
                       onChange={(e) => setBirthDay(e.target.value)}
+                      data-testid="birthDay-select"
                     >
                       {days.map((day) => (
                         <option key={day} value={day}>{day}일</option>
@@ -262,7 +266,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                       )}
                     </div>
                   </div>
-                  {emailError && <div className={styles.errorCase}>올바르지 않은 이메일 형식이에요.</div>}
+                  {emailError && <div className={styles.errorCase} data-testid="not-correct-email">올바르지 않은 이메일 형식이에요.</div>}
                   
                   <div className={styles.pwdInputOne}>
                     <input 
@@ -274,7 +278,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                     />
                     <div className={`${styles.rowGrayBar} ${passwordError ? styles.errorRow : ''}`}></div>
                   </div>
-                  {passwordError && <div className={styles.errorCase}>문자, 숫자, 기호를 조합하여 8자 이상 입력하세요.</div>}
+                  {passwordError && <div className={styles.errorCase} data-testid="not-corret-pw">문자, 숫자, 기호를 조합하여 8자 이상 입력하세요.</div>}
                   
                   <div className={styles.pwdInputTwo}>
                     <input 
@@ -313,6 +317,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
                   disabled={
                     nameError || emailError || passwordError || confirmPasswordError || !isEmailVerified || !policy
                   }
+                  data-testid="register-button"
                 >
                   회원가입
                 </button>
