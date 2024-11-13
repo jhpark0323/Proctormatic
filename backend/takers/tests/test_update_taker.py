@@ -6,10 +6,11 @@ from datetime import timedelta
 from django.utils import timezone
 from datetime import datetime
 from PIL import Image
-
+from io import BytesIO
+from django.core.files.uploadedfile import SimpleUploadedFile
 from exams.models import Exam
-from ..models import Taker
-from ..serializers import TakerTokenSerializer
+from takers.models import Taker
+from takers.serializers import TakerTokenSerializer
 
 User = get_user_model()
 
@@ -34,7 +35,7 @@ class UpdateTakerTestCase(APITestCase):
             start_time=start_time.time(),
             exit_time=start_time.time(),
             end_time=(timezone.now() + timedelta(hours=2)).time(),
-            url="https://exa0mple.com",
+            url="https://example.com",
             expected_taker=10,
             cost=10
         )
@@ -49,12 +50,10 @@ class UpdateTakerTestCase(APITestCase):
 
     def create_dummy_image(self):
         image = Image.new('RGB', (100, 100), color=(255, 0, 0))
-        from io import BytesIO
         img_byte_arr = BytesIO()
         image.save(img_byte_arr, format='PNG')
         img_byte_arr.seek(0)
 
-        from django.core.files.uploadedfile import SimpleUploadedFile
         dummy_image_file = SimpleUploadedFile(
             "dummy_image.png",
             img_byte_arr.read(),
@@ -76,7 +75,6 @@ class UpdateTakerTestCase(APITestCase):
 
         # When
         response = self.client.patch(self.url, data, format='multipart', HTTP_AUTHORIZATION=f'Bearer {self.token}')
-
         # Then
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], '신분증이 등록되었습니다.')
