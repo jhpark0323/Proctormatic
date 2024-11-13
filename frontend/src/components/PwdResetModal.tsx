@@ -92,7 +92,7 @@ const PwdResetModal: React.FC<PwdResetModalProps> = ({ onClose, title, subtitle 
               </div>
             </div>
 
-            <form onSubmit={handleResetSubmit}>
+            <form onSubmit={handleResetSubmit} data-testid="reset-password-form">
               <div className={styles.formInner}>
                 <div className={styles.formInnerNameBox}>
                   <span className={styles.formInnerName}>주최자 이름 (한글 2 - 10 자)</span>
@@ -144,6 +144,7 @@ const PwdResetModal: React.FC<PwdResetModalProps> = ({ onClose, title, subtitle 
                       value={password}
                       onChange={(e) => validatePassword(e.target.value)}
                       autoComplete="new-password"
+                      data-testid="password-input"
                     />
                     <div className={`${styles.rowGrayBar} ${passwordError ? styles.errorRow : ''}`}></div>
                   </div>
@@ -156,10 +157,11 @@ const PwdResetModal: React.FC<PwdResetModalProps> = ({ onClose, title, subtitle 
                       value={confirmPassword}
                       onChange={(e) => validateConfirmPassword(e.target.value)}
                       autoComplete="new-password"
+                      data-testid="new-password-input"
                     />
                     <div className={`${styles.rowGrayBar} ${confirmPasswordError ? styles.errorRow : ''}`}></div>
                   </div>
-                  {confirmPasswordError && <div className={styles.errorCase}>비밀번호를 다시 입력해주세요.</div>}
+                  {confirmPasswordError && <div data-testid="check-password" className={styles.errorCase}>비밀번호를 다시 입력해주세요.</div>}
                 </div>
 
                 <div className={styles.infoPart}>
