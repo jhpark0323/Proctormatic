@@ -133,6 +133,7 @@ def question_detail(request, question_id):
 
 @answer_schema
 @api_view(['POST'])
+@authentication_classes([CustomAuthentication])
 def create_answer(request, question_id):
     user = request.user
 
@@ -145,10 +146,12 @@ def create_answer(request, question_id):
         if serializer.is_valid():
             serializer.save(question=question, author=user.name)
             return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @answer_schema
 @api_view(['PUT', 'DELETE'])
+@authentication_classes([CustomAuthentication])
 def handle_answer(request, question_id, answer_id):
     user = request.user
 
@@ -164,6 +167,7 @@ def handle_answer(request, question_id, answer_id):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
         answer.delete()
