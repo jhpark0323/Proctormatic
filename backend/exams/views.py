@@ -48,7 +48,7 @@ def create_exam(request):
     end_datetime = datetime.combine(date, end_time)
 
     if start_datetime < current_time:
-        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요..'}, status=status.HTTP_409_CONFLICT)
+        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
     if (start_datetime - current_time) < timedelta(minutes=30):
         return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
@@ -105,8 +105,6 @@ def create_exam(request):
                 'url': exam_instance.url
             }
 
-    except User.DoesNotExist:
-        return Response({'message': '사용자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
