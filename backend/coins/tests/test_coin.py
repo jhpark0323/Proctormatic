@@ -65,7 +65,7 @@ class CoinCheckTestCase(CommenTestSetUp):
         response = self.client.get(self.url, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
 class CoinChargeTestCase(CommenTestSetUp):
@@ -116,7 +116,7 @@ class CoinChargeTestCase(CommenTestSetUp):
         response = self.client.post(self.url, data, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_charge_with_invalid_code(self):

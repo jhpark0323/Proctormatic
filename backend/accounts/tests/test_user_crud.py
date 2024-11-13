@@ -210,7 +210,7 @@ class UserFindTestCase(CommenTestSetUp):
         response = self.client.get(self.url, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_user_find_is_not_active(self):
@@ -225,7 +225,7 @@ class UserFindTestCase(CommenTestSetUp):
         response = self.client.get(self.url, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
 class UserUpdateTestCase(CommenTestSetUp):
@@ -279,7 +279,7 @@ class UserUpdateTestCase(CommenTestSetUp):
         response = self.client.put(self.url, data, content_type='application/json', **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_user_update_is_not_active(self):
@@ -297,7 +297,7 @@ class UserUpdateTestCase(CommenTestSetUp):
         response = self.client.put(self.url, data, content_type='application/json', **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_user_update_marketing_invalid_data(self):
@@ -358,7 +358,7 @@ class UserDeleteTestCase(CommenTestSetUp):
         response = self.client.get(self.url, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')
 
     def test_user_delete_is_not_active(self):
@@ -373,5 +373,5 @@ class UserDeleteTestCase(CommenTestSetUp):
         response = self.client.get(self.url, **headers)
 
         # then
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json().get('message'), '권한이 없습니다.')

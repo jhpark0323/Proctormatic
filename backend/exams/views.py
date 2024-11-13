@@ -5,33 +5,32 @@ from django.db.models import F
 from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+
 from .models import Exam
 from takers.models import Taker
 from coins.models import Coin
+from accounts.authentications import CustomAuthentication
 from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer, ExamDetailTakerSerializer
 from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ongoing_exam_list_schema, \
     completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
 
+
 User = get_user_model()
 
 @create_exam_schema
 @api_view(['POST'])
+@authentication_classes([CustomAuthentication])
 def create_exam(request):
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({'message': '사용자 정보가 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+    user = request.user
 
-    expected_taker = request.data.get("expected_taker", 0)
-    if expected_taker > 999:
+    expected_taker = request.data.get('expected_taker', 0)
+    if int(expected_taker) > 999:
         return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if user_role != 'host':
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = ExamSerializer(data=request.data)
     if not serializer.is_valid():
@@ -49,7 +48,7 @@ def create_exam(request):
     end_datetime = datetime.combine(date, end_time)
 
     if start_datetime < current_time:
-        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요..'}, status=status.HTTP_409_CONFLICT)
+        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
 
     if (start_datetime - current_time) < timedelta(minutes=30):
         return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
@@ -67,7 +66,7 @@ def create_exam(request):
 
     try:
         with transaction.atomic():
-            user = User.objects.select_for_update().get(id=user_id)
+            user = User.objects.select_for_update().get(id=user.id)
 
             if not user.is_active:
                 return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -90,7 +89,7 @@ def create_exam(request):
 
             # Coin 내역 생성
             Coin.objects.create(
-                user_id=user_id,
+                user_id=user.id,
                 exam_id=exam_instance.id,
                 type='use',
                 amount=exam_cost
@@ -106,8 +105,6 @@ def create_exam(request):
                 'url': exam_instance.url
             }
 
-    except User.DoesNotExist:
-        return Response({'message': '사용자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

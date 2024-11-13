@@ -97,30 +97,26 @@ def handle_user(request):
 
         error_message = next(iter(serializer.errors.values()))[0]
         return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        validation_response = is_valid_user(request)
-        if isinstance(validation_response, Response):
-            return validation_response
 
-        user = request.user
+    user = request.user
 
-        if request.method == 'GET':
-            serializer = UserInfoSerializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    if request.method == 'GET':
+        serializer = UserInfoSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        elif request.method == 'PUT':
+    elif request.method == 'PUT':
 
-            serializer = EditMarketingSerializer(data=request.data)
-            if serializer.is_valid():
-                user.marketing = serializer.data.get('marketing')
-                user.save()
-                return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        elif request.method == 'PATCH':
-            user.is_active = False
+        serializer = EditMarketingSerializer(data=request.data)
+        if serializer.is_valid():
+            user.marketing = serializer.data.get('marketing')
             user.save()
-            return Response({'message': '회원 탈퇴를 완료했습니다.'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'message': '마케팅 활용 및 광고 수신 여부가 수정되었습니다.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PATCH':
+        user.is_active = False
+        user.save()
+        return Response({'message': '회원 탈퇴를 완료했습니다.'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @token_schema
@@ -207,10 +203,6 @@ def reset_password(request):
         return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        validation_response = is_valid_user(request)
-        if isinstance(validation_response, Response):
-            return validation_response
-
         user = request.user
 
         serializer = ResetPasswordEmailCheckSerializer(data=request.data)
@@ -269,8 +261,3 @@ def is_valid_email(email):
     if re.match(email_regex, email):
         return True
     return False
-
-
-def is_valid_user(request):
-    if not request.user.is_authenticated:
-        return Response({'message': '권한이 없습니다.'}, status=status.HTTP_401_UNAUTHORIZED)

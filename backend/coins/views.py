@@ -59,8 +59,8 @@ def create_coin_code(request):
 
 
 @coin_history_schema
-@authentication_classes([CustomAuthentication])
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def coin_history(request):
     user = request.user
 

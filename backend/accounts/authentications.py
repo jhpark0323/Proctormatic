@@ -9,9 +9,13 @@ User = get_user_model()
 
 class CustomAuthentication(BaseAuthentication):
     def authenticate(self, request):
+        # 회원가입, 비밀번호 재설정 인증번호 전송 기능은 auth가 필요없음
+        if (request.path.endswith('/users/') or request.path.endswith('/users/password/')) and request.method == 'POST':
+            return None
+
         auth_header = request.headers.get('Authorization')
         if auth_header is None or not auth_header.startswith('Bearer '):
-            return None
+            raise AuthenticationFailed('권한이 없습니다.')
 
         token = auth_header.split(' ')[1]
 
