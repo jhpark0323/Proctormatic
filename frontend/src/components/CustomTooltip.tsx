@@ -40,6 +40,7 @@ const CustomTooltip = ({
         data-tooltip-id={id}
         data-tooltip-content={content}
         data-tooltip-place={place}
+        data-testid="tooltip-content"  // 테스트를 위해 추가
       >
         {children}
       </span>
