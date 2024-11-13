@@ -96,6 +96,27 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '종료된 시험입니다.')
 
+    def test_add_taker_after_start_time_15_minutes(self):
+        '''
+        시험 시작 15분 이후 입실하려는 경우 - 400
+        '''
+        # Given
+        self.exam.start_time = (timezone.now() - timedelta(minutes=15)).time()
+        self.exam.save()
+
+        data = {
+            "exam": self.exam.id,
+            "name": "testUser",
+            "email": "test@example.com",
+        }
+
+        # When
+        response = self.client.post(self.url, data, content_type='application/json')
+
+        # Then
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], '입실 시간이 지났습니다. 시험 시작 15분 이후 입장은 불가합니다.')
+
     def test_add_existing_taker_with_checkout(self):
         '''
         이미 정상적인 퇴실을 하였는데 재입실 하려는 경우 - 403

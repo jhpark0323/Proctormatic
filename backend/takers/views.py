@@ -14,7 +14,7 @@ from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_s
     add_abnormal_schema
 from django_redis import get_redis_connection
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 import boto3
 from takers.tasks import merge_videos_task
@@ -33,15 +33,20 @@ def add_taker(request):
 
             current_time = timezone.now()
             entry_time = datetime.combine(exam.date, exam.entry_time)
+            start_time = datetime.combine(exam.date, exam.start_time)
             end_time = datetime.combine(exam.date, exam.end_time)
 
             if current_time < entry_time:
                 return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            if current_time > start_time + timedelta(minutes=15):
+                return Response({'message': '입실 시간이 지났습니다. 시험 시작 15분 이후 입장은 불가합니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if current_time > end_time:
                 return Response({'message': '종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
+            if exam.total_taker >= exam.expected_taker:
+                return Response({'message': "참가자 수를 초과했습니다."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
+            existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
             if existing_taker:
                 if existing_taker.check_out_state == "normal":
                     return Response({'message': '이미 퇴실한 사용자입니다.'}, status=status.HTTP_403_FORBIDDEN)
@@ -51,9 +56,6 @@ def add_taker(request):
                     type = 'entry'
                 )
                 return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
-
-            if exam.total_taker >= exam.expected_taker:
-                return Response({'message': "참가자 수를 초과했습니다."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             taker = serializer.save()
             access_token = TakerTokenSerializer.get_access_token(taker)
