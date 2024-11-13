@@ -151,7 +151,6 @@ def check_email(request):
         else:
             return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 @update_taker_schema
 @api_view(['PATCH'])
 @authentication_classes([CustomJWTAuthentication])
@@ -202,8 +201,6 @@ def update_taker(request):
 
     return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 @add_web_cam_schame
 @api_view(['POST'])
 @authentication_classes([CustomJWTAuthentication])
@@ -212,23 +209,24 @@ def add_web_cam(request):
     taker_id = request.auth['user_id']
 
     taker = Taker.objects.filter(id=taker_id).first()
-    if not taker:
-        return Response({'message': '응시자를 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     exam_id = taker.exam_id
 
     if 'web_cam' not in request.FILES:
-        return Response('잘못된 요청입니다.', status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     web_cam_file = request.FILES['web_cam']
     start_time = request.data.get('start_time')
     end_time = request.data.get('end_time')
 
+    if not start_time or not end_time:
+        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
     start_time = start_time.replace(":", "")
     end_time = end_time.replace(":", "")
 
-    if not start_time:
-        return Response('잘못된 요청입니다.', status=status.HTTP_400_BAD_REQUEST)
+    if start_time > end_time:
+        return Response({'message': '시작 시간이 종료 시간보다 클 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     s3_client = boto3.client('s3')
     _, file_extension = os.path.splitext(web_cam_file.name)
@@ -267,13 +265,11 @@ def add_abnormal(request):
         error_message = next(iter(serializer.errors.values()))[0]
         return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
 
-
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     if re.match(email_regex, email):
         return True
     return False
-
 
 def parse_birth_date(birth):
     if len(birth) != 6:
