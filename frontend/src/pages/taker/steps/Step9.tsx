@@ -21,7 +21,7 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
 
   // 얼굴 인식 모델 로드 함수
   const loadModels = async () => {
-    const MODEL_URL = "/models";
+    const MODEL_URL = "https://k11s209.p.ssafy.io/models";
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     setModelsLoaded(true);
   };
