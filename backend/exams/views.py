@@ -1,3 +1,4 @@
+from django.utils import timezone
 from datetime import date, datetime, timedelta
 from rest_framework.permissions import AllowAny
 from threading import Thread
@@ -116,35 +117,25 @@ def create_exam(request):
 
 @scheduled_exam_list_schema
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def scheduled_exam_list(request):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+    user = request.user
 
     # 현재 시간 가져오기
-    current_datetime = datetime.now()
+    current_datetime = timezone.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
     # 오늘 이후의 시험들
     future_exams = Exam.objects.filter(
-        user_id=user_id,
+        user_id=user.id,
         date__gt=current_date,
         is_deleted=False
     )
 
     # 오늘 중에서 시작 시간이 현재 시간 이후인 시험들
     today_future_exams = Exam.objects.filter(
-        user_id=user_id,
+        user_id=user.id,
         date=current_date,
         start_time__gt=current_time,
         is_deleted=False
@@ -153,16 +144,17 @@ def scheduled_exam_list(request):
     # 두 쿼리셋을 결합하고 정렬
     exams = (future_exams | today_future_exams).order_by('date', 'start_time')
 
-    # 페이지 번호와 사이즈 가져오기
-    page_number = int(request.query_params.get('page', 1))
-    page_size = int(request.query_params.get('size', 10))
+    page = request.GET.get('page', 1)
+    size = request.GET.get('size', 10)
 
-    # 페이지네이션 처리
-    paginated_exams = paginate_queryset(exams, page_number, page_size)
-    if paginated_exams is None:
-        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 시리얼라이저를 사용한 직렬화 처리
+    paginator = Paginator(exams, size)
+    paginated_exams = paginator.get_page(page)
+
     serializer = ScheduledExamListSerializer(paginated_exams, many=True)
 
     # 응답 데이터 구성
@@ -170,48 +162,40 @@ def scheduled_exam_list(request):
         "scheduledExamList": serializer.data,
         "prev": paginated_exams.has_previous(),
         "next": paginated_exams.has_next(),
-        "totalPage": Paginator(exams, page_size).num_pages
+        "totalPage": paginator.num_pages
     }, status=status.HTTP_200_OK)
 
 
 @ongoing_exam_list_schema
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def ongoing_exam_list(request):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+    user = request.user
 
     # 현재 시간 가져오기
-    current_datetime = datetime.now()
+    current_datetime = timezone.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
     # 현재 시간이 entry_time과 end_time 사이에 있는 시험들 필터링
     ongoing_exams = Exam.objects.filter(
-        user_id=user_id,
+        user_id=user.id,
         date=current_date,
         entry_time__lte=current_time,
         end_time__gte=current_time,
         is_deleted=False
     ).order_by('date', 'start_time')
 
-    # 페이지 번호와 사이즈 가져오기
-    page_number = int(request.query_params.get('page', 1))
-    page_size = int(request.query_params.get('size', 10))
+    page = request.GET.get('page', 1)
+    size = request.GET.get('size', 10)
 
-    # 페이지네이션 처리
-    paginated_exams = paginate_queryset(ongoing_exams, page_number, page_size)
-    if paginated_exams is None:
-        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    paginator = Paginator(ongoing_exams, size)
+    paginated_exams = paginator.get_page(page)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = OngoingExamListSerializer(paginated_exams, many=True)
@@ -221,41 +205,31 @@ def ongoing_exam_list(request):
         "ongoingExamList": serializer.data,
         "prev": paginated_exams.has_previous(),
         "next": paginated_exams.has_next(),
-        "totalPage": Paginator(ongoing_exams, page_size).num_pages
+        "totalPage": paginator.num_pages
     }, status=status.HTTP_200_OK)
 
 
 @completed_exam_list_schema
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def completed_exam_list(request):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+    user = request.user
 
     # 현재 시간 가져오기
-    current_datetime = datetime.now()
+    current_datetime = timezone.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
 
     # 종료된 시험들 필터링
     completed_exams = Exam.objects.filter(
-        user_id=user_id,
+        user_id=user.id,
         date__lt=current_date,
         is_deleted=False
     )
 
     # 오늘 날짜의 시험 중에서 종료 시간이 지난 시험들 추가
     today_completed_exams = Exam.objects.filter(
-        user_id=user_id,
+        user_id=user.id,
         date=current_date,
         end_time__lt=current_time,
         is_deleted=False
@@ -264,13 +238,16 @@ def completed_exam_list(request):
     # 두 쿼리셋을 결합하고 정렬
     exams = (completed_exams | today_completed_exams).order_by('-date', '-end_time')
 
-    # 페이지 번호와 사이즈 가져오기
-    page_number = int(request.query_params.get('page', 1))
-    page_size = int(request.query_params.get('size', 10))
+    page = request.GET.get('page', 1)
+    size = request.GET.get('size', 10)
 
-    paginated_exams = paginate_queryset(exams, page_number, page_size)
-    if paginated_exams is None:
-        return Response({"message": "페이지 번호는 1 이상의 값이어야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    paginator = Paginator(exams, size)
+    paginated_exams = paginator.get_page(page)
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = CompletedExamListSerializer(paginated_exams, many=True)
@@ -280,8 +257,9 @@ def completed_exam_list(request):
         "completedExamList": serializer.data,
         "prev": paginated_exams.has_previous(),
         "next": paginated_exams.has_next(),
-        "totalPage": Paginator(exams, page_size).num_pages
+        "totalPage": paginator.num_pages
     }, status=status.HTTP_200_OK)
+
 
 @exam_taker_detail_schema
 @api_view(['GET'])
@@ -455,17 +433,6 @@ def get_user_info_from_token(request):
         user_role = request.auth['role']  # 커스텀 필드 'role'을 가져옴
         return user_id, user_role
     return None, None
-
-
-def paginate_queryset(queryset, page_number, page_size):
-    paginator = Paginator(queryset, page_size)
-    
-    # 음수 페이지 번호는 잘못된 요청으로 처리
-    if page_number < 1:
-        return None
-    
-    # 정상적인 경우 해당 페이지 반환
-    return paginator.get_page(page_number)
 
 
 def send_exam_email_threaded(email, exam_data):

@@ -497,3 +497,119 @@ class ExamUpdateTestCase(CommenTestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.coin_amount, 1200)
+
+class ExamCheckTestCase(CommenTestSetUp):
+    def test_check_exam(self):
+        '''
+        시험 조회를 요청하면 시험의 정보와 200 status를 반환한다
+        '''
+        # given
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        url = f'{self.url}{self.exam.id}/'
+
+        # when
+        response = self.client.get(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('title'), 'first exam')
+        self.assertEqual(response.data.get('expected_taker'), 10)
+
+    def test_check_exam_not_exist(self):
+        '''
+        존재하지 않는 질문을 조회하려고 하면 메세지와 404 status를 반환한다
+        '''
+        # given
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        not_exist_exam_id = 999
+        url = f'{self.url}{not_exist_exam_id}/'
+
+        # when
+        response = self.client.get(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json().get('message'), '존재하지 않는 시험입니다.')
+
+    def test_check_exam_different_user(self):
+        '''
+        다른 사람의 시험을 조회하려고 하면 메세지와 404 status를 반환한다
+        '''
+        # given
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        url = f'{self.url}{self.inactive_user_exam.id}/'
+
+        # when
+        response = self.client.get(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json().get('message'), '존재하지 않는 시험입니다.')
+
+class ExamDeleteTestCase(CommenTestSetUp):
+    def test_delete_exam(self):
+        '''
+        요청한 시험을 삭제하고 204 status를 반환한다
+        '''
+        # given
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        url = f'{self.url}{self.exam.id}/'
+
+        # when
+        response = self.client.delete(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.exam.refresh_from_db()
+        self.assertTrue(self.exam.is_deleted)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.coin_amount, 1600)
+
+        coin_record = Coin.objects.filter(user=self.user, exam_id=self.exam.id, type='refund').first()
+        self.assertIsNotNone(coin_record)
+        self.assertEqual(coin_record.amount, 600)
+
+    def test_delete_exam_not_exist(self):
+        '''
+        존재하지 않는 시험을 삭제하고자 하면 메세지와 404 status를 반환한다
+        '''
+        # given
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        not_exist_exam_id = 999
+        url = f'{self.url}{not_exist_exam_id}/'
+
+        # when
+        response = self.client.delete(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json().get('message'), '존재하지 않는 시험입니다.')
+
+    def test_delete_exam_in_progress(self):
+        '''
+        진행 중인 시험을 삭제하고자 하면 메세지와 409 status를 반환한다
+        '''
+        # given
+        self.exam.date = timezone.now().date()
+        self.exam.start_time = (timezone.now() - timedelta(minutes=30)).time()
+        self.exam.entry_time = (timezone.now() - timedelta(hours=1)).time()
+        self.exam.end_time = (timezone.now() + timedelta(minutes=30)).time()
+        self.exam.exit_time = timezone.now().time()
+        self.exam.save()
+
+        token = self.get_token(self.user)
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+        url = f'{self.url}{self.exam.id}/'
+
+        # when
+        response = self.client.delete(url, **headers)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.json().get('message'), '진행 중인 시험은 삭제할 수 없습니다.')
