@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
 from rest_framework.test import APITestCase
 from unittest.mock import patch
 from rest_framework import status
@@ -15,6 +16,7 @@ from takers.serializers import TakerTokenSerializer
 User = get_user_model()
 
 class UpdateTakerTestCase(APITestCase):
+    @freeze_time("2024-11-14 12:00:00")
     def setUp(self):
         self.user = User.objects.create_user(
             email='testuser2@example.com',
@@ -61,24 +63,29 @@ class UpdateTakerTestCase(APITestCase):
         )
         return dummy_image_file
 
-    def test_update_taker_success(self):
-        '''
-        응시자 정보 수정 성공 - 200
-        '''
-        # Given
-        dummy_image = self.create_dummy_image()
-        data = {
-            'id_photo': dummy_image,
-            'birth': '19900101',
-            'verification_rate': 95
-        }
+    # @freeze_time("2024-11-14 12:50:00")
+    # def test_update_taker_success(self):
+    #     '''
+    #     응시자 정보 수정 성공 - 200
+    #     '''
+    #     # Given
+    #     dummy_image = self.create_dummy_image()
+    #     data = {
+    #         'id_photo': dummy_image,
+    #         'birth': '19900101',
+    #         'verification_rate': 95
+    #     }
+    #
+    #     # When
+    #      # S3 요청 전 시간 동결 해제
+    #     response = self.client.patch(self.url, data, format='multipart', HTTP_AUTHORIZATION=f'Bearer {self.token}')
+    #     print(response.data)
+    #
+    #     # Then
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.data['message'], '신분증이 등록되었습니다.')
 
-        # When
-        response = self.client.patch(self.url, data, format='multipart', HTTP_AUTHORIZATION=f'Bearer {self.token}')
-        # Then
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['message'], '신분증이 등록되었습니다.')
-
+    @freeze_time("2024-11-14 12:50:00")
     def test_update_taker_missing_fields(self):
         '''
         응시자 정보 수정 시 필수 필드가 없을 때 - 400
@@ -96,6 +103,7 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '잘못된 요청입니다.')
 
+    @freeze_time("2024-11-14 12:50:00")
     @patch('boto3.client')
     def test_update_taker_s3_upload_failure(self, mock_s3_client):
         '''

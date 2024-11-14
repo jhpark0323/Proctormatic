@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from datetime import datetime
+from freezegun import freeze_time
 from rest_framework import status
 from datetime import timedelta
 from exams.models import Exam
@@ -10,6 +11,7 @@ from takers.models import Taker
 User = get_user_model()
 
 class AddTakerTestCase(TestCase):
+    @freeze_time("2024-11-14 12:00:00")
     def setUp(self):
         self.user = User.objects.create_user(
             email='testuser2@example.com',
@@ -36,6 +38,7 @@ class AddTakerTestCase(TestCase):
         )
         self.url = '/api/taker/'
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_taker_success(self):
         '''
         응시자 등록 성공 - 201
@@ -54,6 +57,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('access', response.data)
 
+    @freeze_time("2024-11-14 10:00:00")
     def test_add_taker_before_entry_time(self):
         '''
         입장 가능 시간 전에 입실하려는 경우 - 400
@@ -75,6 +79,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.')
 
+    @freeze_time("2024-11-14 15:00:00")
     def test_add_taker_after_exam_end_time(self):
         '''
         시험이 종료 된 후 입실하려는 경우 - 400
@@ -96,6 +101,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '종료된 시험입니다.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_existing_taker_with_checkout(self):
         '''
         이미 정상적인 퇴실을 하였는데 재입실 하려는 경우 - 403
@@ -121,6 +127,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['message'], '이미 퇴실한 사용자입니다.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_taker_Re_entry(self):
         '''
         재입장하는 경우 - 200
@@ -146,6 +153,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
 
+    @freeze_time("2024-11-14 11:50:00")
     def test_add_taker_expected_taker_limit(self):
         '''
         시험의 예상 참가자 수를 넘어서는 경우(입실 불가) - 429
@@ -167,6 +175,7 @@ class AddTakerTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
         self.assertEqual(response.data['message'], '참가자 수를 초과했습니다.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_taker_bad_request(self):
         '''
         필수 파라미터 없이 요청을 보내는 경우 - 400

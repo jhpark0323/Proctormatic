@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
 from rest_framework.test import APITestCase
 from rest_framework import status
 from datetime import timedelta
@@ -11,6 +12,7 @@ from takers.serializers import TakerTokenSerializer, AbnormalSerializer
 User = get_user_model()
 
 class UpdateTakerTestCase(APITestCase):
+    @freeze_time("2024-11-14 12:00:00")
     def setUp(self):
         self.detected_time = (timezone.now() - timedelta(minutes=10)).strftime('%H:%M:%S')
         self.end_time = timezone.now().strftime('%H:%M:%S')
@@ -47,6 +49,7 @@ class UpdateTakerTestCase(APITestCase):
         self.token =str(TakerTokenSerializer.get_access_token(self.taker))
         self.url = '/api/taker/abnormal/'
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_abnormal_success(self):
         '''
         이상행동 구간 등록 성공 - 201
@@ -65,6 +68,7 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['message'], '이상행동 영상이 등록되었습니다.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_abnormal_failure_detected_time(self):
         '''
         이상행동 구간 등록 실패(누락된 데이터, detected_time), - 400
@@ -82,6 +86,7 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '발생 시간을 입력해주세요.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_abnormal_failure_end_time(self):
         '''
         이상행동 구간 등록 실패(누락된 데이터, end_time), - 400
@@ -99,6 +104,7 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '종료 시간을 입력해주세요.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_add_abnormal_failure_type(self):
         '''
         이상행동 구간 등록 실패(누락된 데이터, end_time), - 400
@@ -116,6 +122,7 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '타입을 입력해주세요.')
 
+    @freeze_time("2024-11-14 12:50:00")
     def test_invalid_data_detected_time_later_than_end_time(self):
         """
         이상행동 구간 등록 실패(발생시간이 종료시간보다 나중인 경우) - 400
