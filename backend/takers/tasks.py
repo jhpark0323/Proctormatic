@@ -7,7 +7,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from celery import shared_task
 import tempfile
-
+import subprocess
 from takers.models import Taker
 
 # 임시 디렉토리 설정 및 생성
@@ -23,6 +23,20 @@ config = Config(
     connect_timeout=5,
     read_timeout=10
 )
+
+def log_ffmpeg_path():
+    try:
+        result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            # ffmpeg 버전 정보와 함께 경로를 로그로 출력
+            logging.info(f"ffmpeg 경로: {result.stdout}")
+        else:
+            logging.error("ffmpeg 경로를 찾을 수 없습니다.")
+    except Exception as e:
+        logging.error(f"ffmpeg 경로를 출력하는 도중 오류 발생: {str(e)}")
+
+# 이 함수를 merge_videos_task에서 호출하여 ffmpeg 경로를 출력할 수 있습니다.
+log_ffmpeg_path()
 
 def get_s3_client():
     try:
@@ -49,7 +63,7 @@ def clean_temp_files(file_paths):
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
 def merge_videos_task(self, taker_id, exam_id):
     temp_files = []
-
+    log_ffmpeg_path()  # ffmpeg 경로 출력
     try:
         taker = Taker.objects.filter(id=taker_id).first()
 
