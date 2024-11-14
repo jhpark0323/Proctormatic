@@ -72,23 +72,20 @@ def add_taker(request):
         taker_id = request.auth['user_id']
 
         taker = Taker.objects.filter(id=taker_id).first()
-        if taker is not None:
-            exam = Exam.objects.filter(id=taker.exam_id).first()
-            exit_time = datetime.now().time()
-            if exam:
-                if exit_time < exam.exit_time:
-                    return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
+        exam = Exam.objects.filter(id=taker.exam_id).first()
+        exit_time = datetime.now().time()
+        if exam:
+            if exit_time < exam.exit_time:
+                return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
 
-            taker.check_out_state = 'normal'
+        taker.check_out_state = 'normal'
 
-            task = merge_videos_task.delay(taker_id, taker.exam.id)
+        task = merge_videos_task.delay(taker_id, taker.exam.id)
 
-            log_entry = Logs(taker=taker, type='exit')
-            log_entry.save()
+        log_entry = Logs(taker=taker, type='exit')
+        log_entry.save()
 
-            return Response({'message': '시험이 종료되었습니다.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': '시험이 종료되었습니다.'}, status=status.HTTP_200_OK)
 
 
 @check_email_schema
