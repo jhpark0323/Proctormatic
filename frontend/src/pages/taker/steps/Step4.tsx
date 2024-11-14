@@ -46,7 +46,7 @@ const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, o
       const examStartTime = new Date(examYear, examMonth - 1, examDay, hours, minutes - 30, seconds);
 
       setIsButtonEnabled(currentDate >= examStartTime && 
-                         currentDate.toDateString() === new Date(examYear, examMonth - 1, examDay).toDateString());
+        currentDate.toDateString() === new Date(examYear, examMonth - 1, examDay).toDateString());
     };
 
     fetchExamInfo();
@@ -59,8 +59,8 @@ const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, o
         <div className={styles.StepSubTitle}>응시하실 시험의 상세 정보를 확인해주세요.</div>
       </div>
       <div className={`${styles.StepInner} ${styles.test1}`}>
-        <InputField label="시험 제목" value={examInfo.title} />
-        <InputField label="시험 응시 날짜" value={examInfo.date} />
+        <InputField label="시험 제목" value={examInfo.title} dataTestId="test-title" />
+        <InputField label="시험 응시 날짜" value={examInfo.date} dataTestId="test-date" />
         <InputField
           label="시험 응시 시간"
           value={
@@ -68,6 +68,7 @@ const Step4: React.FC<{ onNext: () => void; onBack: () => void }> = ({ onNext, o
               ? `${examInfo.start_time} ~ ${examInfo.end_time}`
               : ''
           }
+          dataTestId="test-time"
         />
       </div>
       <div className={styles.StepFooter}>
