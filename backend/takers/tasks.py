@@ -24,13 +24,6 @@ config = Config(
     read_timeout=10
 )
 
-if os.name == 'nt':  # Windows일 때
-    FFMPEG_PATH = r'C:\ffmpeg-7.1-essentials_build\bin\ffmpeg.exe'
-elif os.name == 'posix':  # Linux(우분투)일 때
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
-else:
-    raise EnvironmentError("알 수 없는 운영체제 입니다.")
-
 def get_s3_client():
     try:
         return boto3.client('s3',
@@ -51,7 +44,6 @@ def clean_temp_files(file_paths):
                 os.remove(file_path)
         except Exception as e:
             logging.error(f"Error cleaning up file {file_path}: {str(e)}")
-
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
@@ -78,7 +70,6 @@ def merge_videos_task(self, taker_id, exam_id):
 
         if 'Contents' not in response:
             raise Exception("비디오 파일을 찾을 수 없습니다.")
-
 
         video_files = [
             obj['Key'] for obj in response.get('Contents', [])
@@ -113,7 +104,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                            acodec='libvorbis',
                                            pix_fmt='yuv420p')
 
-                    ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
+                    ffmpeg.run(stream, overwrite_output=True)
 
                     processed_videos.append(black_video_path)
                     temp_files.append(black_video_path)
@@ -140,7 +131,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                        s='1280x720',
                                        pix_fmt='yuv420p')
 
-                ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
+                ffmpeg.run(stream, overwrite_output=True)
 
                 processed_videos.append(output_resized_path)
                 temp_files.append(output_resized_path)
@@ -172,7 +163,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                    crf=23,
                                    pix_fmt='yuv420p')
 
-            ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
+            ffmpeg.run(stream, overwrite_output=True)
             temp_files.append(merged_output_path)
 
             s3_client.upload_file(
