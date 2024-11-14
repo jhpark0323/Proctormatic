@@ -8,9 +8,10 @@ interface TermsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  dataTestId: string;
 }
 
-const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, onConfirm }) => {
+const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, onConfirm, dataTestId }) => {
   const navigate = useNavigate();
   const [agreements, setAgreements] = useState({
     all: false,
@@ -92,11 +93,12 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, onConfirm }) =
         }
       }}
       role='dialog'
+      data-testid={dataTestId}
     >
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>이용약관 및 개인정보 처리 방침에 동의해 주세요.</h2>
-          <button onClick={onClose} className={styles.closeButton}>✕</button>
+          <button onClick={onClose} className={styles.closeButton} data-testid="modal-close-button">✕</button>
         </div>
         
         <p className={styles.modalDescription}>아래 내용에 동의 후 시험에 입장해 주세요.</p>

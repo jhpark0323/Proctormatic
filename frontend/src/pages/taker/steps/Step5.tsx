@@ -70,7 +70,7 @@ const Step5: React.FC = () => {
   // 이메일 인증번호 요청 처리
   const handleEmailVerificationRequest = async () => {
     if (!formData.email) {
-      console.log('이메일을 입력해주세요');
+      CustomToast('이메일을 입력해주세요');
       return;
     }
     setIsLoading(true); // 로딩 상태 시작
@@ -103,7 +103,7 @@ const Step5: React.FC = () => {
   // 인증 코드 확인 처리
   const handleVerificationCodeSubmit = async () => {
     if (!formData.verificationCode) {
-      console.log('인증 코드를 입력해주세요');
+      CustomToast('인증 코드를 입력해주세요');
       return;
     }
     setIsLoading(true); // 로딩 상태 시작
@@ -114,7 +114,7 @@ const Step5: React.FC = () => {
       });
 
       if (response.status === 200) {
-        console.log('이메일 인증 성공');
+        CustomToast('이메일 인증 성공');
         setIsVerified(true);
         setVerificationError(''); // 에러 메시지 초기화
         setEmailStatus('');
@@ -190,7 +190,7 @@ const Step5: React.FC = () => {
 
   return (
     <>
-      <div className={styles.StepTitleBox}>
+      <div data-testid="step-title" className={styles.StepTitleBox}>
         <div className={styles.StepTitle}>응시자 정보 입력</div>
         <div className={styles.StepSubTitle}>응시자 정보를 정확하게 입력해주세요.</div>
       </div>
@@ -204,9 +204,10 @@ const Step5: React.FC = () => {
               value={formData.name}
               onChange={handleInputChange}
               style={{ borderBottomColor: isNameValid ? '' : 'red' }}
+              data-testid="input-name"
             />
             {!isNameValid && formData.name && (
-              <span style={{ color: 'red', marginLeft: '10px', fontSize: '14px' }}>
+              <span data-testid="name-error" style={{ color: 'red', marginLeft: '10px', fontSize: '14px' }}>
                 이름을 정확히 입력해주세요.
               </span>
             )}
@@ -222,9 +223,11 @@ const Step5: React.FC = () => {
               value={formData.email}
               onChange={handleInputChange}
               disabled={isVerified || isEmailSent || showReenterButton} // 이메일 인증번호 요청 후 수정 불가
+              data-testid="input-email"
             />
             {isVerified ? (
               <span
+                data-testid="email-verified"
                 style={{
                   padding: '8px 16px',
                   color: '#2196F3',
@@ -244,6 +247,7 @@ const Step5: React.FC = () => {
                   disabled={!formData.email || isLoading}
                   className={styles.buttonTest}
                   style={{ display: showReenterButton ? 'none' : 'block' }}
+                  data-testid="button-email-verification"
                 >
                   {isLoading ? (
                     <div className={styles.loadingSpinner}></div>
@@ -266,6 +270,7 @@ const Step5: React.FC = () => {
           </div>
           {!isVerified && emailStatus && (
             <div
+              data-testid="email-status"
               style={{
                 fontSize: '14px',
                 marginTop: '5px',
@@ -288,16 +293,19 @@ const Step5: React.FC = () => {
                 value={formData.verificationCode}
                 onChange={handleInputChange}
                 disabled={!isEmailSent}
+                data-testid="input-verification-code"
               />
               <button
                 onClick={handleVerificationCodeSubmit}
                 disabled={!isEmailSent || !formData.verificationCode || isLoading}
+                data-testid="button-verify-code"
               >
                 인증하기
               </button>
             </div>
             {verificationError && (
               <div
+                data-testid="verification-error"
                 style={{
                   fontSize: '14px',
                   marginTop: '5px',
@@ -314,6 +322,7 @@ const Step5: React.FC = () => {
         <CustomButton
           onClick={() => setIsModalOpen(true)}
           state={isVerified && isNameValid && formData.name ? 'default' : 'disabled'}
+          data-testid="confirm-button"
         >
           확인했습니다
         </CustomButton>
@@ -323,6 +332,7 @@ const Step5: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirm}
+        dataTestId="terms-modal"
       />
     </>
   );
