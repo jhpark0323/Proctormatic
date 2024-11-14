@@ -75,11 +75,27 @@ class AbnormalListSerializer(serializers.ModelSerializer):
 
 class TakerDetailSerializer(serializers.ModelSerializer):
     number_of_entry = serializers.SerializerMethodField()
+    entry_time = serializers.SerializerMethodField()
+    exit_time = serializers.SerializerMethodField()
     abnormalList = AbnormalListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Taker
-        fields = ['name', 'email', 'birth', 'id_photo', 'verification_rate', 'number_of_entry', 'check_out_state', 'abnormalList']
-    
+        fields = ('name', 'email', 'birth', 'id_photo', 'web_cam', 'verification_rate', 'entry_time', 'exit_time', 'number_of_entry', 'check_out_state', 'abnormalList')
+
     def get_number_of_entry(self, obj):
         return Logs.objects.filter(taker_id=obj.id, type='entry').count()-1
+
+    def get_entry_time(self, obj):
+        entry = Logs.objects.filter(taker_id=obj.id, type='entry').first()
+        if entry:
+            return entry.time
+        else:
+            return None
+
+    def get_exit_time(self, obj):
+        exit = Logs.objects.filter(taker_id=obj.id, type='exit').first()
+        if exit:
+            return exit.time
+        else:
+            return None
