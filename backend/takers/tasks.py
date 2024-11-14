@@ -7,7 +7,6 @@ from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from celery import shared_task
 import tempfile
-import subprocess
 from takers.models import Taker
 
 # 임시 디렉토리 설정 및 생성
@@ -23,20 +22,6 @@ config = Config(
     connect_timeout=5,
     read_timeout=10
 )
-
-def log_ffmpeg_path():
-    try:
-        result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.returncode == 0:
-            # ffmpeg 버전 정보와 함께 경로를 로그로 출력
-            logging.info(f"ffmpeg 경로: {result.stdout}")
-        else:
-            logging.error("ffmpeg 경로를 찾을 수 없습니다.")
-    except Exception as e:
-        logging.error(f"ffmpeg 경로를 출력하는 도중 오류 발생: {str(e)}")
-
-# 이 함수를 merge_videos_task에서 호출하여 ffmpeg 경로를 출력할 수 있습니다.
-log_ffmpeg_path()
 
 def get_s3_client():
     try:
@@ -60,10 +45,14 @@ def clean_temp_files(file_paths):
             logging.error(f"Error cleaning up file {file_path}: {str(e)}")
 
 
+FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
+
+
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
 def merge_videos_task(self, taker_id, exam_id):
+    folder_path = None
     temp_files = []
-    log_ffmpeg_path()  # ffmpeg 경로 출력
+
     try:
         taker = Taker.objects.filter(id=taker_id).first()
 
@@ -85,9 +74,10 @@ def merge_videos_task(self, taker_id, exam_id):
         if 'Contents' not in response:
             raise Exception("비디오 파일을 찾을 수 없습니다.")
 
+
         video_files = [
             obj['Key'] for obj in response.get('Contents', [])
-            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith('.webm')
+            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith(('.mp4', '.webm', '.avi'))
         ]
         video_files.sort()
 
@@ -107,10 +97,8 @@ def merge_videos_task(self, taker_id, exam_id):
                     gap_duration = start_time - previous_end_time
                     black_video_path = os.path.join(TEMP_DIR, f'black_{previous_end_time}_{start_time}.webm')
 
-                    stream = ffmpeg.input('color=c=black:s=1280x720:d={}'.format(gap_duration),
-                                          f='lavfi')
-                    audio = ffmpeg.input('anullsrc=r=44100:cl=stereo:d={}'.format(gap_duration),
-                                         f='lavfi')
+                    stream = ffmpeg.input('color=c=black:s=1280x720:d={}'.format(gap_duration), f='lavfi')
+                    audio = ffmpeg.input('anullsrc=r=44100:cl=stereo:d={}'.format(gap_duration), f='lavfi')
 
                     stream = ffmpeg.output(stream, audio,
                                            black_video_path,
@@ -118,7 +106,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                            acodec='libvorbis',
                                            pix_fmt='yuv420p')
 
-                    ffmpeg.run(stream, overwrite_output=True)
+                    ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
 
                     processed_videos.append(black_video_path)
                     temp_files.append(black_video_path)
@@ -145,7 +133,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                        s='1280x720',
                                        pix_fmt='yuv420p')
 
-                ffmpeg.run(stream, overwrite_output=True)
+                ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
 
                 processed_videos.append(output_resized_path)
                 temp_files.append(output_resized_path)
@@ -177,7 +165,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                    crf=23,
                                    pix_fmt='yuv420p')
 
-            ffmpeg.run(stream, overwrite_output=True)
+            ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
             temp_files.append(merged_output_path)
 
             s3_client.upload_file(
@@ -188,7 +176,7 @@ def merge_videos_task(self, taker_id, exam_id):
 
             merged_video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder_path}/merged.webm"
 
-            taker = Taker.objects.filter(id=taker_id).first()
+            taker = Taker.objects.get(id=taker_id)
             taker.stored_state = 'done'
             taker.web_cam = merged_video_url
             taker.save()
