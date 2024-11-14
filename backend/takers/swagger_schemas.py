@@ -70,17 +70,6 @@ add_taker_schema = extend_schema_view(
         summary='시험 종료',
         responses={
             status.HTTP_200_OK: OpenApiResponse(description='시험 종료 성공'),
-            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-                description='잘못된 요청',
-                response={
-                    'type': 'object',
-                    'properties': {
-                        'message': {
-                            'type': 'string'
-                        },
-                    },
-                }
-            ),
             status.HTTP_409_CONFLICT: OpenApiResponse(
                 description='퇴실 불가능',
                 response={
