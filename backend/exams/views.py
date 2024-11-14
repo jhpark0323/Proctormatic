@@ -147,23 +147,7 @@ def scheduled_exam_list(request):
     page = request.GET.get('page', 1)
     size = request.GET.get('size', 10)
 
-    if int(page) <= 0:
-        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-    if int(size) <= 0:
-        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    paginator = Paginator(exams, size)
-    paginated_exams = paginator.get_page(page)
-
-    serializer = ScheduledExamListSerializer(paginated_exams, many=True)
-
-    # 응답 데이터 구성
-    return Response({
-        "scheduledExamList": serializer.data,
-        "prev": paginated_exams.has_previous(),
-        "next": paginated_exams.has_next(),
-        "totalPage": paginator.num_pages
-    }, status=status.HTTP_200_OK)
+    return paginate_queryset(exams, page, size, ScheduledExamListSerializer, 'scheduledExamList')
 
 
 @ongoing_exam_list_schema
@@ -189,24 +173,7 @@ def ongoing_exam_list(request):
     page = request.GET.get('page', 1)
     size = request.GET.get('size', 10)
 
-    if int(page) <= 0:
-        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-    if int(size) <= 0:
-        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    paginator = Paginator(ongoing_exams, size)
-    paginated_exams = paginator.get_page(page)
-
-    # 시리얼라이저를 사용한 직렬화 처리
-    serializer = OngoingExamListSerializer(paginated_exams, many=True)
-
-    # 응답 데이터 구성
-    return Response({
-        "ongoingExamList": serializer.data,
-        "prev": paginated_exams.has_previous(),
-        "next": paginated_exams.has_next(),
-        "totalPage": paginator.num_pages
-    }, status=status.HTTP_200_OK)
+    return paginate_queryset(ongoing_exams, page, size, OngoingExamListSerializer, 'ongoingExamList')
 
 
 @completed_exam_list_schema
@@ -241,24 +208,7 @@ def completed_exam_list(request):
     page = request.GET.get('page', 1)
     size = request.GET.get('size', 10)
 
-    if int(page) <= 0:
-        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-    if int(size) <= 0:
-        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    paginator = Paginator(exams, size)
-    paginated_exams = paginator.get_page(page)
-
-    # 시리얼라이저를 사용한 직렬화 처리
-    serializer = CompletedExamListSerializer(paginated_exams, many=True)
-
-    # 응답 데이터 구성
-    return Response({
-        "completedExamList": serializer.data,
-        "prev": paginated_exams.has_previous(),
-        "next": paginated_exams.has_next(),
-        "totalPage": paginator.num_pages
-    }, status=status.HTTP_200_OK)
+    return paginate_queryset(exams, page, size, CompletedExamListSerializer, 'completedExamList')
 
 
 @exam_taker_detail_schema
@@ -394,21 +344,8 @@ def exam_detail(request, pk):
 
 @taker_result_view_schema
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def taker_result_view(request, eid, tid):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 탈퇴한 유저일 경우
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
-
     # 삭제된 시험 여부 확인
     exam_exists = Exam.objects.filter(id=eid, is_deleted=False).exists()
     if not exam_exists:
@@ -426,13 +363,23 @@ def taker_result_view(request, eid, tid):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-def get_user_info_from_token(request):
-    user = request.user
-    if user.is_authenticated:  # 사용자가 인증되었는지 확인
-        user_id = user.id  # 기본적으로 User 모델의 PK는 'id'
-        user_role = request.auth['role']  # 커스텀 필드 'role'을 가져옴
-        return user_id, user_role
-    return None, None
+def paginate_queryset(queryset, page, size, serializer_class, list_name):
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    paginator = Paginator(queryset, size)
+    paginated_exams = paginator.get_page(page)
+
+    serializer = serializer_class(paginated_exams, many=True)
+
+    return Response({
+        list_name: serializer.data,
+        'prev': paginated_exams.has_previous(),
+        'next': paginated_exams.has_next(),
+        'totalPage': paginator.num_pages
+    }, status=status.HTTP_200_OK)
 
 
 def send_exam_email_threaded(email, exam_data):

@@ -30,6 +30,7 @@ eventlet==0.37.0
 ffmpeg==1.4
 ffmpeg-python==0.2.0
 flower==2.0.1
+freezegun==1.5.1
 future==1.0.0
 gevent==24.10.3
 greenlet==3.1.1

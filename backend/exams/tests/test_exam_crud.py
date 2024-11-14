@@ -613,3 +613,33 @@ class ExamDeleteTestCase(CommenTestSetUp):
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json().get('message'), '진행 중인 시험은 삭제할 수 없습니다.')
+
+class ExamTakerDetailTestCase(CommenTestSetUp):
+    def test_check_exam_for_taker(self):
+        '''
+        응시자가 시험을 조회하면 시험 결과와 200 status를 반환한다
+        '''
+        # given
+        url = f'{self.url}{self.exam.id}/taker/'
+
+        # when
+        response = self.client.get(url)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('title'), 'first exam')
+
+    def test_check_exam_for_taker_not_exist(self):
+        '''
+        존재하지 않는 시험을 존재하면 메세지와 404 status를 반환한다
+        '''
+        # given
+        not_exist_exam_id = 999
+        url = f'{self.url}{not_exist_exam_id}/taker/'
+
+        # when
+        response = self.client.get(url)
+
+        # then
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data.get('message'), '존재하지 않는 시험입니다.')
