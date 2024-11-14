@@ -22,7 +22,8 @@ interface CustomButtonProps {
   type?: "rectangular" | "oval";
   children: React.ReactNode;
   onClick?: () => void;
-  buttonType?: "button" | "submit" | "reset"; // HTML button의 type 속성
+  buttonType?: "button" | "submit" | "reset";
+  "data-testid"?: string; // 테스트 ID를 받을 수 있도록 추가
 }
 
 const CustomButton = ({
@@ -31,7 +32,8 @@ const CustomButton = ({
   type = "oval",
   children,
   onClick,
-  buttonType = "button", // HTML button의 type을 buttonType으로 설정
+  buttonType = "button",
+  "data-testid": testId, // data-testid 속성을 전달
 }: CustomButtonProps) => {
   return (
     <button
@@ -40,7 +42,8 @@ const CustomButton = ({
       }`}
       onClick={state !== "disabled" ? onClick : undefined}
       style={{ cursor: state === "disabled" ? "not-allowed" : "pointer" }}
-      type={buttonType} // HTML button의 type 설정
+      type={buttonType}
+      data-testid={testId} // data-testid 속성 추가
     >
       {children}
     </button>
