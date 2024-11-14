@@ -17,6 +17,7 @@ RUN coverage run manage.py test --noinput --keepdb
 RUN coverage xml
 
 # ffmegp 설치
-RUN apt install ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg
+
 
 CMD ["sh", "-c", "python3 manage.py migrate && (celery -A proctormatic worker -l debug -P eventlet -c 8 &) && python3 manage.py runserver 0.0.0.0:8000"]
