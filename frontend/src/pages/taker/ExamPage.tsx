@@ -1,72 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useFaceApiModels from "@/hooks/webcamHooks/useFaceApiModels";
 import useFaceTracking from "@/hooks/webcamHooks/useFaceTracking";
 import useCameraStream from "@/hooks/webcamHooks/useCameraStream";
-import useOnnxInference from "@/hooks/webcamHooks/useOnnxInference";
-import useYoloPostProcessing from "@/hooks/webcamHooks/useYoloPostProcessing";
 import { startRecording, stopRecording } from "@/utils/handleRecording";
 import HeaderBlue from "@/components/HeaderBlue";
 
 const ExamPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const faceCanvasRef = useRef<HTMLCanvasElement>(null); // 비식별화용 캔버스
-  const onnxCanvasRef = useRef<HTMLCanvasElement>(null); // 객체 인식용 캔버스
+  const faceCanvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const [startTime, setStartTime] = useState<string | null>(null);
 
   // 1. 웹캠 스트림 초기화
   useCameraStream(videoRef);
-  useEffect(() => {
-    const initializeMediaRecorder = async () => {
-      if (faceCanvasRef.current) {
-        const stream = faceCanvasRef.current.captureStream(30); // 초당 30프레임으로 스트림 생성
-        if (stream) {
-          const mediaRecorder = new MediaRecorder(stream, {
-            mimeType: "video/webm",
-          });
-
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) {
-              recordedChunksRef.current.push(event.data);
-            }
-          };
-
-          mediaRecorderRef.current = mediaRecorder;
-          console.log("MediaRecorder 초기화 완료");
-        }
-      }
-    };
-
-    initializeMediaRecorder();
-  }, [faceCanvasRef.current]);
 
   // 2. Face API 모델 로드 및 비식별화 적용
   useFaceApiModels();
   useFaceTracking(videoRef, faceCanvasRef);
-
-  // 3. ONNX 모델 로드 및 추론
-  const { session, output, runOnnxInference } = useOnnxInference(
-    videoRef,
-    onnxCanvasRef
-  );
-  const { processedResults } = useYoloPostProcessing(output);
-
-  // ONNX 모델이 로드된 후 추론 시작
-  useEffect(() => {
-    if (session && onnxCanvasRef.current) {
-      runOnnxInference();
-    }
-  }, [session, videoRef.current, onnxCanvasRef.current]);
-
-  // 4. 주기적으로 ONNX 추론 실행 (2번 캔버스는 비공개)
-  useEffect(() => {
-    if (onnxCanvasRef.current) {
-      console.log("ONNX 캔버스 초기화 완료");
-      const onnxInterval = setInterval(runOnnxInference, 2000);
-      return () => clearInterval(onnxInterval);
-    }
-  }, [onnxCanvasRef.current]);
 
   // 5. 녹화 기능
   const handleStartRecording = () => {
@@ -75,11 +26,35 @@ const ExamPage = () => {
     }
   };
 
-  // const handleStopRecording = () => {
-  //   if (mediaRecorderRef.current) {
-  //     stopRecording(mediaRecorderRef.current, recordedChunksRef, startTime);
-  //   }
-  // };
+  // 카메라 스트림 설정 및 MediaRecorder 초기화
+  useEffect(() => {
+    const initializeMediaRecorder = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+
+          // MediaRecorder 초기화
+          mediaRecorderRef.current = new MediaRecorder(stream, {
+            mimeType: "video/webm",
+          });
+
+          // 녹화된 데이터 조각 저장
+          mediaRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              recordedChunksRef.current.push(event.data);
+              console.log("새로운 데이터 청크 추가됨:", event.data);
+            }
+          };
+        }
+      } catch (err) {
+        console.error("카메라 접근에 실패했습니다:", err);
+      }
+    };
+    initializeMediaRecorder();
+  }, []);
 
   // 디버깅용 다운로드
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -100,13 +75,6 @@ const ExamPage = () => {
     }
   };
 
-  const LABELS: { [key: number]: string } = {
-    0: "person",
-    1: "watch",
-    2: "earphone",
-    3: "phone",
-  };
-
   return (
     <>
       <HeaderBlue />
@@ -117,40 +85,10 @@ const ExamPage = () => {
           muted
           style={{ width: "640px", height: "480px" }}
         />
-        {/* 1번 캔버스: 비식별화된 영상 (녹화 대상) */}
         <canvas
           ref={faceCanvasRef}
           style={{ position: "absolute", top: 0, left: 0 }}
         />
-
-        {/* 2번 캔버스: 객체 인식 (화면에 표시하지 않음) */}
-        <canvas ref={onnxCanvasRef} style={{ display: "none" }} />
-
-        {/* 객체 인식 결과 출력 */}
-        <div style={{ marginTop: "20px" }}>
-          {processedResults.length > 0 && (
-            <div>
-              <h3>검출된 객체:</h3>
-              <ul>
-                {processedResults.map((result, index) => {
-                  const confidence =
-                    result.confidence > 1
-                      ? result.confidence
-                      : result.confidence * 100;
-                  return (
-                    <li key={index}>
-                      {`클래스: ${
-                        LABELS[result.classId] || "알 수 없음"
-                      }, 신뢰도: ${confidence.toFixed(2)}%, 좌표: [${
-                        result.bbox
-                      }]`}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-        </div>
 
         {/* 녹화 버튼 */}
         <div style={{ marginTop: "20px" }}>
