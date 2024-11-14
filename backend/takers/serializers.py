@@ -44,9 +44,8 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
 
         exam = Exam.objects.get(id=taker.exam.id)
         exam_end_datetime = timezone.datetime.combine(exam.date, exam.end_time)
-        exam_end_datetime_utc = exam_end_datetime.astimezone(timezone.utc)
 
-        token['exp'] = int(exam_end_datetime_utc.astimezone(timezone.utc).timestamp())
+        token['exp'] = int(exam_end_datetime.timestamp())
 
         return token
 
