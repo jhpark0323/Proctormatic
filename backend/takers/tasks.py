@@ -27,26 +27,7 @@ config = Config(
 FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
 
 # 나머지 함수 정의 부분은 그대로 유지
-def get_s3_client():
-    try:
-        return boto3.client('s3',
-                            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                            region_name=settings.AWS_S3_REGION_NAME,
-                            config=config
-                            )
-    except Exception as e:
-        logging.error(f"Failed to create S3 client: {str(e)}")
-        raise
 
-
-def clean_temp_files(file_paths):
-    for file_path in file_paths:
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except Exception as e:
-            logging.error(f"Error cleaning up file {file_path}: {str(e)}")
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
 def merge_videos_task(self, taker_id, exam_id):
