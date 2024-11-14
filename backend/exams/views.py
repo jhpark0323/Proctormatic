@@ -15,7 +15,8 @@ from .models import Exam
 from takers.models import Taker
 from coins.models import Coin
 from accounts.authentications import CustomAuthentication
-from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer, ExamDetailTakerSerializer
+from .serializers import ExamSerializer, ScheduledExamListSerializer, OngoingExamListSerializer, \
+    CompletedExamListSerializer, ExamDetailSerializer, TakerDetailSerializer, ExamDetailTakerSerializer
 from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ongoing_exam_list_schema, \
     completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
@@ -137,7 +138,7 @@ def scheduled_exam_list(request):
     today_future_exams = Exam.objects.filter(
         user_id=user.id,
         date=current_date,
-        start_time__gt=current_time,
+        entry_time__gt=current_time,
         is_deleted=False
     )
 
@@ -223,7 +224,7 @@ def exam_taker_detail(request, pk):
     # GET 요청 처리: 시험 세부 정보 조회
     serializer = ExamDetailTakerSerializer(exam)
     return Response(serializer.data, status=status.HTTP_200_OK)
- 
+
 
 @exam_detail_schema
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -319,7 +320,7 @@ def exam_detail(request, pk):
         current_time = datetime.now().time()
         if exam.date == date.today() and exam.entry_time <= current_time <= exam.end_time:
             return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
-        
+
         # 시험 비용을 반환하고 코인 사용 내역에 기록
         exam_creator = exam.user
         exam_creator.coin_amount += exam.cost
@@ -358,7 +359,7 @@ def taker_result_view(request, eid, tid):
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = TakerDetailSerializer(taker)
-    
+
     # 응답 데이터 구성
     return Response(serializer.data, status=status.HTTP_200_OK)
 
