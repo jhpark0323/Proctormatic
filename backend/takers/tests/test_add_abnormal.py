@@ -65,9 +65,9 @@ class UpdateTakerTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['message'], '이상행동 영상이 등록되었습니다.')
 
-    def test_add_abnormal_failure(self):
+    def test_add_abnormal_failure_detected_time(self):
         '''
-        이상행동 구간 등록 실패(누락된 데이터, request data 중 하나라도 누락된다면 발생), - 400
+        이상행동 구간 등록 실패(누락된 데이터, detected_time), - 400
         '''
         # Given
         data = {
@@ -80,8 +80,41 @@ class UpdateTakerTestCase(APITestCase):
 
         # Then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['message'], '이 필드는 필수 항목입니다.')
+        self.assertEqual(response.data['message'], '발생 시간을 입력해주세요.')
 
+    def test_add_abnormal_failure_end_time(self):
+        '''
+        이상행동 구간 등록 실패(누락된 데이터, end_time), - 400
+        '''
+        # Given
+        data = {
+            'detected_time': self.detected_time,
+            'type': 'cup'
+        }
+
+        # When
+        response = self.client.post(self.url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+        # Then
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], '종료 시간을 입력해주세요.')
+
+    def test_add_abnormal_failure_type(self):
+        '''
+        이상행동 구간 등록 실패(누락된 데이터, end_time), - 400
+        '''
+        # Given
+        data = {
+            'detected_time': self.detected_time,
+            'end_time': self.end_time,
+        }
+
+        # When
+        response = self.client.post(self.url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+        # Then
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], '타입을 입력해주세요.')
     def test_invalid_data_detected_time_later_than_end_time(self):
         """
         이상행동 구간 등록 실패(발생시간이 종료시간보다 나중인 경우) - 400

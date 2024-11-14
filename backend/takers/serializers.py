@@ -54,6 +54,26 @@ class AbnormalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Abnormal
         fields = ['taker', 'detected_time', 'end_time', 'type']
+        extra_kwargs = {
+            'detected_time': {
+                'error_messages': {
+                    'required': '발생 시간을 입력해주세요.',
+                    'blank': '발생 시간을 입력해주세요.',
+                }
+            },
+            'end_time': {
+                'error_messages': {
+                    'required': '종료 시간을 입력해주세요.',
+                    'blank': '종료 시간을 입력해주세요.',
+                }
+            },
+            'type': {
+                'error_messages': {
+                    'required': '타입을 입력해주세요.',
+                    'blank': '타입을 입력해주세요.',
+                }
+            }
+        }
 
     def validate(self, data):
         if data['detected_time'] >= data['end_time']:
