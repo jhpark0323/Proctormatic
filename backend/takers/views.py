@@ -38,8 +38,6 @@ def add_taker(request):
 
             if current_time < entry_time:
                 return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
-            if current_time > start_time + timedelta(minutes=15):
-                return Response({'message': '입실 시간이 지났습니다. 시험 시작 15분 이후 입장은 불가합니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if current_time > end_time:
                 return Response({'message': '종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
