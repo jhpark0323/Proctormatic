@@ -7,7 +7,6 @@ from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from celery import shared_task
 import tempfile
-
 from takers.models import Taker
 
 # 임시 디렉토리 설정 및 생성
