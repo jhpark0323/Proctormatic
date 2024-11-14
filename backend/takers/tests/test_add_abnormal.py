@@ -115,6 +115,7 @@ class UpdateTakerTestCase(APITestCase):
         # Then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['message'], '타입을 입력해주세요.')
+
     def test_invalid_data_detected_time_later_than_end_time(self):
         """
         이상행동 구간 등록 실패(발생시간이 종료시간보다 나중인 경우) - 400
