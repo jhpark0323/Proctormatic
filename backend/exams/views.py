@@ -344,21 +344,8 @@ def exam_detail(request, pk):
 
 @taker_result_view_schema
 @api_view(['GET'])
+@authentication_classes([CustomAuthentication])
 def taker_result_view(request, eid, tid):
-    # JWT에서 user ID와 role을 추출
-    user_id, user_role = get_user_info_from_token(request)
-    if not user_id:
-        return Response({"message": "사용자 정보가 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 탈퇴한 유저일 경우
-    user = User.objects.get(id=user_id)
-    if not user.is_active:
-        return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    # 사용자의 역할이 host가 아니면 403 Forbidden 반환
-    if user_role != 'host':
-        return Response({"message": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
-
     # 삭제된 시험 여부 확인
     exam_exists = Exam.objects.filter(id=eid, is_deleted=False).exists()
     if not exam_exists:
@@ -374,15 +361,6 @@ def taker_result_view(request, eid, tid):
     
     # 응답 데이터 구성
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-def get_user_info_from_token(request):
-    user = request.user
-    if user.is_authenticated:  # 사용자가 인증되었는지 확인
-        user_id = user.id  # 기본적으로 User 모델의 PK는 'id'
-        user_role = request.auth['role']  # 커스텀 필드 'role'을 가져옴
-        return user_id, user_role
-    return None, None
 
 
 def paginate_queryset(queryset, page, size, serializer_class, list_name):
