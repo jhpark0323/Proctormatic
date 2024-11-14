@@ -24,14 +24,38 @@ config = Config(
     read_timeout=10
 )
 
-FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
+if os.name == 'nt':  # Windows일 때
+    FFMPEG_PATH = r'C:\ffmpeg-7.1-essentials_build\bin\ffmpeg.exe'
+elif os.name == 'posix':  # Linux(우분투)일 때
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
+else:
+    raise EnvironmentError("알 수 없는 운영체제 입니다.")
 
-# 나머지 함수 정의 부분은 그대로 유지
+def get_s3_client():
+    try:
+        return boto3.client('s3',
+                            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                            region_name=settings.AWS_S3_REGION_NAME,
+                            config=config
+                            )
+    except Exception as e:
+        logging.error(f"Failed to create S3 client: {str(e)}")
+        raise
+
+
+def clean_temp_files(file_paths):
+    for file_path in file_paths:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            logging.error(f"Error cleaning up file {file_path}: {str(e)}")
+
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
 def merge_videos_task(self, taker_id, exam_id):
-    folder_path = None
     temp_files = []
 
     try:
@@ -58,7 +82,7 @@ def merge_videos_task(self, taker_id, exam_id):
 
         video_files = [
             obj['Key'] for obj in response.get('Contents', [])
-            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith(('.mp4', '.webm', '.avi'))
+            if obj['Key'].startswith(f"{folder_path}/webcam_") and obj['Key'].endswith('.webm')
         ]
         video_files.sort()
 
@@ -78,8 +102,10 @@ def merge_videos_task(self, taker_id, exam_id):
                     gap_duration = start_time - previous_end_time
                     black_video_path = os.path.join(TEMP_DIR, f'black_{previous_end_time}_{start_time}.webm')
 
-                    stream = ffmpeg.input('color=c=black:s=1280x720:d={}'.format(gap_duration), f='lavfi')
-                    audio = ffmpeg.input('anullsrc=r=44100:cl=stereo:d={}'.format(gap_duration), f='lavfi')
+                    stream = ffmpeg.input('color=c=black:s=1280x720:d={}'.format(gap_duration),
+                                          f='lavfi')
+                    audio = ffmpeg.input('anullsrc=r=44100:cl=stereo:d={}'.format(gap_duration),
+                                         f='lavfi')
 
                     stream = ffmpeg.output(stream, audio,
                                            black_video_path,
@@ -87,7 +113,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                            acodec='libvorbis',
                                            pix_fmt='yuv420p')
 
-                    ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
+                    ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
 
                     processed_videos.append(black_video_path)
                     temp_files.append(black_video_path)
@@ -114,7 +140,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                        s='1280x720',
                                        pix_fmt='yuv420p')
 
-                ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
+                ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
 
                 processed_videos.append(output_resized_path)
                 temp_files.append(output_resized_path)
@@ -146,7 +172,7 @@ def merge_videos_task(self, taker_id, exam_id):
                                    crf=23,
                                    pix_fmt='yuv420p')
 
-            ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
+            ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)
             temp_files.append(merged_output_path)
 
             s3_client.upload_file(
