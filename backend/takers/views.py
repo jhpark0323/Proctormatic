@@ -14,7 +14,7 @@ from .swagger_schemas import add_taker_schema, check_email_schema, add_web_cam_s
     add_abnormal_schema
 from django_redis import get_redis_connection
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.conf import settings
 import boto3
 from takers.tasks import merge_videos_task
@@ -33,7 +33,6 @@ def add_taker(request):
 
             current_time = timezone.now()
             entry_time = datetime.combine(exam.date, exam.entry_time)
-            start_time = datetime.combine(exam.date, exam.start_time)
             end_time = datetime.combine(exam.date, exam.end_time)
 
             if current_time < entry_time:
