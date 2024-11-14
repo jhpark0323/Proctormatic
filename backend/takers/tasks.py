@@ -174,7 +174,7 @@ def merge_videos_task(self, taker_id, exam_id):
 
             merged_video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder_path}/merged.webm"
 
-            taker = Taker.objects.get(id=taker_id)
+            taker = Taker.objects.filter(id=taker_id).first()
             taker.stored_state = 'done'
             taker.web_cam = merged_video_url
             taker.save()

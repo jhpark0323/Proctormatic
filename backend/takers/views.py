@@ -72,6 +72,7 @@ def add_taker(request):
         taker_id = request.auth['user_id']
 
         taker = Taker.objects.filter(id=taker_id).first()
+
         exam = Exam.objects.filter(id=taker.exam_id).first()
         exit_time = datetime.now().time()
         if exam:
