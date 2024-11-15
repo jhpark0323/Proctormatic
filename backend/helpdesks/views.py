@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.core.paginator import Paginator
 
 from accounts.authentications import CustomAuthentication
+from proctormatic.utils import created_response, bad_request_invalid_data_response, not_found_response, \
+    ok_with_data_response, no_content_without_message_response, bad_request_response, ok_response
 from .models import Notification, Question, Faq, Answer
 from .serializers import NotificationCreateSerializer, NotificationListSerializer, NotificationObjectSerializer, \
     FaqCreateSerializer, FaqListSerializer, FaqSerializer, QuestionSerializer, QuestionEditSerializer, \
@@ -24,8 +24,8 @@ def notification(request):
         serializer = NotificationCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': '공지사항이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return created_response('공지사항이 등록되었습니다.')
+        return bad_request_invalid_data_response()
 
     elif request.method == 'GET':
         notifications = Notification.objects.all().order_by('-created_at')
@@ -42,15 +42,15 @@ def check_notification(request, notification_id):
     notification = Notification.objects.filter(pk=notification_id).first()
 
     if notification is None:
-        return Response({'message': '공지 사항이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('공지 사항이 존재하지 않습니다.')
 
     if request.method == 'GET':
         serializer = NotificationObjectSerializer(notification)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return ok_with_data_response(serializer.data)
 
     elif request.method == 'DELETE':
         notification.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return no_content_without_message_response()
 
 
 @question_schema
@@ -63,10 +63,10 @@ def question(request):
         serializer = QuestionCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)
-            return Response({'message': '등록이 완료되었습니다.'}, status=status.HTTP_201_CREATED)
+            return created_response('등록이 완료되었습니다.')
 
         error_message = next(iter(serializer.errors.values()))[0]
-        return Response({'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response(error_message)
 
     elif request.method == 'GET':
         category = request.query_params.get('category')
@@ -87,22 +87,22 @@ def question_detail(request, question_id):
     user = request.user
     question = Question.objects.filter(pk=question_id, user_id=user.id).first()
     if question is None:
-        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('질문이 존재하지 않습니다.')
 
     if request.method == 'GET':
         serializer = QuestionSerializer(question)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return ok_with_data_response(serializer.data)
 
     elif request.method == 'PUT':
         serializer = QuestionEditSerializer(question, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': '질문이 수정되었습니다.'}, status=status.HTTP_200_OK)
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return ok_response('질문이 수정되었습니다.')
+        return bad_request_invalid_data_response()
 
     elif request.method == 'DELETE':
         question.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return no_content_without_message_response()
 
 
 @answer_schema
@@ -113,14 +113,14 @@ def create_answer(request, question_id):
 
     question = Question.objects.filter(pk=question_id, user_id=user.id).first()
     if question is None:
-        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('질문이 존재하지 않습니다.')
 
     if request.method == 'POST':
         serializer = AnswerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(question=question, author=user.name)
-            return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return created_response('답변이 등록되었습니다.')
+        return bad_request_invalid_data_response()
 
 
 @answer_schema
@@ -131,21 +131,21 @@ def handle_answer(request, question_id, answer_id):
 
     question = Question.objects.filter(pk=question_id, user_id=user.id).first()
     if question is None:
-        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('질문이 존재하지 않습니다.')
     answer = Answer.objects.filter(pk=answer_id, author=user.name).first()
     if answer is None:
-        return Response({'message': '답변이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('답변이 존재하지 않습니다.')
 
     if request.method == 'PUT':
         serializer = AnswerSerializer(answer, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return ok_response('답변이 수정되었습니다.')
+        return bad_request_invalid_data_response()
 
     elif request.method == 'DELETE':
         answer.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return no_content_without_message_response()
 
 
 @answer_admin_schema
@@ -154,13 +154,13 @@ def handle_answer(request, question_id, answer_id):
 def create_answer_admin(request, question_id):
     question = Question.objects.filter(pk=question_id).first()
     if question is None:
-        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('질문이 존재하지 않습니다.')
 
     if request.method == 'POST':
         serializer = AnswerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(question=question, author='admin')
-            return Response({'message': '답변이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
+            return created_response('답변이 등록되었습니다.')
 
 
 @answer_admin_schema
@@ -169,20 +169,20 @@ def create_answer_admin(request, question_id):
 def handle_answer_admin(request, question_id, answer_id):
     question = Question.objects.filter(pk=question_id).first()
     if question is None:
-        return Response({'message': '질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('질문이 존재하지 않습니다.')
     answer = Answer.objects.filter(pk=answer_id).first()
     if answer is None:
-        return Response({'message': '답변이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('답변이 존재하지 않습니다.')
 
     if request.method == 'PUT':
         serializer = AnswerSerializer(answer, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': '답변이 수정되었습니다.'}, status=status.HTTP_200_OK)
+            return ok_response('답변이 수정되었습니다.')
 
     elif request.method == 'DELETE':
         answer.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return no_content_without_message_response()
 
 
 @faq_schema
@@ -192,14 +192,14 @@ def faq(request):
     if request.method == 'GET':
         faq_list = Faq.objects.all()
         serializer = FaqListSerializer(faq_list, many=True)
-        return Response({'faqList': serializer.data}, status=status.HTTP_200_OK)
+        return ok_with_data_response({'faqList': serializer.data})
 
     elif request.method == 'POST':
         serializer = FaqCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': '자주 묻는 질문이 등록되었습니다.'}, status=status.HTTP_201_CREATED)
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return created_response('자주 묻는 질문이 등록되었습니다.')
+        return bad_request_invalid_data_response()
 
 
 @faq_detail_schema
@@ -208,30 +208,29 @@ def faq(request):
 def faq_detail(request, faq_id):
     faq = Faq.objects.filter(pk=faq_id).first()
     if faq is None:
-        return Response({'message': '자주 묻는 질문이 존재하지 않습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('자주 묻는 질문이 존재하지 않습니다.')
 
     if request.method == 'GET':
         serializer = FaqSerializer(faq)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return ok_with_data_response(serializer.data)
     elif request.method == 'DELETE':
         faq.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return no_content_without_message_response()
 
 
 def paginate_queryset(queryset, page, size, serializer_class, list_name):
     if int(page) <= 0:
-        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('잘못된 페이지 요청입니다.')
     if int(size) <= 0:
-        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('잘못된 사이즈 요청입니다.')
 
     paginator = Paginator(queryset, size)
     paginated_exams = paginator.get_page(page)
 
     serializer = serializer_class(paginated_exams, many=True)
-
-    return Response({
+    return ok_with_data_response({
         list_name: serializer.data,
         'prev': paginated_exams.has_previous(),
         'next': paginated_exams.has_next(),
         'totalPage': paginator.num_pages
-    }, status=status.HTTP_200_OK)
+    })

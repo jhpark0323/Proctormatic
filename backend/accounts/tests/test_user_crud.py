@@ -84,7 +84,7 @@ class UserCreateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json().get('message'), '잘못된 이메일 형식입니다.')
+        self.assertEqual(response.json().get('message'), '이메일 형식을 확인해주세요.')
 
     def test_user_create_email_already_exists(self):
         '''
@@ -316,7 +316,7 @@ class UserUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('marketing', response.data)
+        self.assertEqual(response.json().get('message'), '잘못된 요청입니다.')
 
 class UserDeleteTestCase(CommenTestSetUp):
     def test_user_delete(self):
