@@ -63,7 +63,8 @@ class ExamDetailSerializer(serializers.ModelSerializer):
                 "taker_id": taker.id,
                 "name": taker.name,
                 "verification_rate": taker.verification_rate,
-                "stored_state": taker.stored_state
+                "stored_state": taker.stored_state,
+                "abnormal_cnt": taker.abnormalList.count()
             }
             for taker in takers
         ]
