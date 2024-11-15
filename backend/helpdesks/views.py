@@ -28,25 +28,11 @@ def notification(request):
         return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
-        notifications = Notification.objects.all()
+        notifications = Notification.objects.all().order_by('-created_at')
         page = request.GET.get('page', 1)
         size = request.GET.get('size', 10)
 
-        if int(page) <= 0:
-            return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-        if int(size) <= 0:
-            return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        paginator = Paginator(notifications, size)
-        page_obj = paginator.get_page(page)
-        serializer = NotificationListSerializer(page_obj, many=True)
-
-        return Response({
-            "notificationList": serializer.data,
-            "prev": page_obj.has_previous(),
-            "next": page_obj.has_next(),
-            "totalPage": paginator.num_pages
-        }, status=status.HTTP_200_OK)
+        return paginate_queryset(notifications, page, size, NotificationListSerializer, 'notificationList')
 
 
 @check_notification_schema
@@ -90,20 +76,8 @@ def question(request):
 
         page = request.GET.get('page', 1)
         size = request.GET.get('size', 10)
-        if int(page) <= 0:
-            return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-        if int(size) <= 0:
-            return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-        paginator = Paginator(questions, size)
-        page_obj = paginator.get_page(page)
-        serializer = QuestionListSerializer(page_obj, many=True)
-        data = {
-            "questionList": serializer.data,
-            "prev": page_obj.has_previous(),
-            "next": page_obj.has_next(),
-            "totalPage": paginator.num_pages,
-        }
-        return Response(data, status=status.HTTP_200_OK)
+
+        return paginate_queryset(questions, page, size, QuestionListSerializer, 'questionList')
 
 
 @question_detail_schema
@@ -242,3 +216,22 @@ def faq_detail(request, faq_id):
     elif request.method == 'DELETE':
         faq.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def paginate_queryset(queryset, page, size, serializer_class, list_name):
+    if int(page) <= 0:
+        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+    if int(size) <= 0:
+        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    paginator = Paginator(queryset, size)
+    paginated_exams = paginator.get_page(page)
+
+    serializer = serializer_class(paginated_exams, many=True)
+
+    return Response({
+        list_name: serializer.data,
+        'prev': paginated_exams.has_previous(),
+        'next': paginated_exams.has_next(),
+        'totalPage': paginator.num_pages
+    }, status=status.HTTP_200_OK)
