@@ -11,7 +11,8 @@ interface Taker {
   taker_id: bigint;
   name: string;
   verification_rate: number;
-  stored_state: number;
+  stored_state: string;
+  abnormal_cnt: number;
 }
 
 interface Exam {
@@ -33,7 +34,6 @@ const TestDetail = () => {
     axiosInstance
       .get(`/exam/${id}/`)
       .then((response) => {
-        console.log(response.data);
         setExamData(response.data);
       })
       .catch((error) => {
@@ -126,35 +126,57 @@ const TestDetail = () => {
                   <tr>
                     <th>이름</th>
                     <th>일치 정도</th>
-                    <th>이상 여부</th>
+                    <th>이상 행동 횟수</th>
                     <th>영상 업로드 정도</th>
                   </tr>
                 </thead>
                 <tbody>
                   {examData?.taker_list.map((taker) => (
-                    <tr key={taker.taker_id.toString()}>
+                    <tr
+                      key={taker.taker_id.toString()}
+                      onClick={() => navigate(`${taker.taker_id}`)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <td>{taker.name}</td>
                       <td>{taker.verification_rate}%</td>
                       <td>
-                        <td>
-                          {/* 90을 임시 기준점으로 잡아놓음 */}
-                          <div
-                            className={styles.abnormal}
-                            style={{
-                              ...fonts.MD_SEMIBOLD,
-                              backgroundColor:
-                                taker.verification_rate < 90
-                                  ? "var(--DELETE)"
-                                  : "var(--PRIMARY)",
-                            }}
-                          >
-                            {taker.verification_rate >= 90
-                              ? "이상 없음"
-                              : "확인 필요"}
-                          </div>
-                        </td>
+                        <div
+                          style={{
+                            color:
+                              taker.abnormal_cnt > 0
+                                ? "var(--DELETE)"
+                                : "inherit",
+                            fontWeight:
+                              taker.abnormal_cnt > 0 ? "bold" : "normal",
+                          }}
+                        >
+                          {taker.abnormal_cnt}
+                        </div>
                       </td>
-                      <td>{taker.stored_state}%</td>
+                      <td>
+                        <div
+                          className={styles.abnormal}
+                          style={{
+                            ...fonts.MD_SEMIBOLD,
+                            backgroundColor:
+                              taker.stored_state === "before"
+                                ? "var(--GRAY_700)"
+                                : taker.stored_state === "in_progress"
+                                ? "var(--SECONDARY)"
+                                : taker.stored_state === "done"
+                                ? "var(--PRIMARY)"
+                                : "var(--BLACK)",
+                          }}
+                        >
+                          {taker.stored_state === "before"
+                            ? "업로드 전"
+                            : taker.stored_state === "in_progress"
+                            ? "업로드 중"
+                            : taker.stored_state === "done"
+                            ? "업로드 완료"
+                            : taker.stored_state}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

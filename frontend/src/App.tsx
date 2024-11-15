@@ -19,8 +19,9 @@ import Mypage from "./pages/host/mypages/Mypage";
 import MakeTest from "./pages/host/testpages/MakeTest";
 import MyTest from "./pages/host/testpages/MyTest";
 import TestDetail from "./pages/host/testpages/TestDetail";
-import Helpdesk from "./pages/host/helpdesks/Helpdesk";
 import ScheduledTest from "./pages/host/testpages/ScheduledTest";
+import ReportDetail from "./pages/host/testpages/ReportDetail";
+import Helpdesk from "./pages/host/helpdesks/Helpdesk";
 
 function App() {
   useEffect(() => {
@@ -122,6 +123,14 @@ function App() {
           element={
             <PrivateRoute allowedRoles={["host"]}>
               <TestDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/host/test/:eid/:tid"
+          element={
+            <PrivateRoute allowedRoles={["host"]}>
+              <ReportDetail />
             </PrivateRoute>
           }
         />

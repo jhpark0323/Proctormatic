@@ -294,3 +294,28 @@
 .dropdownMenu li:hover {
   background-color: var(--LIGHT_GRAY);
 }
+
+.takerdetailInfoWrap {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  display: flex;
+  padding: 5rem;
+  flex-wrap: wrap;
+  row-gap: 3rem;
+}
+
+.takerIdImage {
+  width: 80%;
+  height: auto;
+}
+
+.detailEventItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.reportItem {
+  margin-bottom: 2rem;
+}
