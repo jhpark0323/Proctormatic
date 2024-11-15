@@ -80,6 +80,7 @@ def add_taker(request):
                 return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
 
         taker.check_out_state = 'normal'
+        taker.save()
 
         merge_videos_task.delay(taker_id, taker.exam.id)
 
