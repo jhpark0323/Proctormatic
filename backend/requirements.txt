@@ -74,3 +74,6 @@ vine==5.1.0
 wcwidth==0.2.13
 zope.event==5.0
 zope.interface==7.1.1
+
+opencv-python~=4.10.0.84
+ultralytics~=8.3.31

@@ -81,6 +81,7 @@ def add_taker(request):
                 return conflict_response('퇴실 가능 시간이 아닙니다.')
 
         taker.check_out_state = 'normal'
+        taker.save()
 
         merge_videos_task.delay(taker_id, taker.exam.id)
 
