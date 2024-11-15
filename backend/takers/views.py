@@ -35,6 +35,17 @@ def add_taker(request):
             entry_time = datetime.combine(exam.date, exam.entry_time)
             end_time = datetime.combine(exam.date, exam.end_time)
 
+            existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
+            if existing_taker:
+                if existing_taker.check_out_state == "normal":
+                    return Response({'message': '이미 퇴실한 사용자입니다.'}, status=status.HTTP_403_FORBIDDEN)
+                access_token = TakerTokenSerializer.get_access_token(existing_taker)
+                Logs.objects.create(
+                    taker_id=existing_taker.id,
+                    type='entry'
+                )
+                return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
+
             if current_time < entry_time:
                 return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
             if current_time > end_time:
@@ -42,17 +53,6 @@ def add_taker(request):
 
             if exam.total_taker >= exam.expected_taker:
                 return Response({'message': "참가자 수를 초과했습니다."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
-
-            existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
-            if existing_taker:
-                if existing_taker.check_out_state == "normal":
-                    return Response({'message': '이미 퇴실한 사용자입니다.'}, status=status.HTTP_403_FORBIDDEN)
-                access_token = TakerTokenSerializer.get_access_token(existing_taker)
-                Logs.objects.create(
-                    taker_id = existing_taker.id,
-                    type = 'entry'
-                )
-                return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
 
             taker = serializer.save()
             access_token = TakerTokenSerializer.get_access_token(taker)
