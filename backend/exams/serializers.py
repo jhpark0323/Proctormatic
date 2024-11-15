@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Exam
 from takers.models import Taker, Logs, Abnormal
+import datetime
 
 class ExamSerializer(serializers.ModelSerializer):
     cheer_msg = serializers.CharField(allow_null=True, allow_blank=True, required=False)
@@ -104,4 +105,6 @@ class TakerDetailSerializer(serializers.ModelSerializer):
     
     def get_date(self, obj):
         # Taker와 연결된 Exam의 date 값 반환
+        if isinstance(obj.exam.date, datetime.date):
+            return obj.exam.date.strftime('%Y-%m-%d')
         return obj.exam.date
