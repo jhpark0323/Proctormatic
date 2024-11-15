@@ -46,24 +46,9 @@ def create_exam(request):
     end_time = serializer.validated_data.get('end_time')
     exit_time = serializer.validated_data.get('exit_time')
 
-    current_time = datetime.now()
-    start_datetime = datetime.combine(date, start_time)
-    end_datetime = datetime.combine(date, end_time)
-
-    if start_datetime < current_time:
-        return conflict_response('시험 예약은 현재 시간 이후로 설정할 수 있어요.')
-
-    if (start_datetime - current_time) < timedelta(minutes=30):
-        return conflict_response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
-
-    if (end_datetime - start_datetime) > timedelta(minutes=120):
-        return bad_request_response('시험 예약 시간은 최대 2시간입니다.')
-
-    if start_time > end_time:
-        return conflict_response('응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
-
-    if not (start_time <= exit_time <= end_time):
-        return conflict_response('퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+    time_validation_response = validate_exam_time(date, start_time, end_time, exit_time)
+    if time_validation_response:
+        return time_validation_response
 
     entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
 
@@ -259,25 +244,9 @@ def exam_detail(request, pk):
         end_time = serializer.validated_data.get('end_time', exam.end_time)
         exit_time = serializer.validated_data.get('exit_time', exam.exit_time)
 
-        current_time = timezone.now()
-        start_datetime = datetime.combine(exam_date, start_time)
-        end_datetime = datetime.combine(exam_date, end_time)
-
-        # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
-        if start_datetime < current_time:
-            return conflict_response('시험 예약은 현재 시간 이후로 설정할 수 있어요.')
-
-        if (start_datetime - current_time) < timedelta(minutes=30):
-            return conflict_response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
-
-        if (end_datetime - start_datetime) > timedelta(minutes=120):
-            return bad_request_response('시험 예약 시간은 최대 2시간입니다.')
-
-        if start_time > end_time:
-            return conflict_response('응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
-
-        if not (start_time <= exit_time <= end_time):
-            return conflict_response('퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        time_validation_response = validate_exam_time(exam_date, start_time, end_time, exit_time)
+        if time_validation_response:
+            return time_validation_response
 
         # entry_time 계산
         entry_time = (datetime.combine(exam_date, start_time) - timedelta(minutes=30)).time()
@@ -381,6 +350,30 @@ def paginate_queryset(queryset, page, size, serializer_class, list_name):
         'next': paginated_exams.has_next(),
         'totalPage': paginator.num_pages
     })
+
+
+def validate_exam_time(date, start_time, end_time, exit_time):
+    current_time = timezone.now()
+
+    start_datetime = datetime.combine(date, start_time)
+    end_datetime = datetime.combine(date, end_time)
+
+    if start_datetime < current_time:
+        return conflict_response('시험 예약은 현재 시간 이후로 설정할 수 있어요.')
+
+    if (start_datetime - current_time) < timedelta(minutes=30):
+        return conflict_response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+
+    if (end_datetime - start_datetime) > timedelta(minutes=120):
+        return bad_request_response('시험 예약 시간은 최대 2시간입니다.')
+
+    if start_time > end_time:
+        return conflict_response('응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
+
+    if not (start_time <= exit_time <= end_time):
+        return conflict_response('퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+
+    return None
 
 
 def send_exam_email_threaded(email, exam_data):
