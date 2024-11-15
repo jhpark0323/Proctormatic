@@ -95,7 +95,7 @@ class SendEmailForResetPasswordTestCase(CommonTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json().get('message'), '잘못된 이메일 형식입니다.')
+        self.assertEqual(response.json().get('message'), '이메일 형식을 확인해주세요.')
 
     def test_send_email_not_found_user(self):
         '''
@@ -265,7 +265,7 @@ class ResetPasswordWithEmailTestCase(CommonTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json().get('message'), '잘못된 이메일 형식입니다.')
+        self.assertEqual(response.json().get('message'), '이메일 형식을 확인해주세요.')
 
     def test_reset_password_user_not_found(self):
         '''

@@ -7,10 +7,11 @@ from django.db import transaction
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.response import Response
-from rest_framework import status
 from django.contrib.auth import get_user_model
 
+from proctormatic.utils import bad_request_response, bad_request_invalid_data_response, conflict_response, \
+    unauthorized_response, internal_server_error, created_response, not_found_response, ok_with_data_response, \
+    ok_response, no_content_response
 from .models import Exam
 from takers.models import Taker
 from coins.models import Coin
@@ -21,8 +22,8 @@ from .swagger_schemas import create_exam_schema, scheduled_exam_list_schema, ong
     completed_exam_list_schema, exam_detail_schema, taker_result_view_schema, exam_taker_detail_schema
 from django.core.paginator import Paginator
 
-
 User = get_user_model()
+
 
 @create_exam_schema
 @api_view(['POST'])
@@ -32,11 +33,11 @@ def create_exam(request):
 
     expected_taker = request.data.get('expected_taker', 0)
     if int(expected_taker) > 999:
-        return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('총 응시자는 999명을 넘을 수 없습니다.')
 
     serializer = ExamSerializer(data=request.data)
     if not serializer.is_valid():
-        return Response({'message': '요청 데이터가 유효하지 않습니다. 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_invalid_data_response()
 
     exam_cost = serializer.validated_data.get('cost', 0)
 
@@ -45,24 +46,9 @@ def create_exam(request):
     end_time = serializer.validated_data.get('end_time')
     exit_time = serializer.validated_data.get('exit_time')
 
-    current_time = datetime.now()
-    start_datetime = datetime.combine(date, start_time)
-    end_datetime = datetime.combine(date, end_time)
-
-    if start_datetime < current_time:
-        return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
-
-    if (start_datetime - current_time) < timedelta(minutes=30):
-        return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
-
-    if (end_datetime - start_datetime) > timedelta(minutes=120):
-        return Response({'message': '시험 예약 시간은 최대 2시간입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if start_time > end_time:
-        return Response({'message': '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.'}, status=status.HTTP_409_CONFLICT)
-
-    if not (start_time <= exit_time <= end_time):
-        return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+    time_validation_response = validate_exam_time(date, start_time, end_time, exit_time)
+    if time_validation_response:
+        return time_validation_response
 
     entry_time = (datetime.combine(date, start_time) - timedelta(minutes=30)).time()
 
@@ -71,10 +57,10 @@ def create_exam(request):
             user = User.objects.select_for_update().get(id=user.id)
 
             if not user.is_active:
-                return Response({'message': '탈퇴한 사용자입니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+                return unauthorized_response('탈퇴한 사용자입니다.')
 
             if int(user.coin_amount) < int(exam_cost):
-                return Response({'message': '적립금이 부족합니다. 충전해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+                return bad_request_response('적립금이 부족합니다. 충전해주세요.')
 
             exam_instance = serializer.save(
                 user=user,
@@ -108,12 +94,11 @@ def create_exam(request):
             }
 
     except Exception as e:
-        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return internal_server_error(str(e))
 
     # 트랜잭션이 성공적으로 완료된 후 이메일 전송
     send_exam_email_threaded(user.email, exam_data)
-
-    return Response({'message': '시험이 성공적으로 예약되었습니다.'}, status=status.HTTP_201_CREATED)
+    return created_response('시험이 성공적으로 예약되었습니다.')
 
 
 @scheduled_exam_list_schema
@@ -219,11 +204,11 @@ def exam_taker_detail(request, pk):
     # 특정 ID의 시험이 존재하는지 확인
     exam = Exam.objects.filter(pk=pk, is_deleted=False).first()
     if not exam:
-        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('존재하지 않는 시험입니다.')
 
     # GET 요청 처리: 시험 세부 정보 조회
     serializer = ExamDetailTakerSerializer(exam)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return ok_with_data_response(serializer.data)
 
 
 @exam_detail_schema
@@ -235,23 +220,23 @@ def exam_detail(request, pk):
     # 특정 ID의 시험이 존재하는지 확인
     exam = Exam.objects.filter(pk=pk, user_id=user.id, is_deleted=False).first()
     if not exam:
-        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('존재하지 않는 시험입니다.')
 
     if request.method == 'GET':
         # GET 요청 처리: 시험 세부 정보 조회
         serializer = ExamDetailSerializer(exam)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return ok_with_data_response(serializer.data)
 
     elif request.method == 'PUT':
         # PUT 요청 처리: 특정 시험 수정
         serializer = ExamSerializer(exam, data=request.data, partial=True)
         if not serializer.is_valid():
-            return Response({'message': '요청 데이터가 유효하지 않습니다. 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_invalid_data_response()
 
         # expected_taker 값이 999를 넘지 않도록 검증
         expected_taker = serializer.validated_data.get("expected_taker", exam.expected_taker)
         if expected_taker > 999:
-            return Response({'message': '총 응시자는 999명을 넘을 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('총 응시자는 999명을 넘을 수 없습니다.')
 
         # 수정할 날짜 및 시간 필드 가져오기
         exam_date = serializer.validated_data.get('date', exam.date)
@@ -259,25 +244,9 @@ def exam_detail(request, pk):
         end_time = serializer.validated_data.get('end_time', exam.end_time)
         exit_time = serializer.validated_data.get('exit_time', exam.exit_time)
 
-        current_time = timezone.now()
-        start_datetime = datetime.combine(exam_date, start_time)
-        end_datetime = datetime.combine(exam_date, end_time)
-
-        # 시간 관련 유효성 검증을 create_exam과 동일하게 적용
-        if start_datetime < current_time:
-            return Response({'message': '시험 예약은 현재 시간 이후로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
-
-        if (start_datetime - current_time) < timedelta(minutes=30):
-            return Response({'message': '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
-
-        if (end_datetime - start_datetime) > timedelta(minutes=120):
-            return Response({'message': '시험 예약 시간은 최대 2시간입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if start_time > end_time:
-            return Response({'message': '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.'}, status=status.HTTP_409_CONFLICT)
-
-        if not (start_time <= exit_time <= end_time):
-            return Response({'message': '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.'}, status=status.HTTP_409_CONFLICT)
+        time_validation_response = validate_exam_time(exam_date, start_time, end_time, exit_time)
+        if time_validation_response:
+            return time_validation_response
 
         # entry_time 계산
         entry_time = (datetime.combine(exam_date, start_time) - timedelta(minutes=30)).time()
@@ -290,7 +259,7 @@ def exam_detail(request, pk):
         # 시험 생성자의 현재 코인을 가져옴
         exam_creator = exam.user
         if int(exam_creator.coin_amount) < cost_difference:
-            return Response({"message": "적립금이 부족합니다. 충전해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('적립금이 부족합니다. 충전해주세요.')
 
         # 데이터 수정 및 저장
         serializer.save(entry_time=entry_time)
@@ -313,13 +282,13 @@ def exam_detail(request, pk):
                 amount=abs(cost_difference)
             )
 
-        return Response({"message": "수정이 완료되었습니다."}, status=status.HTTP_200_OK)
+        return ok_response('수정이 완료되었습니다.')
 
     elif request.method == "DELETE":
         # 진행 중인 시험은 삭제 불가
         current_time = datetime.now().time()
         if exam.date == date.today() and exam.entry_time <= current_time <= exam.end_time:
-            return Response({"message": "진행 중인 시험은 삭제할 수 없습니다."}, status=status.HTTP_409_CONFLICT)
+            return conflict_response('진행 중인 시험은 삭제할 수 없습니다.')
 
         # 시험 비용을 반환하고 코인 사용 내역에 기록
         exam_creator = exam.user
@@ -337,10 +306,10 @@ def exam_detail(request, pk):
         # 시험 삭제
         exam.is_deleted = True
         exam.save()
-        return Response({"message": "시험이 성공적으로 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+        return no_content_response('시험이 성공적으로 삭제되었습니다.')
 
     # 추가로 명확히 응답을 설정
-    return Response({"message": "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+    return bad_request_invalid_data_response()
 
 
 @taker_result_view_schema
@@ -350,37 +319,61 @@ def taker_result_view(request, eid, tid):
     # 삭제된 시험 여부 확인
     exam_exists = Exam.objects.filter(id=eid, is_deleted=False).exists()
     if not exam_exists:
-        return Response({"message": "존재하지 않는 시험입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('존재하지 않는 시험입니다.')
 
     # 응시자 존재 여부 확인
     taker = Taker.objects.filter(id=tid, exam_id=eid).first()
     if not taker:
-        return Response({"message": "존재하지 않는 응시자입니다."}, status=status.HTTP_404_NOT_FOUND)
+        return not_found_response('존재하지 않는 응시자입니다.')
 
     # 시리얼라이저를 사용한 직렬화 처리
     serializer = TakerDetailSerializer(taker)
 
     # 응답 데이터 구성
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return ok_with_data_response(serializer.data)
 
 
 def paginate_queryset(queryset, page, size, serializer_class, list_name):
     if int(page) <= 0:
-        return Response({'message': '잘못된 페이지 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('잘못된 페이지 요청입니다.')
     if int(size) <= 0:
-        return Response({'message': '잘못된 사이즈 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('잘못된 사이즈 요청입니다.')
 
     paginator = Paginator(queryset, size)
     paginated_exams = paginator.get_page(page)
 
     serializer = serializer_class(paginated_exams, many=True)
 
-    return Response({
+    return ok_with_data_response({
         list_name: serializer.data,
         'prev': paginated_exams.has_previous(),
         'next': paginated_exams.has_next(),
         'totalPage': paginator.num_pages
-    }, status=status.HTTP_200_OK)
+    })
+
+
+def validate_exam_time(date, start_time, end_time, exit_time):
+    current_time = timezone.now()
+
+    start_datetime = datetime.combine(date, start_time)
+    end_datetime = datetime.combine(date, end_time)
+
+    if start_datetime < current_time:
+        return conflict_response('시험 예약은 현재 시간 이후로 설정할 수 있어요.')
+
+    if (start_datetime - current_time) < timedelta(minutes=30):
+        return conflict_response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+
+    if (end_datetime - start_datetime) > timedelta(minutes=120):
+        return bad_request_response('시험 예약 시간은 최대 2시간입니다.')
+
+    if start_time > end_time:
+        return conflict_response('응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
+
+    if not (start_time <= exit_time <= end_time):
+        return conflict_response('퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+
+    return None
 
 
 def send_exam_email_threaded(email, exam_data):

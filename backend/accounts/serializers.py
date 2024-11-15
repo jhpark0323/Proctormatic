@@ -3,7 +3,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from datetime import date, datetime
 from django.contrib.auth import get_user_model, authenticate
 
+from proctormatic.fields import CustomCharField, CustomEmailField, CustomCharFieldWithConsonant
+
 User = get_user_model()
+DATE_FORMAT_ERROR = '날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.'
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -18,39 +22,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
 
 class SendEmailVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField(
-        error_messages={
-            'required': '이메일을 입력해주세요.',
-            'blank': '이메일을 입력해주세요.',
-            'invalid': '이메일 형식을 확인해주세요.'
-        }
-    )
+    email = CustomEmailField()
     re_enter = serializers.BooleanField(required=False, default=False)
 
 class EmailVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField(
-        error_messages={
-            'required': '이메일을 입력해주세요.',
-            'blank': '이메일을 입력해주세요.',
-            'invalid': '이메일 형식을 확인해주세요.'
-        }
-    )
-    code = serializers.CharField(
-        error_messages={
-            'required': '인증번호를 입력해주세요.',
-            'blank': '인증번호를 입력해주세요.'
-        }
-    )
+    email = CustomEmailField()
+    code = CustomCharField(label='인증번호')
 
 class UserSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
+    email = CustomEmailField()
+    birth = CustomCharField(
+        max_length=8,
+        min_length=8,
         error_messages={
-            'invalid': "잘못된 이메일 형식입니다."
-        }
-    )
-    birth = serializers.CharField(
-        error_messages={
-            'invalid': "날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다."
+            'invalid': DATE_FORMAT_ERROR,
+            'min_length': DATE_FORMAT_ERROR,
+            'max_length': DATE_FORMAT_ERROR
         }
     )
 
@@ -60,17 +47,14 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True, 'min_length': 8}}
 
     def validate_birth(self, value):
-        if not value.isdigit() or len(value) != 8:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
-
         try:
             birth = datetime.strptime(value, '%Y%m%d')
             if birth.date() > date.today():
                 raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
         except ValueError:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
+            raise serializers.ValidationError(DATE_FORMAT_ERROR)
 
-        return birth
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -90,19 +74,10 @@ class EditMarketingSerializer(serializers.ModelSerializer):
         fields = ('marketing',)
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(
-        error_messages={
-            'required': '이메일을 입력해주세요.',
-            'blank': '이메일을 입력해주세요.',
-            'invalid': '이메일 형식을 확인해주세요.'
-        }
-    )
-    password = serializers.CharField(
+    email = CustomEmailField()
+    password = CustomCharField(
         write_only=True,
-        error_messages={
-            'required': '비밀번호를 입력해주세요.',
-            'blank': '비밀번호를 입력해주세요.',
-        }
+        label='비밀번호'
     )
 
     def validate_email(self, value):
@@ -124,9 +99,13 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 class FindEmailRequestSerializer(serializers.ModelSerializer):
-    birth = serializers.CharField(
+    birth = CustomCharField(
+        max_length=8,
+        min_length=8,
         error_messages={
-            'invalid': "날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다."
+            'invalid': DATE_FORMAT_ERROR,
+            'min_length': DATE_FORMAT_ERROR,
+            'max_length': DATE_FORMAT_ERROR
         }
     )
 
@@ -135,17 +114,14 @@ class FindEmailRequestSerializer(serializers.ModelSerializer):
         fields = ('name', 'birth',)
 
     def validate_birth(self, value):
-        if not value.isdigit() or len(value) != 8:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
-
         try:
             birth = datetime.strptime(value, '%Y%m%d')
             if birth.date() > date.today():
                 raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
         except ValueError:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
+            raise serializers.ValidationError(DATE_FORMAT_ERROR)
 
-        return birth
+        return value
 
 class FindEmailResponseSerializer(serializers.ModelSerializer):
     joined_on = serializers.SerializerMethodField()
@@ -158,47 +134,14 @@ class FindEmailResponseSerializer(serializers.ModelSerializer):
         return instance.created_at.strftime('%Y-%m-%d')
 
 class ResetPasswordRequestSerializer(serializers.Serializer):
-    name = serializers.CharField(
-        error_messages={
-            'required': '성명을 입력해주세요.',
-            'blank': '성명을 입력해주세요.'
-        }
-    )
-    email = serializers.EmailField(
-        error_messages={
-            'required': '이메일을 입력해주세요.',
-            'blank': '이메일을 입력해주세요.',
-            'invalid': '잘못된 이메일 형식입니다.'
-        }
-    )
+    name = CustomCharFieldWithConsonant(label='성명')
+    email = CustomEmailField()
 
 class ResetPasswordEmailCheckSerializer(serializers.Serializer):
-    password1 = serializers.CharField(
-        error_messages={
-            'required': '비밀번호가 입력되지 않았습니다.'
-        }
-    )
-    password2 = serializers.CharField(
-        error_messages={
-            'required': '비밀번호 확인이 입력되지 않았습니다.'
-        }
-    )
+    password1 = CustomCharField(label='비밀번호')
+    password2 = CustomCharField(label='비밀번호 확인')
 
 class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(
-        error_messages={
-            'required': '이메일을 입력해주세요.',
-            'blank': '이메일을 입력해주세요.',
-            'invalid': '잘못된 이메일 형식입니다.'
-        }
-    )
-    password1 = serializers.CharField(
-        error_messages={
-            'required': '비밀번호가 입력되지 않았습니다.'
-        }
-    )
-    password2 = serializers.CharField(
-        error_messages={
-            'required': '비밀번호 확인이 입력되지 않았습니다.'
-        }
-    )
+    email = CustomEmailField()
+    password1 = CustomCharField(label='비밀번호')
+    password2 = CustomCharField(label='비밀번호 확인')

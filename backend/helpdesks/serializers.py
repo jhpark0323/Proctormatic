@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from proctormatic.fields import CustomCharField
 from .models import Notification, Question, Faq, Answer
 
 
@@ -18,10 +20,11 @@ class NotificationObjectSerializer(serializers.ModelSerializer):
         exclude = ['id']
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(
+    title = CustomCharField(
         max_length=100,
+        label='제목',
         error_messages={
-            'max_length': '제목은 100자를 넘길 수 없습니다.'
+            'max_length': '제목은 100자를 넘길 수 없습니다.',
         }
     )
 
@@ -53,10 +56,11 @@ class QuestionSerializer(serializers.ModelSerializer):
         return AnswerListSerializer(answers, many=True).data
 
 class QuestionEditSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(
+    title = CustomCharField(
         max_length=100,
+        label='제목',
         error_messages={
-            'max_length': '제목은 100자를 넘길 수 없습니다.'
+            'max_length': '제목은 100자를 넘길 수 없습니다.',
         }
     )
 

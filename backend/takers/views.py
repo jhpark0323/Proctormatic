@@ -3,10 +3,12 @@ import os
 from accounts.utils import generate_verification_code, send_verification_email, save_verification_code_to_redis
 from exams.models import Exam
 from rest_framework.decorators import api_view, permission_classes, parser_classes, authentication_classes
-from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+
+from proctormatic.utils import forbidden_response, ok_with_data_response, bad_request_response, \
+    too_many_requests_response, created_response, created_with_data_response, bad_request_invalid_data_response, \
+    conflict_response, ok_response, not_found_response, internal_server_error
 from .authentication import CustomJWTAuthentication
 from .models import Taker, Logs
 from .serializers import TakerSerializer, UpdateTakerSerializer, TakerTokenSerializer, AbnormalSerializer
@@ -38,21 +40,20 @@ def add_taker(request):
             existing_taker = Taker.objects.filter(email=email, exam_id=exam.id).first()
             if existing_taker:
                 if existing_taker.check_out_state == "normal":
-                    return Response({'message': '이미 퇴실한 사용자입니다.'}, status=status.HTTP_403_FORBIDDEN)
+                    return forbidden_response('이미 퇴실한 사용자입니다.')
                 access_token = TakerTokenSerializer.get_access_token(existing_taker)
                 Logs.objects.create(
                     taker_id=existing_taker.id,
                     type='entry'
                 )
-                return Response({'access': str(access_token)}, status=status.HTTP_200_OK)
+                return ok_with_data_response({'access': str(access_token)})
 
             if current_time < entry_time:
-                return Response({'message': '입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+                return bad_request_response('입장 가능 시간이 아닙니다. 입장은 시험 시작 30분 전부터 가능합니다.')
             if current_time > end_time:
-                return Response({'message': '종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
-
+                return bad_request_response('종료된 시험입니다.')
             if exam.total_taker >= exam.expected_taker:
-                return Response({'message': "참가자 수를 초과했습니다."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                return too_many_requests_response('참가자 수를 초과했습니다.')
 
             taker = serializer.save()
             access_token = TakerTokenSerializer.get_access_token(taker)
@@ -65,8 +66,8 @@ def add_taker(request):
                 type='entry'
             )
 
-            return Response({'access': str(access_token)}, status=status.HTTP_201_CREATED)
-        return Response({'message': "잘못된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return created_with_data_response({'access': str(access_token)})
+        return bad_request_invalid_data_response()
 
     elif request.method == 'PATCH':
         taker_id = request.auth['user_id']
@@ -77,7 +78,7 @@ def add_taker(request):
         exit_time = datetime.now().time()
         if exam:
             if exit_time < exam.exit_time:
-                return Response({"message": "퇴실 가능 시간이 아닙니다."}, status=status.HTTP_409_CONFLICT)
+                return conflict_response('퇴실 가능 시간이 아닙니다.')
 
         taker.check_out_state = 'normal'
 
@@ -86,7 +87,7 @@ def add_taker(request):
         log_entry = Logs(taker=taker, type='exit')
         log_entry.save()
 
-        return Response({'message': '시험이 종료되었습니다.'}, status=status.HTTP_200_OK)
+        return ok_response('시험이 종료되었습니다.')
 
 
 @check_email_schema
@@ -98,16 +99,16 @@ def check_email(request):
         exam_id = request.query_params.get("id")
 
         if not email or not exam_id:
-            return Response({'message': '이메일과 시험 ID를 모두 입력해야 합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('이메일과 시험 ID를 모두 입력해야 합니다.')
 
         if not is_valid_email(email):
-            return Response({'message': '유효하지 않은 이메일 형식입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('유효하지 않은 이메일 형식입니다.')
 
         if not Exam.objects.filter(id=exam_id).exists():
-            return Response({'message': '유효하지 않은 시험 ID입니다.'}, status=status.HTTP_404_NOT_FOUND)
+            return not_found_response('유효하지 않은 시험 ID입니다.')
 
         is_duplicate = Taker.objects.filter(email=email, exam__id=exam_id).exists()
-        return Response({'isAlreadyExists': is_duplicate}, status=status.HTTP_200_OK)
+        return ok_with_data_response({'isAlreadyExists': is_duplicate})
 
     elif request.method == 'POST':
         exam_id = request.data.get('id')
@@ -115,38 +116,39 @@ def check_email(request):
 
         if email:
             if not is_valid_email(email):
-                return Response({'message': '이메일 형식을 확인해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+                return bad_request_response('이메일 형식을 확인해주세요.')
 
             if Taker.objects.filter(exam_id=exam_id, email=email).exists():
-                return Response({'message': '이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.'}, status=status.HTTP_409_CONFLICT)
+                return conflict_response('이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.')
 
             code = generate_verification_code()
             send_verification_email(email, code)
             save_verification_code_to_redis(email, code)
 
-            return Response({'message': '인증번호를 발송했습니다.'}, status=status.HTTP_200_OK)
+            return ok_response('인증번호를 발송했습니다.')
         else:
-            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('이메일을 입력해주세요.')
 
     elif request.method == 'PUT':
         email = request.data.get('email')
         code = request.data.get('code')
 
         if not email:
-            return Response({'message': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('이메일을 입력해주세요.')
         if not code:
-            return Response({'message': '인증번호를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('인증번호를 입력해주세요.')
 
         redis_conn = get_redis_connection('default')
         stored_code = redis_conn.get(f'verification_code:{email}')
 
         if stored_code is None:
-            return Response({'message': '인증번호가 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('인증번호가 만료되었습니다.')
 
         if stored_code.decode('utf-8') == code:
-            return Response({'message': '이메일 인증이 완료되었습니다.'}, status=status.HTTP_200_OK)
+            return ok_response('이메일 인증이 완료되었습니다.')
         else:
-            return Response({'message': '잘못된 인증번호입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_response('잘못된 인증번호입니다.')
+
 
 @update_taker_schema
 @api_view(['PATCH'])
@@ -158,7 +160,7 @@ def update_taker(request):
 
     for field in required_fields:
         if field not in request.data:
-            return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request_invalid_data_response()
 
     taker = Taker.objects.filter(id=taker_id).first()
 
@@ -180,23 +182,23 @@ def update_taker(request):
             s3_file_url = f"{settings.MEDIA_URL}{s3_path}"
 
         except Exception as e:
-            return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return internal_server_error(f'S3 업로드 실패: {str(e)}')
 
     else:
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_invalid_data_response()
 
     update_data = {**request.data.dict(), 'id_photo': s3_file_url}
 
     serializer = UpdateTakerSerializer(taker, data=update_data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response({'message': '신분증이 등록되었습니다.'}, status=status.HTTP_200_OK)
+        return ok_response('신분증이 등록되었습니다.')
 
     error_messages = serializer.errors.get('birth', [])
     if error_messages:
-        return Response({'message': error_messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response(error_messages[0])
+    return bad_request_invalid_data_response()
 
-    return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @add_web_cam_schame
 @api_view(['POST'])
@@ -204,26 +206,24 @@ def update_taker(request):
 @parser_classes([MultiPartParser])
 def add_web_cam(request):
     taker_id = request.auth['user_id']
-
     taker = Taker.objects.filter(id=taker_id).first()
-
     exam_id = taker.exam_id
 
     if 'web_cam' not in request.FILES:
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_invalid_data_response()
 
     web_cam_file = request.FILES['web_cam']
     start_time = request.data.get('start_time')
     end_time = request.data.get('end_time')
 
     if not start_time or not end_time:
-        return Response({'message': '잘못된 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_invalid_data_response()
 
     start_time = start_time.replace(":", "")
     end_time = end_time.replace(":", "")
 
     if start_time > end_time:
-        return Response({'message': '시작 시간이 종료 시간보다 클 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response('시작 시간이 종료 시간보다 클 수 없습니다.')
 
     s3_client = boto3.client('s3')
     _, file_extension = os.path.splitext(web_cam_file.name)
@@ -239,9 +239,9 @@ def add_web_cam(request):
         )
 
     except Exception as e:
-        return Response({'message': f'S3 업로드 실패: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return internal_server_error(f'S3 업로드 실패: {str(e)}')
+    return ok_response('웹캠 영상이 저장되었습니다.')
 
-    return Response({'message': '웹캠 영상이 저장되었습니다.'}, status=status.HTTP_200_OK)
 
 @add_abnormal_schema
 @api_view(['POST'])
@@ -257,10 +257,11 @@ def add_abnormal(request):
 
     if serializer.is_valid():
         serializer.save()
-        return Response({"message" : "이상행동 영상이 등록되었습니다."}, status=201)
+        return created_response('이상행동 영상이 등록되었습니다.')
     else:
         error_message = next(iter(serializer.errors.values()))[0]
-        return Response({"message": error_message}, status=status.HTTP_400_BAD_REQUEST)
+        return bad_request_response(error_message)
+
 
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'

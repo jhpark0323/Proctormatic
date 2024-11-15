@@ -1,5 +1,8 @@
 from rest_framework import serializers
+
+from proctormatic.fields import CustomCharField
 from .models import Coin, CoinCode
+
 
 class CoinCodeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,12 +10,10 @@ class CoinCodeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CoinCodeCreateSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(
+    code = CustomCharField(
         required=True,
-        error_messages={
-            'required': '적립금 코드를 입력해주세요.',
-            'blank': '적립금 코드를 입력해주세요.',
-    })
+        label='적립금 코드'
+    )
 
     class Meta:
         model = CoinCode

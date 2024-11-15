@@ -3,7 +3,11 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from exams.models import Exam
 from datetime import date, datetime
+
+from proctormatic.fields import CustomCharField, CustomCharFieldWithConsonant
 from .models import Taker, Abnormal
+
+DATE_FORMAT_ERROR = '날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.'
 
 
 class TakerSerializer(serializers.ModelSerializer):
@@ -12,9 +16,13 @@ class TakerSerializer(serializers.ModelSerializer):
         fields = ['name', 'email', 'exam']
 
 class UpdateTakerSerializer(serializers.ModelSerializer):
-    birth = serializers.CharField(
+    birth = CustomCharField(
+        max_length=8,
+        min_length=8,
         error_messages={
-            'invalid': "날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다."
+            'invalid': DATE_FORMAT_ERROR,
+            'min_length': DATE_FORMAT_ERROR,
+            'max_length': DATE_FORMAT_ERROR
         }
     )
 
@@ -23,17 +31,14 @@ class UpdateTakerSerializer(serializers.ModelSerializer):
         fields = ['birth', 'id_photo', 'verification_rate']
 
     def validate_birth(self, value):
-        if not value.isdigit() or len(value) != 8:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
-
         try:
             birth = datetime.strptime(value, '%Y%m%d')
             if birth.date() > date.today():
                 raise serializers.ValidationError('생년월일은 오늘 날짜 이전이어야 합니다.')
         except ValueError:
-            raise serializers.ValidationError("날짜 형식이 올바르지 않습니다. YYYYMMDD 형식이어야 합니다.")
+            raise serializers.ValidationError(DATE_FORMAT_ERROR)
 
-        return birth
+        return value
 
 class TakerTokenSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -50,29 +55,13 @@ class TakerTokenSerializer(TokenObtainPairSerializer):
         return token
 
 class AbnormalSerializer(serializers.ModelSerializer):
+    detected_time = CustomCharFieldWithConsonant(label='발생 시간')
+    end_time = CustomCharFieldWithConsonant(label='종료 시간')
+    type = CustomCharFieldWithConsonant(label='타입')
+
     class Meta:
         model = Abnormal
         fields = ['taker', 'detected_time', 'end_time', 'type']
-        extra_kwargs = {
-            'detected_time': {
-                'error_messages': {
-                    'required': '발생 시간을 입력해주세요.',
-                    'blank': '발생 시간을 입력해주세요.',
-                }
-            },
-            'end_time': {
-                'error_messages': {
-                    'required': '종료 시간을 입력해주세요.',
-                    'blank': '종료 시간을 입력해주세요.',
-                }
-            },
-            'type': {
-                'error_messages': {
-                    'required': '타입을 입력해주세요.',
-                    'blank': '타입을 입력해주세요.',
-                }
-            }
-        }
 
     def validate(self, data):
         if data['detected_time'] >= data['end_time']:
