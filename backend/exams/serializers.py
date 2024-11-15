@@ -79,10 +79,11 @@ class TakerDetailSerializer(serializers.ModelSerializer):
     entry_time = serializers.SerializerMethodField()
     exit_time = serializers.SerializerMethodField()
     abnormalList = AbnormalListSerializer(many=True, read_only=True)
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = Taker
-        fields = ('name', 'email', 'birth', 'id_photo', 'web_cam', 'verification_rate', 'entry_time', 'exit_time', 'number_of_entry', 'check_out_state', 'abnormalList')
+        fields = ('name', 'email', 'birth', 'id_photo', 'web_cam', 'verification_rate', 'date','entry_time', 'exit_time', 'number_of_entry', 'check_out_state', 'abnormalList')
 
     def get_number_of_entry(self, obj):
         return Logs.objects.filter(taker_id=obj.id, type='entry').count()-1
@@ -100,3 +101,7 @@ class TakerDetailSerializer(serializers.ModelSerializer):
             return exit.time
         else:
             return None
+    
+    def get_date(self, obj):
+        # Taker와 연결된 Exam의 date 값 반환
+        return obj.exam.date
