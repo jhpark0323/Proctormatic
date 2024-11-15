@@ -7,6 +7,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 from celery import shared_task
 import tempfile
+from takers.ai import process_video_by_frame
 from takers.models import Taker
 
 # 임시 디렉토리 설정 및 생성
@@ -45,7 +46,13 @@ def clean_temp_files(file_paths):
             logging.error(f"Error cleaning up file {file_path}: {str(e)}")
 
 
-FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
+if os.name == 'nt':  # Windows일 때
+    FFMPEG_PATH = r'C:\ffmpeg-7.1-essentials_build\bin\ffmpeg.exe'
+elif os.name == 'posix':  # Linux(우분투)일 때
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
+else:
+    raise EnvironmentError("알 수 없는 운영체제 입니다.")
+# FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
@@ -167,6 +174,9 @@ def merge_videos_task(self, taker_id, exam_id):
             ffmpeg.run(stream, cmd=FFMPEG_PATH, overwrite_output=True)  # 절대 경로 지정
             temp_files.append(merged_output_path)
 
+            model_path = os.path.join(os.path.dirname(__file__), 'yolo11_epochs50_imgsz640_batch4_best.pt')
+            process_video_by_frame(merged_output_path, model_path, taker_id)
+
             s3_client.upload_file(
                 Filename=merged_output_path,
                 Bucket=settings.AWS_STORAGE_BUCKET_NAME,
@@ -177,6 +187,7 @@ def merge_videos_task(self, taker_id, exam_id):
 
             taker = Taker.objects.filter(id=taker_id).first()
             taker.web_cam = merged_video_url
+            taker.stored_state = 'done'
             taker.save()
 
             return f'블랙스크린이 추가된 {len(video_files)} 개의 비디오가 성공적으로 병합되었습니다.'
