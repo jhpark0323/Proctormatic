@@ -50,7 +50,6 @@ FFMPEG_PATH = '/usr/bin/ffmpeg'  # ffmpeg의 절대 경로 지정
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5 * 60)
 def merge_videos_task(self, taker_id, exam_id):
-    folder_path = None
     temp_files = []
 
     try:
@@ -176,8 +175,7 @@ def merge_videos_task(self, taker_id, exam_id):
 
             merged_video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder_path}/merged.webm"
 
-            taker = Taker.objects.get(id=taker_id)
-            taker.stored_state = 'done'
+            taker = Taker.objects.filter(id=taker_id).first()
             taker.web_cam = merged_video_url
             taker.save()
 
