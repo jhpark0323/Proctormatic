@@ -259,7 +259,7 @@ def exam_detail(request, pk):
         end_time = serializer.validated_data.get('end_time', exam.end_time)
         exit_time = serializer.validated_data.get('exit_time', exam.exit_time)
 
-        current_time = datetime.now()
+        current_time = timezone.now()
         start_datetime = datetime.combine(exam_date, start_time)
         end_datetime = datetime.combine(exam_date, end_time)
 
