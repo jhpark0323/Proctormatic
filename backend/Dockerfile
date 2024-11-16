@@ -16,12 +16,11 @@ RUN python manage.py migrate
 RUN coverage run manage.py test --noinput --keepdb
 RUN coverage xml
 
-# ffmegp 설치
-RUN apt-get update && apt-get install -y ffmpeg
+# ffmegp 설치 && libgl1 설치
 
-# libgl1 설치
-RUN apt-get update && apt-get install -y libgl1
-
-
-
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libgl1-mesa-glx \
+    libglib2.0-0
+    
 CMD ["sh", "-c", "python3 manage.py migrate && (celery -A proctormatic worker -l debug -P eventlet -c 8 &) && python3 manage.py runserver 0.0.0.0:8000"]
