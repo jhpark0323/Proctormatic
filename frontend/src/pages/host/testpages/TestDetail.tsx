@@ -106,17 +106,19 @@ const TestDetail = () => {
                 {examData?.expected_taker}명
               </div>
             </div>
-            <div className={styles.detailInfoItem}>
-              <div
-                className={styles.detailInfoTitle}
-                style={fonts.HEADING_SM_BOLD}
-              >
-                응원 메세지
+            {examData?.cheer_msg?.trim() && (
+              <div className={styles.detailInfoItem}>
+                <div
+                  className={styles.detailInfoTitle}
+                  style={fonts.HEADING_SM_BOLD}
+                >
+                  응원 메세지
+                </div>
+                <div className={styles.detailInfoContext}>
+                  {examData.cheer_msg}
+                </div>
               </div>
-              <div className={styles.detailInfoContext}>
-                {examData?.cheer_msg}
-              </div>
-            </div>
+            )}
           </div>
           <div className={styles.summaryWrap}>
             <div style={{ marginBottom: "0.5rem" }}>응시자 요약</div>

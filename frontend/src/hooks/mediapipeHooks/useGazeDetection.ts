@@ -6,7 +6,7 @@ const useGazeDetection = (recordStartTime: Date) => {
   const gazeStartTimeRef = useRef<number | null>(null);
   const LOOK_UP_DURATION = 5000;
 
-  const fetchPostAbnormal = () => {
+  const fetchPostAbnormal = (dir: string) => {
     const currentTime = new Date();
 
     // `end_time`은 현재 시간에서 `recordStartTime`을 뺀 결과
@@ -39,7 +39,7 @@ const useGazeDetection = (recordStartTime: Date) => {
 
     axiosInstance
       .post("/taker/abnormal/", {
-        type: "eyesight",
+        type: `eyesight_${dir}`,
         detected_time: detectedTimeFormatted,
         end_time: endTimeFormatted,
       })
@@ -87,7 +87,7 @@ const useGazeDetection = (recordStartTime: Date) => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 왼쪽을 5초 동안 보고 있습니다");
-        fetchPostAbnormal();
+        fetchPostAbnormal("left");
         gazeStartTimeRef.current = null;
       }
     } else if (leftEyeDiffX < -0.02) {
@@ -96,6 +96,7 @@ const useGazeDetection = (recordStartTime: Date) => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 오른쪽을 5초 동안 보고 있습니다");
+        fetchPostAbnormal("right");
         gazeStartTimeRef.current = null;
       }
     } else if (leftEyeDiffY < -0.005) {
@@ -104,6 +105,7 @@ const useGazeDetection = (recordStartTime: Date) => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 위를 5초 동안 보고 있습니다");
+        fetchPostAbnormal("up");
         gazeStartTimeRef.current = null;
       }
     } else {
@@ -112,8 +114,6 @@ const useGazeDetection = (recordStartTime: Date) => {
 
     if (ctx) {
       ctx.save();
-      // 캔버스 안 보이게
-      // ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.restore();
     }
   };

@@ -19,6 +19,7 @@ const MyCoin = () => {
   const [isInputModalOpen, setIsInputModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [code, setCode] = useState("");
+  const [category, setCategory] = useState("all");
 
   const [myCoin, setMyCoin] = useState(0);
   const fetchMyCoin = () => {
@@ -34,7 +35,11 @@ const MyCoin = () => {
   const [myCoinHistory, setMyCoinHistory] = useState<CoinHistoryItem[]>([]);
   const fetchMyCoinHistory = () => {
     axiosInstance
-      .get("/coin/history/")
+      .get("/coin/history/", {
+        params: {
+          type: category,
+        },
+      })
       .then((response) => {
         setMyCoinHistory(response.data.coinList || []);
       })
@@ -45,7 +50,7 @@ const MyCoin = () => {
   useEffect(() => {
     fetchMyCoin();
     fetchMyCoinHistory();
-  }, [myCoin]);
+  }, [category]);
 
   // 모달
   const handleOpenInputModal = () => setIsInputModalOpen(true);
@@ -85,7 +90,15 @@ const MyCoin = () => {
       </div>
       <div className={styles.header} style={{ marginTop: "2rem" }}>
         <div>적립금 사용 내역</div>
-        <div>전체</div>
+        <select
+          className={styles.coinSelect}
+          onChange={(event) => setCategory(event.target.value)}
+        >
+          <option value="all">전체</option>
+          <option value="use">사용</option>
+          <option value="charge">충전</option>
+          <option value="refund">취소</option>
+        </select>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.historyTable}>

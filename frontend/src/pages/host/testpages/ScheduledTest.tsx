@@ -84,6 +84,9 @@ const ScheduledTest = () => {
       });
       setExpectedTaker(data.expected_taker || 0);
       setOriginalCost(data.cost);
+      if (data.end_time && data.exit_time && data.end_time !== data.exit_time) {
+        setIsExitPermitted(true);
+      }
     } catch (error) {
       console.error("시험 정보 조회 실패:", error);
     }
@@ -153,12 +156,7 @@ const ScheduledTest = () => {
       const error = err as AxiosError;
       const errorMessage = (error.response?.data as { message: string })
         ?.message;
-
-      if (error.response?.status === 409) {
-        CustomToast(errorMessage || "다시 시도해주세요.");
-      } else {
-        CustomToast("다시 시도해주세요.");
-      }
+      CustomToast(errorMessage || "다시 시도해주세요.");
       console.error("시험 수정 실패:", error);
     }
   };

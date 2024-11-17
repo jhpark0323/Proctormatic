@@ -21,7 +21,7 @@
 }
 
 .tableWrap {
-  height: 50%;
+  height: 50vh;
   overflow-y: scroll;
 }
 
@@ -62,6 +62,11 @@
 
 .modalInfoText {
   opacity: 0.5;
+}
+
+.coinSelect {
+  border: none;
+  padding: 0 1rem;
 }
 
 /* Account Info */
