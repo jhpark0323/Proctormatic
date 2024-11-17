@@ -26,7 +26,9 @@ const useFaceMesh = (
 
     const camera = new Camera(videoRef.current!, {
       onFrame: async () => {
-        await faceMesh.send({ image: videoRef.current! });
+        if (videoRef.current) {
+          await faceMesh.send({ image: videoRef.current });
+        }
       },
       width: 800,
       height: 600,
