@@ -5,8 +5,8 @@ import CustomButton from "@/components/CustomButton";
 import { usePhotoStore } from "@/store/usePhotoStore";
 import { FaCamera } from "react-icons/fa";
 import useOCR from "@/hooks/OCR";
-import axiosInstance from "@/utils/axios";
 import { CustomToast } from "@/components/CustomToast";
+import { useTakerStore } from "@/store/TakerAuthStore";
 
 interface Step9Props {
   onNext: () => void;
@@ -19,6 +19,7 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isPhotoTaken, setIsPhotoTaken] = useState(false);
   const [photoData, setPhotoData] = useState<string | null>(null);
+  const { birth, setBirth } = useTakerStore();
   const { maskedIDPhoto } = useOCR();
 
   // 얼굴 인식 모델 로드 함수
@@ -172,7 +173,17 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
 
       {maskedIDPhoto && (
         <div>
-          <img src={maskedIDPhoto} alt="" />
+          {/* <img src={maskedIDPhoto} alt="" /> */}
+          <div className={styles.InputContainer}>
+            <label>생년월일 입력</label>
+            <input
+              type="text"
+              value={birth}
+              onChange={(e) => setBirth(e.target.value)}
+              placeholder="YYYYMMDD 형식으로 입력"
+              className={styles.InputField}
+            />
+          </div>
         </div>
       )}
 
