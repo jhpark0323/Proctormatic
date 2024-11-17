@@ -5,6 +5,8 @@ import CustomButton from "@/components/CustomButton";
 import { usePhotoStore } from "@/store/usePhotoStore";
 import { FaCamera } from "react-icons/fa";
 import useOCR from "@/hooks/OCR";
+import axiosInstance from "@/utils/axios";
+import { CustomToast } from "@/components/CustomToast";
 
 interface Step9Props {
   onNext: () => void;
@@ -99,14 +101,14 @@ const Step9: React.FC<Step9Props> = ({ onNext }) => {
         if (detections.length > 0) {
           setPhotoStep9(capturedPhoto);
         } else {
-          alert("얼굴 인식에 실패했습니다. 다시 촬영해 주세요.");
+          CustomToast("얼굴이 인식되지 않았습니다.");
           setIsPhotoTaken(false);
           setPhotoData(null);
           startWebcam();
         }
       };
     } else {
-      alert("사진 캡처에 실패했습니다. 다시 시도해 주세요.");
+      CustomToast("다시 시도해주세요.");
     }
   }, [modelsLoaded, setPhotoStep9]);
 
