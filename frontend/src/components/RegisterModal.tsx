@@ -183,7 +183,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, title, subtitle 
             <form>
               <div className={styles.formInner}>
                 <div className={styles.formInnerNameBox}>
-                  <span className={styles.formInnerName}>주최자 이름 (한글 2 - 10 자)</span>
+                  <span className={styles.formInnerName}>이름 (한글 2 - 10 자)</span>
                 </div>
                 <input 
                   type="text" 

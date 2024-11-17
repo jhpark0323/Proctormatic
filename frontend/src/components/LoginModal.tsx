@@ -142,13 +142,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
             <div className={styles.selectButton} onClick={() => handleLogin('host')}>
               <img src={ColorMetamong} alt="사진없음" />
               <div data-testid="host-login">
-                <strong>주최자</strong> 로그인
+                <strong>주최자</strong>
+                {/* 로그인 */}
               </div>
             </div>
             <div className={styles.selectButton} onClick={() => handleLogin('taker')} data-testid="taker-login-button">
               <img src={Metamong} alt="사진없음" />
               <div>
-                <strong>응시자</strong> 로그인
+                <strong>응시자</strong>
+                {/* 로그인 */}
               </div>
             </div>
           </div>
