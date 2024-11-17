@@ -26,34 +26,43 @@ const ExamPage = () => {
   const { drawCircularMosaic } = useCircularMosaic();
 
   // MediaPipe Face Mesh 훅 사용
-  useFaceMesh(videoRef, faceCanvasRef, (results) => {
-    if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0)
-      return;
+  useFaceMesh(videoRef, faceCanvasRef, recordStartTime, (results) => {
+    const canvas = faceCanvasRef.current;
+    if (!canvas) return;
 
-    const canvas = faceCanvasRef.current!;
-    const ctx = canvas?.getContext("2d");
+    const ctx = canvas.getContext("2d");
     const video = videoRef.current;
 
-    if (ctx && video) {
-      // 캔버스 초기화 및 비디오 프레임 그리기
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!ctx || !video) return;
 
-      const landmarks = results.multiFaceLandmarks[0];
+    // 캔버스 초기화 및 비디오 프레임 그리기 (얼굴이 없더라도 계속 그리기)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // 눈, 코, 입을 포함한 모든 랜드마크 가져오기
-      const allPoints = [
-        ...FACEMESH_LEFT_EYE.map(([index]) => landmarks[index]),
-        ...FACEMESH_RIGHT_EYE.map(([index]) => landmarks[index]),
-        ...FACEMESH_LIPS.map(([index]) => landmarks[index]),
-      ];
-
-      // 하나의 큰 원으로 모자이크 처리
-      drawCircularMosaic(ctx, allPoints);
-
-      // 시선 감지 로직
-      detectGaze(landmarks, ctx);
+    // 얼굴 인식 결과가 없으면 함수 종료
+    if (
+      !results.multiFaceLandmarks ||
+      results.multiFaceLandmarks.length === 0
+    ) {
+      console.log("얼굴이 감지되지 않았습니다.");
+      return;
     }
+
+    // 얼굴이 감지되었을 때만 랜드마크 및 모자이크 처리 등 추가 작업 수행
+    const landmarks = results.multiFaceLandmarks[0];
+
+    // 눈, 코, 입을 포함한 모든 랜드마크 가져오기
+    const allPoints = [
+      ...FACEMESH_LEFT_EYE.map(([index]) => landmarks[index]),
+      ...FACEMESH_RIGHT_EYE.map(([index]) => landmarks[index]),
+      ...FACEMESH_LIPS.map(([index]) => landmarks[index]),
+    ];
+
+    // 하나의 큰 원으로 모자이크 처리
+    drawCircularMosaic(ctx, allPoints);
+
+    // 시선 감지 로직
+    detectGaze(landmarks, ctx);
   });
 
   return (
