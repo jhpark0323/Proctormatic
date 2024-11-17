@@ -22,7 +22,7 @@ describe("TermsModal 컴포넌트 테스트", () => {
   const renderModal = (isOpen = true) =>
     render(
       <MemoryRouter>
-        <TermsModal isOpen={isOpen} onClose={mockOnClose} onConfirm={mockOnConfirm} />
+        <TermsModal isOpen={isOpen} onClose={mockOnClose} onConfirm={mockOnConfirm} dataTestId="terms-modal" />
       </MemoryRouter>
     );
 
