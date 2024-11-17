@@ -8,6 +8,8 @@ const useFaceMesh = (
   onResults: (results: any) => void
 ) => {
   useEffect(() => {
+    if (!videoRef.current) return;
+
     const faceMesh = new FaceMesh({
       locateFile: (file) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
@@ -24,7 +26,7 @@ const useFaceMesh = (
 
     const camera = new Camera(videoRef.current!, {
       onFrame: async () => {
-        await faceMesh.send({ image: videoRef.current });
+        await faceMesh.send({ image: videoRef.current! });
       },
       width: 800,
       height: 600,
