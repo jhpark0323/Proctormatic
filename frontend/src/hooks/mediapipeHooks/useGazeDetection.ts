@@ -113,7 +113,7 @@ const useGazeDetection = (recordStartTime: Date) => {
     if (ctx) {
       ctx.save();
       // 캔버스 안 보이게
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      // ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.restore();
     }
   };
