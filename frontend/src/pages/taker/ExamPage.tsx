@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import HeaderBlue from "@/components/HeaderBlue";
 import useRecording from "@/hooks/mediapipeHooks/useRecording";
 import useGazeDetection from "@/hooks/mediapipeHooks/useGazeDetection";
@@ -14,10 +14,15 @@ const ExamPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const faceCanvasRef = useRef<HTMLCanvasElement>(null);
   const [recordStartTime, setRecordStartTime] = useState<Date>(new Date());
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 녹화 관련
-  const { handleStartRecording, handleStopRecording, downloadUrl } =
-    useRecording(videoRef);
+  const {
+    handleStartRecording,
+    handleStopRecording,
+    downloadUrl,
+    mediaRecorderRef,
+  } = useRecording(faceCanvasRef);
 
   // 시선 분석
   const { detectGaze } = useGazeDetection(recordStartTime);
@@ -65,6 +70,32 @@ const ExamPage = () => {
     detectGaze(landmarks, ctx);
   });
 
+  // 녹화 주기 시작 함수 (컴포넌트 마운트 시 자동 호출)
+  useEffect(() => {
+    const startRecordingCycle = () => {
+      handleStartRecording(); // 첫 녹화 시작
+
+      intervalRef.current = setInterval(() => {
+        if (mediaRecorderRef.current) {
+          // 기존 녹화를 중지하고 새로운 녹화를 바로 시작
+          handleStopRecording(); // 기존 녹화를 중지하고 비동기로 전송
+          handleStartRecording(); // 바로 새로운 녹화를 시작
+        }
+      }, 5 * 60 * 1000); // 5분 주기 (5 * 60 * 1000ms)
+      // }, 10 * 1000); // 디버깅용 10초 주기
+    };
+
+    startRecordingCycle();
+
+    return () => {
+      // 컴포넌트 언마운트 시 녹화 중지 및 타이머 제거
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      handleStopRecording();
+    };
+  }, []); // 빈 배열을 두어 컴포넌트가 마운트될 때 한 번만 실행
+
   return (
     <>
       <HeaderBlue />
@@ -92,20 +123,19 @@ const ExamPage = () => {
             position: "absolute",
             top: 0,
             left: 0,
+            display: "none",
           }}
         />
       </div>
 
-      {/* 녹화 버튼 */}
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={handleStartRecording}>녹화 시작</button>
-        <button onClick={handleStopRecording}>녹화 종료</button>
+      {/* 녹화 영상 확인용 다운로드 버튼 */}
+      {/* <div style={{ marginTop: "20px" }}>
         {downloadUrl && (
           <a href={downloadUrl} download="recorded_video.webm">
             녹화된 영상 다운로드
           </a>
         )}
-      </div>
+      </div> */}
     </>
   );
 };
