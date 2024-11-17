@@ -44,7 +44,10 @@ class Logs(models.Model):
 
 class Abnormal(models.Model):
     TYPE_CHOICES = (
-        ('eyesight', 'Eyesight'),
+        ('eyesight_left', 'Eyesight_Left'),
+        ('eyesight_right', 'Eyesight_Right'),
+        ('eyesight_up', 'Eyesight_Up'),
+        ('eyesight_down', 'Eyesight_Down'),
         ('absence', 'Absence'),
         ('overcrowded', 'Overcrowded'),
         ('paper', 'Paper'),
