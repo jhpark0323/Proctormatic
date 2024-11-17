@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import HeaderBlue from "@/components/HeaderBlue";
 import useRecording from "@/hooks/mediapipeHooks/useRecording";
 import useGazeDetection from "@/hooks/mediapipeHooks/useGazeDetection";
@@ -8,13 +8,23 @@ import useFaceBoundingBox from "@/hooks/mediapipeHooks/useFaceBoundingBox";
 const ExamPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const faceCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [recordStartTime, setRecordStartTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (recordStartTime === null) {
+      // recordStartTime이 설정되지 않았을 때만 설정
+      const currentTime = new Date();
+      setRecordStartTime(currentTime);
+      console.log(currentTime.toString());
+    }
+  }, []);
 
   // 녹화 관련 훅 사용
   const { handleStartRecording, handleStopRecording, downloadUrl } =
     useRecording(videoRef);
 
   // 시선 감지 훅 사용
-  const { detectGaze } = useGazeDetection();
+  const { detectGaze } = useGazeDetection(recordStartTime);
 
   // MediaPipe Face Mesh 훅 사용
   useFaceMesh(videoRef, faceCanvasRef, (results) => {

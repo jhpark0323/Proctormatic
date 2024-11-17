@@ -1,9 +1,55 @@
 import { useRef } from "react";
 import { FACEMESH_LEFT_EYE, FACEMESH_LEFT_IRIS } from "@mediapipe/face_mesh";
+import axiosInstance from "@/utils/axios";
 
-const useGazeDetection = () => {
+const useGazeDetection = (recordStartTime: Date) => {
   const gazeStartTimeRef = useRef<number | null>(null);
   const LOOK_UP_DURATION = 5000;
+
+  const fetchPostAbnormal = () => {
+    const currentTime = new Date();
+
+    // `end_time`은 현재 시간에서 `recordStartTime`을 뺀 결과
+    const elapsedMilliseconds =
+      currentTime.getTime() - recordStartTime.getTime();
+
+    // 경과 시간을 시, 분, 초로 변환
+    const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000) % 60;
+    const elapsedMinutes = Math.floor(elapsedMilliseconds / (1000 * 60)) % 60;
+    const elapsedHours = Math.floor(elapsedMilliseconds / (1000 * 60 * 60));
+
+    // 포맷팅된 시간 문자열 생성 (HH:mm:ss)
+    const endTimeFormatted = `${String(elapsedHours).padStart(2, "0")}:${String(
+      elapsedMinutes
+    ).padStart(2, "0")}:${String(elapsedSeconds).padStart(2, "0")}`;
+
+    // `detected_time`은 `end_time`에서 5초 전
+    const detectedMilliseconds = elapsedMilliseconds - 5000;
+    const detectedSeconds = Math.floor(detectedMilliseconds / 1000) % 60;
+    const detectedMinutes = Math.floor(detectedMilliseconds / (1000 * 60)) % 60;
+    const detectedHours = Math.floor(detectedMilliseconds / (1000 * 60 * 60));
+
+    // 포맷팅된 `detected_time` 문자열 생성 (HH:mm:ss)
+    const detectedTimeFormatted = `${String(detectedHours).padStart(
+      2,
+      "0"
+    )}:${String(detectedMinutes).padStart(2, "0")}:${String(
+      detectedSeconds
+    ).padStart(2, "0")}`;
+
+    axiosInstance
+      .post("/taker/abnormal/", {
+        type: "eyesight",
+        detected_time: detectedTimeFormatted,
+        end_time: endTimeFormatted,
+      })
+      .then((response) => {
+        console.log("이상행동 등록 성공: ", response.data);
+      })
+      .catch((error) => {
+        console.error("이상행동 등록 실패: ", error);
+      });
+  };
 
   const detectGaze = (landmarks: any, ctx: CanvasRenderingContext2D | null) => {
     // 왼쪽 홍채의 중앙을 계산
@@ -41,6 +87,7 @@ const useGazeDetection = () => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 왼쪽을 5초 동안 보고 있습니다");
+        fetchPostAbnormal();
         gazeStartTimeRef.current = null;
       }
     } else if (leftEyeDiffX < -0.02) {
