@@ -55,9 +55,9 @@ const ReservationDateTime = ({
       <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
         * 응시자는 시험 시작하기 30분 전부터 입장이 가능해요.
       </div>
-      <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
+      {/* <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
         * 지각한 응시자는 시험 시작 후 15분 이내까지만 입장이 가능해요.
-      </div>
+      </div> */}
 
       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
         <div className={styles.timeWrap}>
