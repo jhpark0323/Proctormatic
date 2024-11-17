@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken
 from django.utils import timezone
 from datetime import timedelta
+from freezegun import freeze_time
+
 
 from exams.models import Exam
 from coins.models import Coin
@@ -187,6 +189,7 @@ class ExamCreateTestCase(CommenTestSetUp):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json().get('message'), '시험 예약은 현재 시간 이후로 설정할 수 있어요.')
 
+    @freeze_time("2024-11-15 10:00:00")
     def test_create_exam_with_insufficient_time_to_start(self):
         '''
         시험 시작 시간이 현재 시간보다 30분 미만으로 남은 경우 메세지와 409 status를 반환한다
@@ -196,10 +199,10 @@ class ExamCreateTestCase(CommenTestSetUp):
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
         data = {
             'title': 'test exam',
-            'date': timezone.now().date(),
-            'start_time': (timezone.now() + timedelta(minutes=20)).time(),
-            'end_time': (timezone.now() + timedelta(minutes=100)).time(),
-            'exit_time': (timezone.now() + timedelta(minutes=90)).time(),
+            'date': '2024-11-15',
+            'start_time': '10:20:00',
+            'end_time': '12:20:00',
+            'exit_time': '12:20:00',
             'expected_taker': 10,
             'cost': 600
         }
@@ -209,7 +212,7 @@ class ExamCreateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간은 최소 30분 이후부터 설정할 수 있어요.')
 
     def test_create_exam_with_exceeding_duration(self):
         '''
@@ -259,7 +262,7 @@ class ExamCreateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '퇴실 가능 시간을 확인해주세요.')
 
 class ExamUpdateTestCase(CommenTestSetUp):
     def test_update_exam(self):
@@ -338,6 +341,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json().get('message'), '존재하지 않는 시험입니다.')
 
+    @freeze_time("2024-11-15 10:00:00")
     def test_update_exam_start_time_in_the_past(self):
         '''
         응시 시작 시간을 현재 시간 이전으로 수정 요청한 경우 메세지와 409 status를 반환한다
@@ -347,10 +351,10 @@ class ExamUpdateTestCase(CommenTestSetUp):
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
         url = f'{self.url}{self.exam.id}/'
         data = {
-            'date': timezone.now().date(),
-            'start_time': (timezone.now() - timedelta(hours=1)).time(),
-            'end_time': (timezone.now() + timedelta(hours=1)).time(),
-            'exit_time': (timezone.now() + timedelta(hours=1)).time(),
+            'date': '2024-11-15',
+            'start_time': '09:00:00',
+            'end_time': '11:00:00',
+            'exit_time': '10:30:00',
         }
 
         # when
@@ -360,6 +364,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json().get('message'), '시험 예약은 현재 시간 이후로 설정할 수 있어요.')
 
+    @freeze_time("2024-11-15 10:00:00")
     def test_update_exam_start_time_too_soon(self):
         '''
         응시 시작 시간이 현재 시간으로부터 최소 30분 후가 아닌 시간으로 수정 요청한 경우 메세지와 409 status를 반환한다
@@ -369,10 +374,10 @@ class ExamUpdateTestCase(CommenTestSetUp):
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
         url = f'{self.url}{self.exam.id}/'
         data = {
-            'date': timezone.now().date(),
-            'start_time': (timezone.now() + timedelta(minutes=20)).time(),
-            'end_time': (timezone.now() + timedelta(hours=1, minutes=20)).time(),
-            'exit_time': (timezone.now() + timedelta(hours=1)).time(),
+            'date': '2024-11-15',
+            'start_time': '10:20:00',
+            'end_time': '12:20:00',
+            'exit_time': '12:20:00',
         }
 
         # when
@@ -380,7 +385,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간은 최소 30분 이후부터 설정할 수 있어요.')
 
     def test_update_exam_duration_exceeds_two_hours(self):
         '''
@@ -419,7 +424,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간이 종료 시간보다 늦을 수 없습니다.')
 
     def test_update_exam_exit_time_not_between_start_and_end(self):
         '''
@@ -438,7 +443,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '퇴실 가능 시간을 확인해주세요.')
 
     def test_update_exam_expected_taker_exceeds_limit(self):
         '''
@@ -591,21 +596,27 @@ class ExamDeleteTestCase(CommenTestSetUp):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json().get('message'), '존재하지 않는 시험입니다.')
 
+    @freeze_time("2024-11-15 10:00:00")
     def test_delete_exam_in_progress(self):
         '''
         진행 중인 시험을 삭제하고자 하면 메세지와 409 status를 반환한다
         '''
         # given
-        self.exam.date = timezone.now().date()
-        self.exam.start_time = (timezone.now() - timedelta(minutes=30)).time()
-        self.exam.entry_time = (timezone.now() - timedelta(hours=1)).time()
-        self.exam.end_time = (timezone.now() + timedelta(minutes=30)).time()
-        self.exam.exit_time = timezone.now().time()
-        self.exam.save()
+        del_exam = Exam.objects.create(
+            user=self.user,
+            title='delete test exam',
+            date='2024-11-15',
+            entry_time='09:30:00',
+            start_time='10:00:00',
+            end_time='12:00:00',
+            exit_time='11:30:00',
+            expected_taker=10,
+            cost=600
+        )
 
         token = self.get_token(self.user)
         headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
-        url = f'{self.url}{self.exam.id}/'
+        url = f'{self.url}{del_exam.id}/'
 
         # when
         response = self.client.delete(url, **headers)

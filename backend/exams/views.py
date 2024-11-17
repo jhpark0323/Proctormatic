@@ -362,16 +362,16 @@ def validate_exam_time(date, start_time, end_time, exit_time):
         return conflict_response('시험 예약은 현재 시간 이후로 설정할 수 있어요.')
 
     if (start_datetime - current_time) < timedelta(minutes=30):
-        return conflict_response('응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+        return conflict_response('응시 시작 시간은 최소 30분 이후부터 설정할 수 있어요.')
 
     if (end_datetime - start_datetime) > timedelta(minutes=120):
         return bad_request_response('시험 예약 시간은 최대 2시간입니다.')
 
     if start_time > end_time:
-        return conflict_response('응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
+        return conflict_response('응시 시작 시간이 종료 시간보다 늦을 수 없습니다.')
 
     if not (start_time <= exit_time <= end_time):
-        return conflict_response('퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        return conflict_response('퇴실 가능 시간을 확인해주세요.')
 
     return None
 
