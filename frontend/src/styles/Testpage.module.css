@@ -319,3 +319,33 @@
 .reportItem {
   margin-bottom: 2rem;
 }
+
+.timelineButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timelineButton {
+  padding: 5px 10px;
+  border: 1px solid var(--PRIMARY);
+  background-color: var(--SECONDARY_LIGHT);
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.timelineButton:hover {
+  background-color: var(--PRIMARY_LIGHT);
+}
+
+.takerVideo {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
