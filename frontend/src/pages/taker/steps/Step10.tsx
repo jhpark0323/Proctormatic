@@ -5,13 +5,16 @@ import { usePhotoStore } from "@/store/usePhotoStore";
 import * as faceapi from "face-api.js";
 import { useNavigate } from "react-router-dom";
 import { useTakerStore } from "@/store/TakerAuthStore";
+import axiosInstance from "@/utils/axios";
+import { CustomToast } from "@/components/CustomToast";
 
 const Step10 = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
-  const { photoStep8, photoStep9 } = usePhotoStore();
+  const { photoStep8, photoStep9, maskedIDPhoto } = usePhotoStore();
   const [similarity, setSimilarity] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { testId } = useTakerStore();
+  const { birth } = useTakerStore();
   const navigate = useNavigate();
 
   // 유사도 계산 함수
@@ -55,6 +58,57 @@ const Step10 = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
       calculateSimilarity();
     }
   }, [modelsLoaded, photoStep8, photoStep9, calculateSimilarity]);
+
+  const postID = async () => {
+    if (!maskedIDPhoto) {
+      CustomToast("신분증 사진이 없습니다.");
+      return;
+    }
+    if (!birth) {
+      CustomToast("생년월일을 작성해주세요.");
+      return;
+    }
+    if (!similarity) {
+      CustomToast("유사도 분석을 완료해주세요.");
+      return;
+    }
+
+    try {
+      // FormData 생성
+      const formData = new FormData();
+      formData.append("birth", birth); // 생년월일 추가
+      formData.append("verification_rate", similarity.toString()); // 유사도 추가
+
+      // maskedIDPhoto를 File 객체로 변환 후 추가
+      const idPhotoFile = dataURLtoFile(maskedIDPhoto, "id_photo.png");
+      formData.append("id_photo", idPhotoFile);
+
+      // 서버에 POST 요청
+      const response = await axiosInstance.post("/taker/photo/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("신분증 등록 성공:", response.data);
+      navigate(`/taker/${testId}`);
+    } catch (error) {
+      console.error("신분증 등록 실패:", error);
+    }
+  };
+
+  // base64 형식의 dataURL을 File 객체로 변환하는 함수
+  const dataURLtoFile = (dataUrl: string, fileName: string) => {
+    const arr = dataUrl.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], fileName, { type: mime });
+  };
 
   return (
     <>
@@ -104,7 +158,7 @@ const Step10 = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
       <div className={styles.StepFooter}>
         <CustomButton
           state={!similarity || isLoading ? "disabled" : "default"}
-          onClick={() => navigate(`/taker/${testId}`)}
+          onClick={postID}
         >
           시험 입실하기
         </CustomButton>
