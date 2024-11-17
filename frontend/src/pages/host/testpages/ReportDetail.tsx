@@ -72,6 +72,7 @@ const ReportDetail = ({}: ReportDetailProps) => {
 
         <div className={styles.detailContentWrap}>
           <div className={styles.takerdetailInfoWrap}>
+            {/* 응시자 정보 */}
             <div className={styles.detailInfoItem}>
               <div className={styles.reportItem}>
                 <div
@@ -123,6 +124,8 @@ const ReportDetail = ({}: ReportDetailProps) => {
                 </div>
               </div>
             </div>
+
+            {/* 시험 정보 */}
             <div className={styles.detailInfoItem}>
               <div className={styles.reportItem}>
                 <div
@@ -194,28 +197,82 @@ const ReportDetail = ({}: ReportDetailProps) => {
                 </div>
               </div>
             </div>
-            <div className={styles.detailEventItem}>
+
+            {/* 영상 */}
+            <div className={styles.reportItem}>
               <div
                 className={styles.detailInfoTitle}
                 style={fonts.HEADING_SM_BOLD}
               >
-                감지된 이벤트 내역
+                응시 영상
               </div>
               <div className={styles.detailInfoContext}>
-                <div className={styles.detailInfoItem}>총 이벤트</div>
-                <div className={styles.detailInfoItem}>
-                  {takerData.abnormalList.length} 건
-                </div>
+                <video
+                  id="videoPlayer"
+                  controls
+                  src={takerData?.web_cam}
+                  className={styles.takerVideo}
+                >
+                  현재 브라우저는 동영상을 지원하지 않습니다.
+                </video>
               </div>
             </div>
+
+            {/* 타임라인 버튼 */}
             <div className={styles.detailEventItem}>
               <div
                 className={styles.detailInfoTitle}
                 style={fonts.HEADING_SM_BOLD}
               >
-                감지된 이벤트 영상
+                감지된 이벤트 타임라인
               </div>
-              <div className={styles.detailInfoContext}>타임라인</div>
+              <div className={styles.timelineButtons}>
+                {takerData.abnormalList.map((event, index) => {
+                  const borderColors: { [key: string]: string } = {
+                    phone: "red",
+                    person: "blue",
+                    watch: "green",
+                    earphone: "purple",
+                  };
+
+                  const borderColor = borderColors[event.type] || "gray";
+
+                  return (
+                    <button
+                      key={index}
+                      className={styles.timelineButton}
+                      style={{
+                        border: `2px solid ${borderColor}`,
+                        margin: "5px",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        backgroundColor: "white",
+                        color: borderColor,
+                      }}
+                      onClick={() => {
+                        const videoElement = document.getElementById(
+                          "videoPlayer"
+                        ) as HTMLVideoElement;
+                        if (videoElement) {
+                          const timeParts = event.detected_time
+                            .split(":")
+                            .map((part) => parseFloat(part));
+                          const timeInSeconds = timeParts.reduce(
+                            (acc, time, i) =>
+                              acc +
+                              time * Math.pow(60, timeParts.length - 1 - i),
+                            0
+                          );
+                          videoElement.currentTime = timeInSeconds;
+                          videoElement.play();
+                        }
+                      }}
+                    >
+                      {`이벤트 ${index + 1} (${event.type}): ${event.detected_time}`}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
