@@ -96,6 +96,7 @@ const useGazeDetection = (recordStartTime: Date) => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 오른쪽을 5초 동안 보고 있습니다");
+        fetchPostAbnormal();
         gazeStartTimeRef.current = null;
       }
     } else if (leftEyeDiffY < -0.005) {
@@ -104,6 +105,7 @@ const useGazeDetection = (recordStartTime: Date) => {
       }
       if (Date.now() - gazeStartTimeRef.current >= LOOK_UP_DURATION) {
         console.log("사용자가 위를 5초 동안 보고 있습니다");
+        fetchPostAbnormal();
         gazeStartTimeRef.current = null;
       }
     } else {
@@ -112,8 +114,6 @@ const useGazeDetection = (recordStartTime: Date) => {
 
     if (ctx) {
       ctx.save();
-      // 캔버스 안 보이게
-      // ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       ctx.restore();
     }
   };
