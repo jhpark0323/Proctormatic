@@ -84,6 +84,9 @@ const ScheduledTest = () => {
       });
       setExpectedTaker(data.expected_taker || 0);
       setOriginalCost(data.cost);
+      if (data.end_time && data.exit_time && data.end_time !== data.exit_time) {
+        setIsExitPermitted(true);
+      }
     } catch (error) {
       console.error("시험 정보 조회 실패:", error);
     }

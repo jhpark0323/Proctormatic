@@ -50,7 +50,7 @@ const ReservationDateTime = ({
   return (
     <div className={styles.makeTestContentItem}>
       <div className={styles.makeTestContentTitle}>
-        시험 날짜와 시간 (최대 60분)
+        시험 날짜와 시간 (최대 120분)
       </div>
       <div style={{ ...fonts.SM_REGULAR, color: "var(--GRAY_500)" }}>
         * 응시자는 시험 시작하기 30분 전부터 입장이 가능해요.
