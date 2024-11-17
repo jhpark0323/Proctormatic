@@ -209,7 +209,7 @@ class ExamCreateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간은 최소 30분 이후부터 설정할 수 있어요.')
 
     def test_create_exam_with_exceeding_duration(self):
         '''
@@ -259,7 +259,7 @@ class ExamCreateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '퇴실 가능 시간을 확인해주세요.')
 
 class ExamUpdateTestCase(CommenTestSetUp):
     def test_update_exam(self):
@@ -380,7 +380,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간은 현 시간 기준 최소 30분 이후부터 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간은 최소 30분 이후부터 설정할 수 있어요.')
 
     def test_update_exam_duration_exceeds_two_hours(self):
         '''
@@ -419,7 +419,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '응시 시작 시간이 응시 끝나는 시간보다 늦을 수 없습니다.')
+        self.assertEqual(response.json().get('message'), '응시 시작 시간이 종료 시간보다 늦을 수 없습니다.')
 
     def test_update_exam_exit_time_not_between_start_and_end(self):
         '''
@@ -438,7 +438,7 @@ class ExamUpdateTestCase(CommenTestSetUp):
 
         # then
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.json().get('message'), '퇴실 가능시간은 시험 시작시간과 종료시간 사이로 설정할 수 있어요.')
+        self.assertEqual(response.json().get('message'), '퇴실 가능 시간을 확인해주세요.')
 
     def test_update_exam_expected_taker_exceeds_limit(self):
         '''
