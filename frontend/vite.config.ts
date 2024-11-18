@@ -17,4 +17,8 @@ export default defineConfig({
       mangle: false, // 난독화 해제
     },
   },
+  // @mediapipe/face_mesh 모듈을 사전 번들링하도록 설정
+  optimizeDeps: {
+    include: ['@mediapipe/face_mesh'], // Vite가 이 모듈을 사전 번들링
+  }
 });
