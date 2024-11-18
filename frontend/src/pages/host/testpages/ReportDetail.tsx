@@ -12,7 +12,7 @@ interface Taker {
   name: string;
   email: string;
   birth: string;
-  id_photo: string;
+  id_photo: string | null;
   web_cam: string | null;
   verification_rate: number;
   date: string;
@@ -35,7 +35,7 @@ const ReportDetail = ({}: ReportDetailProps) => {
     name: "",
     email: "",
     birth: "",
-    id_photo: "",
+    id_photo: null,
     web_cam: null,
     verification_rate: 0,
     date: "",
@@ -98,7 +98,11 @@ const ReportDetail = ({}: ReportDetailProps) => {
                   신분증 사진
                 </div>
                 <div className={styles.detailInfoContext}>
-                  <img src={takerData?.id_photo} alt="신분증 사진" className={styles.takerIdImage} />
+                  {takerData?.id_photo ? (
+                    <img src={takerData.id_photo} className={styles.takerIdImage} />
+                  ) : (
+                    "업로드 된 신분증이 없습니다..."
+                  )}
                 </div>
               </div>
             </div>
