@@ -77,11 +77,13 @@ const Step10 = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
       // FormData 생성
       const formData = new FormData();
       formData.append("birth", birth); // 생년월일 추가
-      formData.append("verification_rate", similarity.toString()); // 유사도 추가
+      formData.append("verification_rate", Math.trunc(similarity).toString());
 
       // maskedIDPhoto를 File 객체로 변환 후 추가
       const idPhotoFile = dataURLtoFile(maskedIDPhoto, "id_photo.png");
       formData.append("id_photo", idPhotoFile);
+
+      console.log(formData);
 
       // 서버에 POST 요청
       const response = await axiosInstance.patch("/taker/photo/", formData, {
