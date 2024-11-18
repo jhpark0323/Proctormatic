@@ -84,7 +84,7 @@ const Step10 = ({ modelsLoaded }: { modelsLoaded: boolean }) => {
       formData.append("id_photo", idPhotoFile);
 
       // 서버에 POST 요청
-      const response = await axiosInstance.post("/taker/photo/", formData, {
+      const response = await axiosInstance.patch("/taker/photo/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
