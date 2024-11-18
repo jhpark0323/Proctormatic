@@ -75,6 +75,10 @@ class AbnormalListSerializer(serializers.ModelSerializer):
         model = Abnormal
         exclude = ('id', 'taker',)
 
+    def to_representation(self, instance):
+        qs = super().to_representation(instance)
+        return sorted(qs, key=lambda x: x['detected_time'], reverse=True)
+
 class TakerDetailSerializer(serializers.ModelSerializer):
     number_of_entry = serializers.SerializerMethodField()
     entry_time = serializers.SerializerMethodField()
