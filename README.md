@@ -119,7 +119,7 @@
     <tr>
       <td><img src="asset/checkEmail.png" alt="이메일 인증" width="300"/></td>
       <td><img src="asset/Ai.png" alt="신분증 인증 & 비식별화" width="300"/></td>
-      <td><img src="asset/" alt="영상 비식별화" width="300"/></td>
+      <td><img src="asset/video.png" alt="영상 비식별화" width="300"/></td>
     </tr>
   </table>
 
