@@ -1,0 +1,100 @@
+.Header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  height: 75px;
+  padding: 18px 30px;
+  box-sizing: border-box;
+  background-color: white;
+  z-index: 40;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.Logo {
+  margin: 0px;
+  width: 220px;
+  cursor: pointer;
+}
+
+.LoginBox {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 20px;
+}
+
+.LoginButton {
+  color: #2276dc;
+  display: flex;
+  align-items: center;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.UserInfo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.UserRoleContainer {
+  position: relative;
+}
+
+.UserRole {
+  cursor: pointer;
+}
+
+.UserRole > span {
+  color: #2276dc;
+}
+
+.Modal {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 100px;
+  text-align: center;
+}
+
+.LogoutButton {
+  background: none;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  width: 100%;
+}
+
+.LogoutButton:hover {
+  background-color: #f5f5f5;
+}
+
+/* HostHeader */
+.menu {
+  display: flex;
+  gap: 10vh;
+  align-items: center;
+}
+
+.menuIcon {
+  text-decoration: none;
+  color: var(--BLACK);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--PRIMARY);
+  }
+}

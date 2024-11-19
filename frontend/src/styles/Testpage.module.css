@@ -1,0 +1,351 @@
+/* 내 시험 보기 */
+.mytestHeader {
+  background-color: var(--WHITE);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5rem 0;
+}
+
+.mytestHeaderWrap {
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+}
+
+.myInfoWrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.myName {
+  color: var(--PRIMARY);
+  margin-right: 0.5rem;
+}
+
+.testInfoBox {
+  border: 1px solid var(--GRAY_300);
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6rem;
+  padding: 3rem 6rem;
+}
+
+.seperate {
+  width: 1px;
+  height: 100%;
+  background-color: var(--GRAY_300);
+}
+
+.testInfoItem {
+  text-align: center;
+}
+
+.testInfoTitle {
+  margin-bottom: 1rem;
+}
+
+.testWrap {
+  background-color: var(--BACKGROUND);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 0;
+}
+
+.testBox {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  width: 80%;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.testCategory {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.testContent {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  background-color: var(--BACKGROUND);
+}
+
+.tableCell {
+  padding: 1rem;
+  text-align: center;
+  font-weight: 500;
+  border-bottom: 1px solid var(--GRAY_300);
+}
+
+.reportButton {
+  background-color: var(--PRIMARY);
+  color: var(--WHITE);
+  padding: 0.5rem 1rem;
+  width: fit-content;
+  border-radius: 1rem;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+/* MakeTest */
+.makeTestContainer {
+  background-color: var(--BACKGROUND);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-top: 75px;
+}
+
+.goBack {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.makeTestBox {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  padding: 5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.makeTestContentBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 70%;
+}
+
+.makeTestName {
+  color: var(--PRIMARY);
+}
+
+.timeWrap {
+  display: flex;
+  margin-top: 0.5rem;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.endTimeWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.newTestInfoBox {
+  border-radius: 1rem;
+  border: 1px solid var(--GRAY_300);
+  display: flex;
+  justify-content: center;
+  gap: 8rem;
+  padding: 2rem;
+}
+
+.newTestInfoTitle {
+  color: var(--GRAY_500);
+  margin-bottom: 1rem;
+}
+
+.newTestSeperate {
+  width: 20px;
+  height: 100%;
+  background-color: var(--GRAY_300);
+}
+
+.peopelNumWrap {
+  display: flex;
+  justify-content: space-between;
+}
+
+.coinAmount {
+  color: var(--PRIMARY);
+  margin-right: 0.3rem;
+}
+
+.submitButton {
+  text-align: center;
+}
+
+/* detail */
+.detailMenuWrap {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5rem;
+}
+
+.detailContentWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detailInfoWrap {
+  display: flex;
+  padding: 5rem;
+  flex-wrap: wrap;
+  row-gap: 3rem;
+}
+
+.detailInfoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 50%;
+}
+
+.summaryWrap {
+  padding: 0 5rem;
+}
+
+.summaryBox {
+  width: 100%;
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-LIGHT_2);
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.summaryTable {
+  width: 90%;
+  border-collapse: collapse;
+}
+
+.summaryTable th {
+  padding: 1rem;
+  background-color: var(--BACKGROUND);
+  width: 25%;
+}
+
+.summaryTable td {
+  padding: 1rem;
+  text-align: center;
+  vertical-align: middle;
+  width: 25%;
+}
+
+.abnormal {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.5rem 2rem;
+  justify-content: center;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--PRIMARY);
+  color: var(--WHITE);
+}
+
+.dropdownWrapper {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 2rem;
+  right: 0;
+  background-color: var(--WHITE);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 100;
+  width: 60px;
+}
+
+.dropdownMenu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdownMenu li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.dropdownMenu li:hover {
+  background-color: var(--LIGHT_GRAY);
+}
+
+.takerdetailInfoWrap {
+  background-color: var(--WHITE);
+  border-radius: 1rem;
+  display: flex;
+  padding: 5rem;
+  flex-wrap: wrap;
+  row-gap: 3rem;
+}
+
+.takerIdImage {
+  width: 80%;
+  height: auto;
+}
+
+.detailEventItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.reportItem {
+  margin-bottom: 2rem;
+}
+
+.timelineButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timelineButton {
+  padding: 5px 10px;
+  border: 1px solid var(--PRIMARY);
+  background-color: var(--SECONDARY_LIGHT);
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.timelineButton:hover {
+  background-color: var(--PRIMARY_LIGHT);
+}
+
+.takerVideo {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}

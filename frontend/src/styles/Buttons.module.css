@@ -1,0 +1,202 @@
+/* Checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox input[type="checkbox"] {
+  appearance: none; /* 기본 체크박스 스타일 제거 */
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--GRAY_400);
+  border-radius: 2px;
+  background-color: var(--GRAY_100);
+  margin-right: 0.3rem;
+  position: relative;
+  top: 0.1rem;
+}
+
+.checkbox input[type="checkbox"]:checked {
+  appearance: auto;
+}
+
+.checkbox label {
+  /* 라벨 드래그 막기 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* ToggleSwitch */
+
+.toggle {
+  position: relative;
+  cursor: pointer;
+}
+
+.toggle-container {
+  width: 44px;
+  height: 24px;
+  border-radius: 30px;
+  border: 1px solid var(--GRAY_300);
+  background: var(--WHITE);
+  transition: background-color 0.5s;
+}
+
+.toggle-container.toggle--checked {
+  background-color: var(--PRIMARY);
+}
+
+.toggle-circle {
+  position: absolute;
+  top: 2px;
+  left: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--GRAY_300);
+  background: var(--WHITE);
+  transition: left 0.5s;
+}
+
+.toggle-circle.toggle--checked {
+  left: 22px;
+}
+
+/* 텍스트 필드 */
+.textfield-container {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.textfield-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid var(--GRAY_300);
+  background-color: var(--WHITE);
+}
+
+.textfield-input::placeholder {
+  font-size: 0.8rem;
+}
+
+/* underline 타입일 때 적용될 스타일 */
+.textfield-input.underline {
+  border-radius: 0px;
+  border: none;
+  border-bottom: 1px solid var(--GRAY_400);
+}
+
+.textfield-help {
+  font-size: 12px;
+  color: var(--DELETE);
+}
+
+.trailing-icon {
+  position: absolute;
+  right: 0px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+}
+
+/* Buttons.module.css */
+
+.button {
+  display: inline-flex;
+  height: 40px;
+  padding: 5px 30px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: small;
+  border: none;
+}
+
+.button.rectangular {
+  border-radius: 0.3rem;
+}
+
+.button.oval {
+  border-radius: 40px;
+}
+
+.button.default {
+  background-color: var(--NAVY);
+  color: var(--WHITE);
+}
+
+.button.primary_fill {
+  background-color: var(--PRIMARY);
+  color: var(--WHITE);
+}
+
+.button.primary_outline {
+  background-color: transparent;
+  border: 2px solid var(--PRIMARY);
+  color: var(--PRIMARY);
+}
+
+.button.primary_clear {
+  background-color: transparent;
+  color: var(--PRIMARY);
+  border: none;
+}
+
+.button.secondary {
+  background-color: var(--SECONDARY);
+  color: var(--WHITE);
+}
+
+.button.danger {
+  background-color: var(--DELETE);
+  color: var(--WHITE);
+}
+
+.button.danger_outline {
+  background-color: transparent;
+  border: 2px solid var(--DELETE);
+  color: var(--DELETE);
+}
+
+.button.whitefill {
+  background-color: var(--WHITE);
+  color: var(--BLACK);
+}
+
+.button.blackfill {
+  background-color: var(--BLACK);
+  color: var(--WHITE);
+}
+
+.button.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background-color: var(--GRAY_300);
+  color: var(--GRAY_500);
+}
+
+/* tooltip */
+.tooltip-default {
+  background-color: var(--GRAY_800) !important;
+  color: var(--WHITE) !important;
+  padding: 8px 16px !important;
+  border-radius: 0.3rem !important;
+  opacity: 1 !important;
+}
+
+.tooltip-white {
+  background-color: var(--WHITE) !important;
+  color: var(--BLACK) !important;
+  padding: 8px 16px !important;
+  border-radius: 0.3rem !important;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.25) !important;
+  opacity: 1 !important;
+}

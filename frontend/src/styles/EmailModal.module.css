@@ -1,0 +1,172 @@
+.EmailModal {
+  left: 50%;
+  top: 50%;
+  padding: 60px;
+  box-sizing: border-box;
+  width: 580px;
+  transform: translate(-50%, -50%);
+
+  position: fixed;
+  background-color: white;
+  z-index: 58;
+}
+
+.ModalTitle {
+  font-size: 28px;
+  font-family: var(--font-HEADING_4XL-fontfamily);
+  font-weight: bold;
+  line-height: 41px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.closeBtn {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.EmailBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.InfoBox {
+  font-size: 17px;
+  font-family: var(--font-lg_medium-fontfamily);
+  /* line-height: 27px; */
+  padding: 20px 0px;
+}
+
+.InfoBox span {
+  color: var(--PRIMARY);
+}
+
+.InputBox {
+  padding: 20px 0px;
+}
+
+.InputBox input {
+  width: 100%;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-image: initial;
+  border-bottom: 1px solid rgba(217, 217, 217, 0.5);
+  padding: 6px 0px;
+  margin-top: 5px;
+  font-family: var(--font-MD_ITALIC-fontfamily);
+}
+
+.InputTitle {
+  font-size: 15px;
+  font-family: var(--font-lg_medium-fontfamily);
+  line-height: 22px;
+  margin-bottom: 5px;
+}
+
+.InputError {
+  color: rgb(200, 59, 56);
+  font-size: 12px;
+  font-family: var(--font-lg_medium-fontfamily);
+  line-height: 18px;
+  margin-bottom: 12px;
+}
+
+.Timer {
+  font-family: var(--font-lg_medium-fontfamily);
+  color: rgb(34, 118, 220);
+  font-size: 12px;
+  line-height: 18px;
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.DetailBox {
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0px 36px;
+}
+
+.DetailTitle {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-family: var(--font-md_regular-fontfamily);
+  line-height: 19px;
+}
+
+.DetailItem {
+  font-size: 12px;
+  display: grid;
+  /* flex-direction: column; */
+  gap: 6px;
+  font-family: var(--font-md_regular-fontfamily);
+  line-height: 16px;
+  margin-top: 8px;
+  color: rgb(68, 68, 68);
+}
+
+.ResendBox {
+  font-size: 12px;
+  text-align: center;
+  font-family: var(--font-lg_medium-fontfamily);
+  line-height: 16px;
+  padding: 14px 24px 25px;
+}
+
+.ResendBox > span {
+  color: rgb(34, 118, 220);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-md_regular-fontfamily);
+  line-height: 16px;
+  font-size: 12px;
+}
+
+.ButtonBox {
+  gap: 21px;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  margin: 0px auto;
+  padding: 15px 0px;
+}
+
+.CancelButton {
+  width: 204px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgb(0, 0, 0);
+  border-radius: 42px;
+  font-size: 14px;
+  font-family: medium;
+  line-height: 21px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.VerifyButton {
+  width: 204px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgb(217, 217, 217);
+  border-radius: 42px;
+  font-size: 14px;
+  font-family: medium;
+  line-height: 21px;
+  background-color: rgb(237, 137, 62);
+  cursor: pointer;
+  /* 인증 안되면 색깔 수정 */
+  /* background-color: rgb(217, 217, 217); */
+  box-sizing: border-box;
+  color: white;
+}
